@@ -36,7 +36,7 @@ The server you will run this program on must be able to access outside world on 
 In order to build the image, simply run (replace `docker` by `podman` if needed) :
 
 ```bash
-docker build -t eyecloudfr/trader:latest -f ./Dockerfile
+docker build -t trader:latest -f ./Dockerfile
 ```
 
 ## Run
@@ -44,7 +44,7 @@ docker build -t eyecloudfr/trader:latest -f ./Dockerfile
 After the image has been built, you can now run it like so :
 
 ```bash
-docker run --name trader -e EXCHANGE_API_KEY=token -v /data:/app eyecloudfr/trader:latest
+docker run --name trader -e EXCHANGE_API_KEY=token -v /data:/app trader:latest
 ```
 
 ## Disclaimer
