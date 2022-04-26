@@ -44,7 +44,7 @@ docker build -t eyecloudfr/trader:latest -f ./Dockerfile
 After the image has been built, you can now run it like so :
 
 ```bash
-docker run --name stocks -e EXCHANGE_API_KEY=token -v /data:/data eyecloudfr/trader:latest
+docker run --name trader -e EXCHANGE_API_KEY=token -v /data:/app eyecloudfr/trader:latest
 ```
 
 ## Disclaimer
