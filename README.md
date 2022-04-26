@@ -1,4 +1,4 @@
-# Stocks
+# Trader
 
 This algorithm has been created by Hugo TOMASI in order to be used with Bitpanda Pro API server. It is used to monitor your trades fluctuation and cancel them if necessary.
 
@@ -29,14 +29,14 @@ The server you will run this program on must be able to access outside world on 
 | `SMTP_FROM`       | The email address which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_KEY`       | The token used to connect to your account (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_TO`       | The email addresses to whom you want to send the email separated by a comma (default to `SMTP_FROM`)            | no      | None       |
-| `CSV_FILE_PATH`       | The path you want your CSV to be saved (usage is not recommended if used with the container runtime)            | no      | /data/stocks.csv       |
+| `CSV_FILE_PATH`       | The path you want your CSV to be saved (usage is not recommended if used with the container runtime)            | no      | /data/cryptos.csv       |
 
 ## Build
 
 In order to build the image, simply run (replace `docker` by `podman` if needed) :
 
 ```bash
-docker build -t eyecloudfr/stockwatch:latest -f ./Dockerfile
+docker build -t eyecloudfr/trader:latest -f ./Dockerfile
 ```
 
 ## Run
@@ -44,7 +44,7 @@ docker build -t eyecloudfr/stockwatch:latest -f ./Dockerfile
 After the image has been built, you can now run it like so :
 
 ```bash
-docker run --name stocks -e EXCHANGE_API_KEY=token -v /data:/data eyecloudfr/crypto:latest
+docker run --name stocks -e EXCHANGE_API_KEY=token -v /data:/data eyecloudfr/trader:latest
 ```
 
 ## Disclaimer
