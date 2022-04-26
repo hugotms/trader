@@ -2,14 +2,11 @@ FROM python:3.8
 
 ENV TZ=Europe/Paris
 
-RUN apt -y update && \
-    apt -y install git && \
-    mkdir /app && \
+RUN mkdir /app && \
     mkdir /data && \
-    pip install requests
+    pip install requests && \
+    git clone --branch master https://github.com/hugotms/trader.git /app
 
 WORKDIR /app
-
-RUN git clone --branch master https://github.com/hugotms/trader.git ./
 
 ENTRYPOINT python monitor.py
