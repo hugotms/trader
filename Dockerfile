@@ -1,9 +1,9 @@
-FROM python:3.8-bullseye
+FROM python:3.8
 
 ENV TZ=Europe/Paris
 
 RUN apt -y update && \
-    apt -y install git
+    apt -y install git && \
     mkdir /app && \
     mkdir /data && \
     pip install requests
