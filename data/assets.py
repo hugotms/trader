@@ -9,8 +9,8 @@ class Crypto:
         self.placed = placed
         self.current = current
         self.higher = current
-        self.active = True
         self.loaded = False
+        self.dailyDanger = 0
         self.weeklyDanger = 0
         self.monthlyDanger = 0
     
