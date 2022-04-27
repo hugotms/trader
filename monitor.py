@@ -5,18 +5,18 @@ from server import exchange
 from server import mail
 
 def stop(exchange_client, crypto, account):
-    if not exchange_client.stopTrade(crypto):
+    percentage = exchange_client.stopTrade(crypto, account)
+    if percentage == 0:
         print("Unable to stop trade on " + crypto.cryptoName)
         return "Unable to stop trade on " + crypto.cryptoName + "\n"
     
-    crypto.active = False
-    account.amount += crypto.current * account.takerFee
+    account.amount += crypto.current * percentage
 
-    message = "Removed all current action on " + crypto.cryptoName + " at " + crypto.current + "€"
+    message = "Removed all current action on " + crypto.cryptoName + " at " + str(crypto.current) + "€"
 
-    if crypto.current * account.takerFee > crypto.placed:
-        message = message + " (NET: " + crypto.current * account.takerFee * 0.7 + "€ / TAXES: " + \
-             crypto.current * account.takerFee * 0.3 + "€)"
+    if crypto.current * percentage > crypto.placed:
+        message = message + " (NET: " + str(crypto.current * percentage * 0.7) + "€ / TAXES: " + \
+            str(crypto.current * percentage * 0.3) + "€)"
     
     return message + "\n"
         
@@ -81,7 +81,7 @@ while isOk:
     subject = "New trades done on " + time.strftime("%d/%m/%Y - %H:%M:%S")
     message = ""
 
-    listCrypto = client.getAllActiveTrades(listCrypto, max_danger)
+    listCrypto = client.getAllActiveTrades(listCrypto, account, max_danger)
     for crypto in listCrypto:
         print("Found " + crypto.cryptoName)
 

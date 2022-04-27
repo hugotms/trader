@@ -59,6 +59,7 @@ class BitpandaPro:
             })
     
     def getAccountFees(self):
+        makerFee = 1
         takerFee = 1
 
         client = web.Api(BitpandaPro.baseUrl + '/account/fees', headers=self.headers).send()
@@ -72,15 +73,19 @@ class BitpandaPro:
         
         if client.getStatusCode() != 200:
             print("Error while trying to access account fees data")
-            return 1
+            return None
         
         running_trading_volume = client.getData()['running_trading_volume']
 
         for tier in client.getData()['fee_tiers']:
             if tier['volume'] >= running_trading_volume:
+                makerFee = 1 - float(tier['maker_fee']) / 100
                 takerFee = 1 - float(tier['taker_fee']) / 100
 
-        return takerFee
+        return json.dumps({
+                "makerFee": makerFee,
+                "takerFee": takerFee
+            })
     
     def getAccount(self):
         response = self.getAccountDetails()
@@ -90,7 +95,15 @@ class BitpandaPro:
         
         res = json.loads(response)
 
-        return account.Account(id=res['account_id'], amount=res['amount'], takerFee=self.getAccountFees())
+        new = account.Account(id=res['account_id'], amount=res['amount'])
+
+        response = self.getAccountFees()
+        if response is not None:
+            res = json.loads(response)
+            new.makerFee = res['makerFee']
+            new.takerFee = res['takerFee']
+
+        return new
     
     def getPrices(self, crypto, time_unit=None):
         if time_unit is None:
@@ -166,33 +179,34 @@ class BitpandaPro:
         elif variation > 0.1:
             danger += 2
         
+        if crypto.loaded == True:
+            danger += crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
+            crypto.danger = danger
+            return self
+        
+        crypto.dailyDanger = 0
+        crypto.weeklyDanger = 0
+        crypto.monthlyDanger = 0
+        
         res = self.getPrices(crypto, time_unit='DAYS')
         if res is None:
-            crypto.danger = danger
+            crypto.danger = danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
             return self
         res = json.loads(res)
 
         if res['open'] > res['close']:
-            danger += 2
+            crypto.dailyDanger += 2
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
         if variation > 0.1:
-            danger += 1
+            crypto.dailyDanger += 1
         elif variation > 0.2:
-            danger += 2
-        
-        if crypto.loaded == True:
-            danger += crypto.weeklyDanger + crypto.monthlyDanger
-            crypto.danger = danger
-            return self
-        
-        crypto.weeklyDanger = 0
-        crypto.monthlyDanger = 0
+            crypto.dailyDanger += 2
 
         res = self.getPrices(crypto, time_unit='WEEKS')
         if res is None:
-            crypto.danger = danger + crypto.weeklyDanger + crypto.monthlyDanger
+            crypto.danger = danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
             return self
         res = json.loads(res)
 
@@ -208,7 +222,7 @@ class BitpandaPro:
         
         res = self.getPrices(crypto, time_unit='MONTHS')
         if res is None:
-            crypto.danger = danger + crypto.weeklyDanger + crypto.monthlyDanger
+            crypto.danger = danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
             return self
         res = json.loads(res)
 
@@ -222,13 +236,13 @@ class BitpandaPro:
         elif variation > 0.6:
             crypto.monthlyDanger += 2
 
-        crypto.danger = danger + crypto.weeklyDanger + crypto.monthlyDanger
+        crypto.danger = danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
         crypto.loaded = True
 
         return self
 
 
-    def getAllActiveTrades(self, listCrypto, max_danger):
+    def getAllActiveTrades(self, listCrypto, account, max_danger):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -254,8 +268,8 @@ class BitpandaPro:
                 active_trades.append(assets.Crypto(
                     order_id=item['trade']['order_id'],
                     cryptoName=item['trade']['instrument_code'],
-                    owned=float(item['trade']['amount']),
-                    placed=float(item['trade']['price']),
+                    owned=float(item['trade']['amount']) * account.makerFee,
+                    placed=float(item['trade']['price']) * account.makerFee,
                     current=amount
                     ))
 
@@ -277,7 +291,7 @@ class BitpandaPro:
                         trade.weeklyDanger = crypto.weeklyDanger
                         trade.monthlyDanger = crypto.monthlyDanger
                 
-                if isFound and self.filesystem.getLastDanger(trade) > max_danger % 2:
+                if isFound and int(self.filesystem.getLastDanger(trade)) > max_danger % 2:
                     trade.danger += 1
 
             if not isFound:
@@ -288,12 +302,13 @@ class BitpandaPro:
 
         return active_trades
     
-    def stopTrade(self, crypto):
+    def stopTrade(self, crypto, account):
+        percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.current)) * account.takerFee * account.makerFee
         body = {
             "instrument_code": crypto.cryptoName,
             "side": "SELL",
             "type": "MARKET",
-            "amount": str(round(crypto.owned, 4))
+            "amount": str(round(crypto.owned * percentage, 4))
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
@@ -307,7 +322,7 @@ class BitpandaPro:
 
         if client.getStatusCode() != 201:
             print("Error while trying to stop trade")
-            return False
+            return 0
 
-        return True
+        return percentage
     
