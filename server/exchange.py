@@ -261,25 +261,37 @@ class BitpandaPro:
         trades = client.getData()['trade_history']
 
         trade_names = []
+        ignored_trades = []
         for item in trades:
-            if item['trade']['side'] == "BUY" and item['trade']['instrument_code'] not in trade_names:
-                amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code'])
+            if item['trade']['side'] == "SELL":
+                ignored_trades.append(item['trade']['instrument_code'])
 
-                active_trades.append(assets.Crypto(
-                    order_id=item['trade']['order_id'],
-                    cryptoName=item['trade']['instrument_code'],
-                    owned=float(item['trade']['amount']) * account.makerFee,
-                    placed=float(item['trade']['price']) * account.makerFee,
-                    current=amount
-                    ))
+            elif item['trade']['instrument_code'] not in ignored_trades:
+                amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee
 
-            trade_names.append(item['trade']['instrument_code'])
-
+                if item['trade']['instrument_code'] not in trade_names:
+                    active_trades.append(assets.Crypto(
+                        cryptoName=item['trade']['instrument_code'],
+                        owned=float(item['trade']['amount']),
+                        placed=float(item['trade']['amount']) * float(item['trade']['price']),
+                        current=amount
+                        ))
+                else:
+                    for active in active_trades:
+                        if active.cryptoName == item['trade']['instrument_code']:
+                            active.owned += float(item['trade']['amount'])
+                            active.placed += float(item['trade']['amount']) * float(item['trade']['price'])
+                            active.current += amount
+                            active.higher += amount
+                            break
+                
+                trade_names.append(item['trade']['instrument_code'])
+        
         for crypto in listCrypto:
             isFound = False
 
             for trade in active_trades:
-                if crypto.order_id == trade.order_id:
+                if crypto.cryptoName == trade.cryptoName:
                     isFound = True
                     trade.placed = crypto.placed
 
