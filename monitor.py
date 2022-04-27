@@ -8,7 +8,7 @@ def stop(exchange_client, crypto, account):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == 0:
         print("Unable to stop trade on " + crypto.cryptoName)
-        return "Unable to stop trade on " + crypto.cryptoName + "\n"
+        return "Unable to stop trade on " + crypto.cryptoName + ".\n"
     
     account.amount += crypto.current * percentage
 
@@ -18,7 +18,7 @@ def stop(exchange_client, crypto, account):
         message = message + " (NET: " + str(round(crypto.current * percentage * 0.7, 2)) + "€ / TAXES: " + \
             str(round(crypto.current * percentage * 0.3, 2)) + "€)"
     
-    return message + "\n"
+    return message + ".\n"
         
 isOk = True
 
@@ -87,7 +87,7 @@ while isOk:
 
         if crypto.current < 10:
             print("No action can be done on " + crypto.cryptoName)
-            message += "No action can be done on " + crypto.cryptoName
+            message += "No action can be done on " + crypto.cryptoName + " (less than 10€)."
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             print("Loosing money on " + crypto.cryptoName)
