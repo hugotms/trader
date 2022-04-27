@@ -108,6 +108,10 @@ class BitpandaPro:
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
             return None
+        
+        if client.getData() == []:
+            print("No prices data were found for time unit " + time_unit)
+            return None
 
         return json.dumps({
                 "open": float(client.getData()[0]['open']),

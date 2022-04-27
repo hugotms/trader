@@ -78,13 +78,17 @@ delay = seconds_in_delay
 listCrypto = []
 
 while isOk:
-    subject = "New trades placed on " + time.strftime("%d/%m/%Y")
+    subject = "New trades done on " + time.strftime("%d/%m/%Y - %H:%M:%S")
     message = ""
 
     listCrypto = client.getAllActiveTrades(listCrypto, max_danger)
     for crypto in listCrypto:
         print("Found " + crypto.cryptoName)
-        if crypto.current * account.takerFee < crypto.higher * min_recovered:
+
+        if crypto.current < 10:
+            print("No action can be done on " + crypto.cryptoName)
+        
+        elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             print("Loosing money on " + crypto.cryptoName)
             message += stop(client, crypto)
 
@@ -92,7 +96,7 @@ while isOk:
             print(crypto.cryptoName + " is too dangerous")
             message += stop(client, crypto)
         
-        elif crypto.danger >= max_danger % 2 and crypto.placed * min_profit >= 10 and crypto.current * account.takerFee >= crypto.placed * min_profit:
+        elif crypto.danger >= max_danger % 2 and crypto.current * account.takerFee >= crypto.placed * min_profit:
             print(crypto.cryptoName + " has reached its profit level")
             message += stop(client, crypto)
         
