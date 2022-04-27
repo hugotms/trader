@@ -276,6 +276,9 @@ class BitpandaPro:
                         placed=float(item['trade']['amount']) * float(item['trade']['price']),
                         current=amount
                         ).setHigher())
+                    
+                    trade_names.append(item['trade']['instrument_code'])
+                    
                 else:
                     for active in active_trades:
                         if active.cryptoName == item['trade']['instrument_code']:
@@ -284,8 +287,6 @@ class BitpandaPro:
                             active.current += amount
                             active.setHigher()
                             break
-                
-                trade_names.append(item['trade']['instrument_code'])
         
         for crypto in listCrypto:
             isFound = False
