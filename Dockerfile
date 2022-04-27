@@ -1,5 +1,7 @@
 FROM python:3.8
 
+ENV TRADER_VERSION=1.0.4
+
 RUN mkdir /app && \
     mkdir /data && \
     pip install requests && \

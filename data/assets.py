@@ -16,7 +16,7 @@ class Crypto:
     
     def to_csv(self):
         return (self.cryptoName + ","
-            + self.owned + "," 
-            + self.current + "," 
-            + self.higher + ","
-            + self.danger) 
+            + str(self.owned) + "," 
+            + str(self.current) + "," 
+            + str(self.higher) + ","
+            + str(self.danger)) 
