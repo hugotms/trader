@@ -7,11 +7,17 @@ class Crypto:
         self.owned = owned
         self.placed = placed
         self.current = current
-        self.higher = current
         self.loaded = False
         self.dailyDanger = 0
         self.weeklyDanger = 0
         self.monthlyDanger = 0
+
+    def setHigher(self):
+        self.higher = self.placed
+        if self.current > self.placed:
+            self.higher = self.current
+        
+        return self
     
     def to_csv(self):
         return (self.cryptoName + ","

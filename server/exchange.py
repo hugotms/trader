@@ -275,14 +275,14 @@ class BitpandaPro:
                         owned=float(item['trade']['amount']),
                         placed=float(item['trade']['amount']) * float(item['trade']['price']),
                         current=amount
-                        ))
+                        ).setHigher())
                 else:
                     for active in active_trades:
                         if active.cryptoName == item['trade']['instrument_code']:
                             active.owned += float(item['trade']['amount'])
                             active.placed += float(item['trade']['amount']) * float(item['trade']['price'])
                             active.current += amount
-                            active.higher += amount
+                            active.setHigher()
                             break
                 
                 trade_names.append(item['trade']['instrument_code'])
