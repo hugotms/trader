@@ -90,15 +90,15 @@ while isOk:
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             print("Loosing money on " + crypto.cryptoName)
-            message += stop(client, crypto)
+            message += stop(client, crypto, account)
 
         elif crypto.danger > max_danger:
             print(crypto.cryptoName + " is too dangerous")
-            message += stop(client, crypto)
+            message += stop(client, crypto, account)
         
         elif crypto.danger >= max_danger % 2 and crypto.current * account.takerFee >= crypto.placed * min_profit:
             print(crypto.cryptoName + " has reached its profit level")
-            message += stop(client, crypto)
+            message += stop(client, crypto, account)
         
         if delay < 0:
             crypto.loaded = False
