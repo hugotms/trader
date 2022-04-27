@@ -8,17 +8,17 @@ def stop(exchange_client, crypto, account):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == 0:
         print("Unable to stop trade on " + crypto.cryptoName)
-        return "Unable to stop trade on " + crypto.cryptoName + "\n"
+        return "Unable to stop trade on " + crypto.cryptoName + ".\n"
     
     account.amount += crypto.current * percentage
 
-    message = "Removed all current action on " + crypto.cryptoName + " at " + str(crypto.current) + "€"
+    message = "Removed all current action on " + crypto.cryptoName + " at " + str(round(crypto.current, 2)) + "€"
 
     if crypto.current * percentage > crypto.placed:
-        message = message + " (NET: " + str(crypto.current * percentage * 0.7) + "€ / TAXES: " + \
-            str(crypto.current * percentage * 0.3) + "€)"
+        message = message + " (NET: " + str(round(crypto.current * percentage * 0.7, 2)) + "€ / TAXES: " + \
+            str(round(crypto.current * percentage * 0.3, 2)) + "€)"
     
-    return message + "\n"
+    return message + ".\n"
         
 isOk = True
 
@@ -78,15 +78,16 @@ delay = seconds_in_delay
 listCrypto = []
 
 while isOk:
-    subject = "New trades done on " + time.strftime("%d/%m/%Y - %H:%M:%S")
+    subject = "New trades removed on " + time.strftime("%d/%m/%Y - %H:%M:%S")
     message = ""
 
     listCrypto = client.getAllActiveTrades(listCrypto, account, max_danger)
     for crypto in listCrypto:
-        print("Found " + crypto.cryptoName)
+        print("Found " + crypto.cryptoName + " (HIGHER: " + str(round(crypto.higher, 2)) + "€ / CURRENT: " + str(round(crypto.current, 2)) + "€)")
 
         if crypto.current < 10:
             print("No action can be done on " + crypto.cryptoName)
+            message += "No action can be done on " + crypto.cryptoName + " (less than 10€)."
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             print("Loosing money on " + crypto.cryptoName)
