@@ -7,18 +7,22 @@ class SMTP:
 
     def new(self):
         self.smtp_host = os.getenv('SMTP_HOST')
+        self.smtp_port = os.getenv('SMTP_PORT')
         self.smtp_from = os.getenv('SMTP_FROM')
         self.smtp_as = os.getenv('SMTP_AS')
         self.smtp_key = os.getenv('SMTP_KEY')
         self.smtp_to = os.getenv('SMTP_TO')
 
         if (self.smtp_host is None 
+            or self.smtp_port is None
             or self.smtp_from is None 
             or self.smtp_key is None):
 
             print("Required SMTP variables not set")
             return None
         
+        self.smtp_port = int(self.smtp_port)
+
         if self.smtp_as is None:
             self.smtp_as = self.smtp_from
         else:
@@ -37,7 +41,7 @@ class SMTP:
             mail['Subject'] = subject
             mail.attach(text.MIMEText(message))
 
-            client = smtplib.SMTP(host=self.smtp_host, port=587)
+            client = smtplib.SMTP(host=self.smtp_host, port=self.smtp_port)
             client.starttls()
             client.login(user=self.smtp_from, password=self.smtp_key)
             client.sendmail(from_addr=self.smtp_from, to_addrs=self.smtp_to.split(','), msg=mail.as_string())
