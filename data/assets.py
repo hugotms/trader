@@ -7,6 +7,7 @@ class Crypto:
         self.owned = owned
         self.placed = placed
         self.current = current
+        self.danger = 0
         self.loaded = False
         self.dailyDanger = 0
         self.weeklyDanger = 0
