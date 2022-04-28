@@ -15,8 +15,8 @@ def stop(exchange_client, crypto, account):
     message = "Removed all current action on " + crypto.cryptoName + " at " + str(round(crypto.current, 2)) + "€"
 
     if crypto.current * percentage > crypto.placed:
-        message = message + " (NET: " + str(round(crypto.current * percentage * 0.7, 2)) + "€ / TAXES: " + \
-            str(round(crypto.current * percentage * 0.3, 2)) + "€)"
+        message += " (NET: " + str(round((crypto.current * percentage - crypto.placed) * 0.7, 2)) + "€ / TAXES: " + \
+            str(round((crypto.current * percentage - crypto.placed) * 0.3, 2)) + "€)"
     
     return message + ".\n"
         

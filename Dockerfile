@@ -1,6 +1,6 @@
 FROM python:3.8
 
-ENV TRADER_VERSION=1.0.7
+ENV TRADER_VERSION=1.0.8
 
 RUN mkdir /app && \
     mkdir /data && \
