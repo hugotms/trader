@@ -7,7 +7,6 @@ from server import mail
 def stop(exchange_client, crypto, account):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == 0:
-        print("Unable to stop trade on " + crypto.cryptoName)
         return "Unable to stop trade on " + crypto.cryptoName + ".\n"
     
     account.amount += crypto.current * percentage
@@ -87,19 +86,18 @@ while isOk:
         print("Found " + crypto.cryptoName + " (HIGHER: " + str(round(crypto.higher, 2)) + "€ / CURRENT: " + str(round(crypto.current, 2)) + "€)")
 
         if crypto.current < 10:
-            print("No action can be done on " + crypto.cryptoName)
-            message += "No action can be done on " + crypto.cryptoName + " (less than 10€)."
+            message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n"
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
-            print("Loosing money on " + crypto.cryptoName)
+            message += "Loosing money on " + crypto.cryptoName + ". "
             message += stop(client, crypto, account)
 
         elif crypto.danger > max_danger:
-            print(crypto.cryptoName + " is too dangerous")
+            message += crypto.cryptoName + " is too dangerous. "
             message += stop(client, crypto, account)
         
         elif crypto.danger >= max_danger % 2 and crypto.current * account.takerFee >= crypto.placed * min_profit:
-            print(crypto.cryptoName + " has reached its profit level")
+            message += crypto.cryptoName + " has reached its profit level. "
             message += stop(client, crypto, account)
         
         if delay < 0:
@@ -107,7 +105,7 @@ while isOk:
     
     if smtp_sending == True and message != "":
         if not smtp.send(subject=subject, message=message):
-            print("Unable to send mail to destinary address.\n")
+            print("Unable to send mail to destinary address.")
             print(message)
     
     elif smtp_sending == False and message != "":
