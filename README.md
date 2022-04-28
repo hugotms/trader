@@ -12,7 +12,9 @@ No active trade is necessarry to allow the program to run. If you have some runn
 
 You will also need a computer with Docker (or Podman) installed in order to run the program. If you are aware of what you're doing, you could also run this program bare metal, on any computer that support Python 3.8. You will however have to manage dependencies yourself.
 
-The server you will run this program on must be able to access outside world on port 443 and must be able to resolve URLs (must have configured nameservers).
+The server you will run this program on must be able to access outside world on port 443/TCP and must be able to resolve URLs (must have configured nameservers).
+
+If you want to receive mail alert on action took by the bot, please make sure that outside world is also reachable on port defined for your SMTP server.
 
 ## Variables
 
@@ -25,6 +27,7 @@ The server you will run this program on must be able to access outside world on 
 | `MINUTES_REFRESH_TIME`       | The number of minutes between two checks            | no      | 10       |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
 | `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
+| `SMTP_PORT`       | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_AS`       | The sender name which you're going to use to send mail         | no      | None       |
 | `SMTP_FROM`       | The email address which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_KEY`       | The token used to connect to your account (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
