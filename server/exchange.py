@@ -272,8 +272,8 @@ class BitpandaPro:
                 if item['trade']['instrument_code'] not in trade_names:
                     active_trades.append(assets.Crypto(
                         cryptoName=item['trade']['instrument_code'],
-                        owned=float(item['trade']['amount']),
-                        placed=float(item['trade']['amount']) * float(item['trade']['price']),
+                        owned=float(item['trade']['amount']) * account.makerFee,
+                        placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
                         current=amount
                         ).setHigher())
                     
@@ -282,8 +282,8 @@ class BitpandaPro:
                 else:
                     for active in active_trades:
                         if active.cryptoName == item['trade']['instrument_code']:
-                            active.owned += float(item['trade']['amount'])
-                            active.placed += float(item['trade']['amount']) * float(item['trade']['price'])
+                            active.owned += float(item['trade']['amount']) * account.makerFee
+                            active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
                             active.current += amount
                             active.setHigher()
                             break
