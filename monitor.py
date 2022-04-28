@@ -109,6 +109,9 @@ while isOk:
         if not smtp.send(subject=subject, message=message):
             print("Unable to send mail to destinary address.\n")
             print(message)
+    
+    elif smtp_sending == False and message != "":
+        print(message)
 
     account.actualize(client)
 
