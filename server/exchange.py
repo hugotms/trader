@@ -321,7 +321,7 @@ class BitpandaPro:
         return active_trades
     
     def stopTrade(self, crypto, account):
-        percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.current)) * account.takerFee * account.makerFee
+        percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.owned)) * account.takerFee * account.makerFee
         body = {
             "instrument_code": crypto.cryptoName,
             "side": "SELL",
