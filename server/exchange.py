@@ -25,10 +25,9 @@ class BitpandaPro:
             print("Required API key was not set")
             return None
         
-        watching_cryptos = os.getenv('WATCHING_CRYPTOS')
-        if watching_cryptos is None:
-            watching_cryptos = ""
-        self.watching_cryptos = watching_cryptos.split(',')
+        self.watching_cryptos = []
+        if os.getenv('WATCHING_CRYPTOS') is not None:
+            self.watching_cryptos = os.getenv('WATCHING_CRYPTOS').split(',')
         
         self.headers = {
             'Accept': 'application/json',
