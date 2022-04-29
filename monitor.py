@@ -89,7 +89,16 @@ while isOk:
 
     listCrypto = client.getAllActiveTrades(listCrypto, account, max_danger)
     for crypto in listCrypto:
-        print("Found " + crypto.cryptoName + " (HIGHER: " + str(round(crypto.higher, 2)) + "€ / CURRENT: " + str(round(crypto.current, 2)) + "€)")
+        percentage = round((1 - crypto.current / crypto.placed) * 100, 2)
+        if crypto.current < crypto.placed:
+            percentage *= -1
+        
+        print("Found " + crypto.cryptoName 
+            + " (HIGHER: " + str(round(crypto.higher, 2)) 
+            + "€ / CURRENT: " + str(round(crypto.current, 2)) 
+            + "€ / DANGER: " + str(crypto.danger) 
+            + " / VARIATION: " + str(percentage)
+            + "%)")
 
         if crypto.current < 10:
             message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n"
