@@ -14,7 +14,7 @@ USER trader
 WORKDIR /app
 
 RUN pip install requests && \
-    git clone --branch master https://github.com/hugotms/trader.git /app
+    git clone --branch $TRADER_VERSION https://github.com/hugotms/trader.git /app
 
 CMD ["/app/monitor.py"]
 ENTRYPOINT ["python","-u"]
