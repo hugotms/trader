@@ -25,7 +25,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `MIN_PROFIT_RATE`          | The rate from which you may take profit if considered dangerous        | no      | 1.05       |
 | `MAX_DANGER`              | The maximum danger level an action can be running       | no         | 10        |
 | `MINUTES_REFRESH_TIME`       | The number of minutes between two checks            | no      | 10       |
-| `WATCHING_CRYPTOS`       | By default, the bot watches all cryto you have trades going on. You can, however, specify cryptos to look for and thus ignore the rest.            | no      | None       |
+| `WATCHING_CRYPTOS`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to look for and thus ignore the rest.            | no      | None       |
 | `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
 | `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
