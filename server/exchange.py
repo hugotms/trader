@@ -25,6 +25,11 @@ class BitpandaPro:
             print("Required API key was not set")
             return None
         
+        watching_cryptos = os.getenv('WATCHING_CRYPTOS')
+        if watching_cryptos is None:
+            watching_cryptos = ""
+        self.watching_cryptos = watching_cryptos.split(',')
+        
         self.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -263,30 +268,31 @@ class BitpandaPro:
         trade_names = []
         ignored_trades = []
         for item in trades:
-            if item['trade']['side'] == "SELL":
-                ignored_trades.append(item['trade']['instrument_code'])
+            if len(self.watching_cryptos) == 0 or (len(self.watching_cryptos) != 0 and item['trade']['instrument_code'] in self.watching_cryptos):
+                if item['trade']['side'] == "SELL":
+                    ignored_trades.append(item['trade']['instrument_code'])
 
-            elif item['trade']['instrument_code'] not in ignored_trades:
-                amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee
+                elif item['trade']['instrument_code'] not in ignored_trades:
+                    amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee
 
-                if item['trade']['instrument_code'] not in trade_names:
-                    active_trades.append(assets.Crypto(
-                        cryptoName=item['trade']['instrument_code'],
-                        owned=float(item['trade']['amount']) * account.makerFee,
-                        placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
-                        current=amount
-                        ).setHigher())
-                    
-                    trade_names.append(item['trade']['instrument_code'])
-                    
-                else:
-                    for active in active_trades:
-                        if active.cryptoName == item['trade']['instrument_code']:
-                            active.owned += float(item['trade']['amount']) * account.makerFee
-                            active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
-                            active.current += amount
-                            active.setHigher()
-                            break
+                    if item['trade']['instrument_code'] not in trade_names:
+                        active_trades.append(assets.Crypto(
+                            cryptoName=item['trade']['instrument_code'],
+                            owned=float(item['trade']['amount']) * account.makerFee,
+                            placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
+                            current=amount
+                            ).setHigher())
+                        
+                        trade_names.append(item['trade']['instrument_code'])
+                        
+                    else:
+                        for active in active_trades:
+                            if active.cryptoName == item['trade']['instrument_code']:
+                                active.owned += float(item['trade']['amount']) * account.makerFee
+                                active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
+                                active.current += amount
+                                active.setHigher()
+                                break
         
         for crypto in listCrypto:
             isFound = False
