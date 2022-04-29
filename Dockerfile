@@ -13,8 +13,8 @@ USER trader
 
 WORKDIR /app
 
-RUN pip install requests && \
-    git clone --branch $TRADER_VERSION https://github.com/hugotms/trader.git /app
+RUN git clone --branch $TRADER_VERSION https://github.com/hugotms/trader.git ./ && \
+    pip install -r requirements.txt
 
 CMD ["/app/monitor.py"]
 ENTRYPOINT ["python","-u"]
