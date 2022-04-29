@@ -21,10 +21,12 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
 | `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API            | yes      | None       |
-| `MIN_RECOVERED_RATE`       | The rate you want to get if stock goes down            | no      | 0.9       |
-| `MIN_PROFIT_RATE`          | The rate from which you may take profit if considered dangerous        | no      | 1.01       |
+| `MIN_RECOVERED_RATE`       | The rate you want to get if stock goes down            | no      | 0.95       |
+| `MIN_PROFIT_RATE`          | The rate from which you may take profit if considered dangerous        | no      | 1.05       |
 | `MAX_DANGER`              | The maximum danger level an action can be running       | no         | 10        |
 | `MINUTES_REFRESH_TIME`       | The number of minutes between two checks            | no      | 10       |
+| `WATCHING_CRYPTOS`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to look for and thus ignore the rest.            | no      | None       |
+| `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
 | `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_PORT`       | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
@@ -36,18 +38,18 @@ If you want to receive mail alert on action took by the bot, please make sure th
 
 ## Build
 
-In order to build the image, simply run (replace `docker` by `podman` if needed) :
+In order to build the image, you need to clone this repository then simply run (replace `docker` by `podman` if needed) :
 
 ```bash
-docker build -t trader:1.0.0 -f ./Dockerfile
+docker build -t trader:1.1.0 -f ./Dockerfile .
 ```
 
 ## Run
 
-After the image has been built, you can now run it like so :
+After the image has been built, you can now run it like so (add any non required extra environment variables you want to modify preceeded by a `-e`) :
 
 ```bash
-docker run --name trader -e EXCHANGE_API_KEY=token -v $PWD:/data trader:1.0.0
+docker run --name trader -e EXCHANGE_API_KEY=token -v $PWD:/data trader:1.1.0
 ```
 
 ## Disclaimer

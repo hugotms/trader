@@ -25,6 +25,10 @@ class BitpandaPro:
             print("Required API key was not set")
             return None
         
+        self.watching_cryptos = []
+        if os.getenv('WATCHING_CRYPTOS') is not None:
+            self.watching_cryptos = os.getenv('WATCHING_CRYPTOS').split(',')
+        
         self.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -263,30 +267,31 @@ class BitpandaPro:
         trade_names = []
         ignored_trades = []
         for item in trades:
-            if item['trade']['side'] == "SELL":
-                ignored_trades.append(item['trade']['instrument_code'])
+            if len(self.watching_cryptos) == 0 or (len(self.watching_cryptos) != 0 and item['trade']['instrument_code'] in self.watching_cryptos):
+                if item['trade']['side'] == "SELL":
+                    ignored_trades.append(item['trade']['instrument_code'])
 
-            elif item['trade']['instrument_code'] not in ignored_trades:
-                amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee
+                elif item['trade']['instrument_code'] not in ignored_trades:
+                    amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee
 
-                if item['trade']['instrument_code'] not in trade_names:
-                    active_trades.append(assets.Crypto(
-                        cryptoName=item['trade']['instrument_code'],
-                        owned=float(item['trade']['amount']) * account.makerFee,
-                        placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
-                        current=amount
-                        ).setHigher())
-                    
-                    trade_names.append(item['trade']['instrument_code'])
-                    
-                else:
-                    for active in active_trades:
-                        if active.cryptoName == item['trade']['instrument_code']:
-                            active.owned += float(item['trade']['amount']) * account.makerFee
-                            active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
-                            active.current += amount
-                            active.setHigher()
-                            break
+                    if item['trade']['instrument_code'] not in trade_names:
+                        active_trades.append(assets.Crypto(
+                            cryptoName=item['trade']['instrument_code'],
+                            owned=float(item['trade']['amount']) * account.makerFee,
+                            placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
+                            current=amount
+                            ).setHigher())
+                        
+                        trade_names.append(item['trade']['instrument_code'])
+                        
+                    else:
+                        for active in active_trades:
+                            if active.cryptoName == item['trade']['instrument_code']:
+                                active.owned += float(item['trade']['amount']) * account.makerFee
+                                active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
+                                active.current += amount
+                                active.setHigher()
+                                break
         
         for crypto in listCrypto:
             isFound = False
@@ -316,7 +321,7 @@ class BitpandaPro:
         return active_trades
     
     def stopTrade(self, crypto, account):
-        percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.current)) * account.takerFee * account.makerFee
+        percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.owned)) * account.takerFee * account.makerFee
         body = {
             "instrument_code": crypto.cryptoName,
             "side": "SELL",
