@@ -131,11 +131,9 @@ while isOk:
             crypto.loaded = False
     
     if smtp_sending == True and message != "":
-        if not smtp.send(subject=subject, message=message):
-            print("Unable to send mail to destinary address.")
-            print(message.replace('|', '\n'))
+        smtp.send(subject=subject, message=message)
     
-    elif smtp_sending == False and message != "":
+    if message != "":
         print(message.replace('|', '\n'))
 
     account.actualize(client)
