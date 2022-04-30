@@ -7,7 +7,7 @@ from server import mail
 def stop(exchange_client, crypto, account, taxe_rate):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == 0:
-        return "Unable to stop trade on " + crypto.cryptoName + ".\n"
+        return "Unable to stop trade on " + crypto.cryptoName + ".|"
     
     account.amount += crypto.current * percentage
 
@@ -17,8 +17,10 @@ def stop(exchange_client, crypto, account, taxe_rate):
         profit = crypto.current * percentage - crypto.placed
         message += " (NET: " + str(round(profit * (1 - taxe_rate), 2)) + "€ / TAXES: " + \
             str(round(profit * taxe_rate, 2)) + "€)"
+    elif crypto.current * percentage < crypto.placed:
+        message += " (LOST: " + str(round(crypto.placed - crypto.current * percentage, 2)) + "€)"
     
-    return message + ".\n"
+    return message + ".|"
         
 isOk = True
 
@@ -97,7 +99,7 @@ while isOk:
             + "%)")
 
         if crypto.current < 10:
-            message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n"
+            message += "No action can be done on " + crypto.cryptoName + " (less than 10€).|"
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             message += "Loosing money on " + crypto.cryptoName + ". "
@@ -117,10 +119,10 @@ while isOk:
     if smtp_sending == True and message != "":
         if not smtp.send(subject=subject, message=message):
             print("Unable to send mail to destinary address.")
-            print(message)
+            print(message.replace('|', '\n'))
     
     elif smtp_sending == False and message != "":
-        print(message)
+        print(message.replace('|', '\n'))
 
     account.actualize(client)
 

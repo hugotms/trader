@@ -39,7 +39,7 @@ class SMTP:
             mail['From'] = self.smtp_as
             mail['To'] = self.smtp_to
             mail['Subject'] = subject
-            mail.attach(text.MIMEText(message))
+            mail.attach(text.MIMEText(message.replace('|', '\n'), 'plain'))
 
             client = smtplib.SMTP(host=self.smtp_host, port=self.smtp_port)
             client.starttls()
