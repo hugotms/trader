@@ -41,7 +41,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 In order to build the image, you need to clone this repository then simply run (replace `docker` by `podman` if needed) :
 
 ```bash
-docker build -t trader:1.1.0 -f ./Dockerfile .
+docker build -t trader:1.2.0 https://raw.githubusercontent.com/hugotms/trader/v1.2.0/Dockerfile
 ```
 
 ## Run
@@ -49,7 +49,7 @@ docker build -t trader:1.1.0 -f ./Dockerfile .
 After the image has been built, you can now run it like so (add any non required extra environment variables you want to modify preceeded by a `-e`) :
 
 ```bash
-docker run --name trader -e EXCHANGE_API_KEY=token -v $PWD:/data trader:1.1.0
+docker run --name trader -e EXCHANGE_API_KEY=token trader:1.2.0
 ```
 
 ## Disclaimer

@@ -33,13 +33,16 @@ class SMTP:
         
         return self
 
-    def send(self, subject, message):
+    def send(self, subject, plain, html=None):
         try:
             mail = multipart.MIMEMultipart()
             mail['From'] = self.smtp_as
             mail['To'] = self.smtp_to
             mail['Subject'] = subject
-            mail.attach(text.MIMEText(message))
+            mail.attach(text.MIMEText(plain, 'plain'))
+
+            if html is not None:
+                mail.attach(text.MIMEText(html, 'html'))
 
             client = smtplib.SMTP(host=self.smtp_host, port=self.smtp_port)
             client.starttls()
