@@ -1,6 +1,8 @@
 import os
 import time
 
+from lastversion import has_update
+
 from server import exchange
 from server import mail
 
@@ -21,6 +23,14 @@ def stop(exchange_client, crypto, account, taxe_rate):
         message += " (LOST: " + str(round(crypto.placed - crypto.current * percentage, 2)) + "€)"
     
     return message + ".|"
+
+def checkUpdate():
+    version = has_update(repo="hugotms/trader", at="github", current_version=os.getenv('TRADER_VERSION'))
+    if version != False:
+        print("A new version of Trader is available ! It is highly recommended to upgrade.\n" + \
+            "Currently, you are on version " + os.getenv('TRADER_VERSION') + " and latest is " + \
+            str(version) + ".\n Note that this new version may include security patches, bug fixes and new features.\n"
+        )
         
 isOk = True
 
@@ -30,6 +40,10 @@ max_danger = os.getenv('MAX_DANGER')
 refresh_time = os.getenv('MINUTES_REFRESH_TIME')
 taxe_rate = os.getenv('TAXE_RATE')
 smtp_sending = os.getenv('SEND_ALERT_MAIL')
+latest_release = os.getenv('TRADER_VERSION')
+
+if latest_release is not None:
+    checkUpdate()
 
 if min_recovered is None:
     print("Default recovered rate is 0.95")
@@ -70,7 +84,7 @@ account = None
 if client is not None:
     account = client.getAccount()
 
-if smtp_sending:
+if smtp_sending == True:
     smtp = mail.SMTP().new()
     if smtp is None:
         isOk = False
