@@ -14,6 +14,8 @@ WORKDIR /app
 RUN git clone --branch $TRADER_VERSION https://github.com/hugotms/trader.git ./ && \
     pip install -r requirements.txt
 
+VOLUME ["/data"]
+
 USER trader
 
 CMD ["/app/monitor.py"]
