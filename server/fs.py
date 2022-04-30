@@ -49,7 +49,7 @@ class File:
         fs.close()
     
     def putInFile(self, crypto):
-        if self.isInFile(crypto):
+        if self.isInFile(crypto) == True:
             self.updateInFile(crypto)
         else:
             self.addToFile(crypto)

@@ -309,10 +309,10 @@ class BitpandaPro:
                         trade.weeklyDanger = crypto.weeklyDanger
                         trade.monthlyDanger = crypto.monthlyDanger
                 
-                if isFound and int(self.filesystem.getLastDanger(trade)) > max_danger % 2:
-                    trade.danger += 1
+                    if int(self.filesystem.getLastDanger(trade)) > max_danger % 2:
+                        trade.danger += 1
 
-            if not isFound:
+            if isFound == False:
                 self.filesystem.putInFile(crypto)
 
         for trade in active_trades:
