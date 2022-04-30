@@ -9,7 +9,7 @@ from server import mail
 def stop(exchange_client, crypto, account, taxe_rate):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == 0:
-        return "Unable to stop trade on " + crypto.cryptoName + ".|"
+        return "Unable to stop trade on " + crypto.cryptoName + ".\n"
     
     account.amount += crypto.current * percentage
 
@@ -22,7 +22,7 @@ def stop(exchange_client, crypto, account, taxe_rate):
     elif crypto.current * percentage < crypto.placed:
         message += " (LOST: " + str(round(crypto.placed - crypto.current * percentage, 2)) + "€)"
     
-    return message + ".|"
+    return message + ".\n"
 
 def checkUpdate():
     version = has_update(repo="hugotms/trader", at="github", current_version=os.getenv('TRADER_VERSION'))
@@ -113,7 +113,7 @@ while isOk:
             + "%)")
 
         if crypto.current < 10:
-            message += "No action can be done on " + crypto.cryptoName + " (less than 10€).|"
+            message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n"
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             message += "Loosing money on " + crypto.cryptoName + ". "
@@ -131,10 +131,10 @@ while isOk:
             crypto.loaded = False
     
     if smtp_sending == True and message != "":
-        smtp.send(subject=subject, message=message)
+        smtp.send(subject=subject, plain=message)
     
     if message != "":
-        print(message.replace('|', '\n'))
+        print(message)
 
     account.actualize(client)
 
