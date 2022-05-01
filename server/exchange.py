@@ -6,6 +6,7 @@ import time
 import os
 
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 from data import account
 from data import assets
@@ -98,27 +99,45 @@ class BitpandaPro:
         
         res = json.loads(response)
 
-        new = account.Account(id=res['account_id'], amount=res['amount'])
+        new = account.Account(id=res['account_id'], available=res['amount'])
 
         response = self.getAccountFees()
         if response is not None:
             res = json.loads(response)
             new.makerFee = res['makerFee']
             new.takerFee = res['takerFee']
+        
+        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        if response is not None:
+            response = json.loads(response)
+            new.dailyProfit = float(response["profit"])
+            new.dailyLoss = float(response["loss"])
+        
+        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(weeks=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        if response is not None:
+            response = json.loads(response)
+            new.weeklyProfit = float(response["profit"])
+            new.weeklyLoss = float(response["loss"])
+        
+        response = self.database.getPastPerformance((datetime.utcnow() - relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        if response is not None:
+            response = json.loads(response)
+            new.monthlyProfit = float(response["profit"])
+            new.monthlyLoss = float(response["loss"])
 
         return new
     
     def actualizeAccount(self, account):
-        amount = 0
+        available = 0
         fees = None
         
         response = self.getAccountDetails()
         if response is not None:
-            amount = json.loads(response)['amount']
+            available = json.loads(response)['amount']
         
-        if account.amount != amount:
+        if account.available != available:
             print("Uneven account balance between local and remote")
-            account.amount = amount
+            account.available = available
         
         response = self.getAccountFees()
         if response is not None:

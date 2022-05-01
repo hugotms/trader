@@ -17,12 +17,17 @@ def stop(exchange_client, crypto, account, taxe_rate):
 
     if crypto.current * percentage > crypto.placed and taxe_rate != 0.0:
         profit = crypto.current * percentage - crypto.placed
+        account.addProfit(profit)
         message += " (NET: " + str(round(profit * (1 - taxe_rate), 2)) + "€ / TAXES: " + \
             str(round(profit * taxe_rate, 2)) + "€)"
     elif crypto.current * percentage > crypto.placed:
+        profit = crypto.current * percentage - crypto.placed
+        account.addProfit(profit)
         message += " (WON: " + str(round(crypto.current * percentage - crypto.placed, 2)) + "€)"
     elif crypto.current * percentage < crypto.placed:
-        message += " (LOST: " + str(round(crypto.placed - crypto.current * percentage, 2)) + "€)"
+        loss = crypto.placed - crypto.current * percentage
+        account.addLoss(loss)
+        message += " (LOST: " + str(round(loss, 2)) + "€)"
     
     return message + ".\n"
 

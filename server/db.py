@@ -1,5 +1,6 @@
 import pymongo
 import os
+import json
 
 from datetime import datetime
 
@@ -127,7 +128,7 @@ class Mongo:
             self.delete("actives", query)
 
             data = {
-                "date": datetime.now(),
+                "date": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                 "cryptoName": crypto["_id"],
                 "owned": crypto["owned"],
                 "placed": crypto["placed"],
@@ -150,6 +151,34 @@ class Mongo:
             return []
         
         return self.find("actives")
+    
+    def getPastPerformance(self, past):
+        self.connect()
+        if self.client is None:
+            return None
+        
+        profit = 0
+        loss = 0
+
+        query = {
+            "date": {
+                "$gt": past
+            }
+        }
+
+        for item in self.find("history", query):
+            placed = float(item["placed"])
+            current = float(item["current"])
+
+            if current > placed:
+                profit += current - placed
+            else:
+                loss += placed - current
+        
+        return json.dumps({
+            "profit": profit,
+            "loss": loss
+        })
 
     def getLastDanger(self, crypto):
         self.connect()
