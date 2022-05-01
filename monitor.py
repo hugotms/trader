@@ -103,8 +103,7 @@ while isOk:
     subject = "New trades removed on " + time.strftime("%d/%m/%Y - %H:%M:%S")
     message = ""
 
-    listCrypto = client.getAllActiveTrades(account, max_danger)
-    for crypto in listCrypto:
+    for crypto in client.getAllActiveTrades(account, max_danger):
         print("Found " + crypto.cryptoName 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
