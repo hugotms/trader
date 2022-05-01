@@ -19,6 +19,8 @@ def stop(exchange_client, crypto, account, taxe_rate):
         profit = crypto.current * percentage - crypto.placed
         message += " (NET: " + str(round(profit * (1 - taxe_rate), 2)) + "€ / TAXES: " + \
             str(round(profit * taxe_rate, 2)) + "€)"
+    elif crypto.current * percentage > crypto.placed:
+        message += " (WON: " + str(round(crypto.current * percentage - crypto.placed, 2)) + "€)"
     elif crypto.current * percentage < crypto.placed:
         message += " (LOST: " + str(round(crypto.placed - crypto.current * percentage, 2)) + "€)"
     
@@ -97,13 +99,11 @@ if account is None:
 seconds_in_delay = 2 * 3600
 delay = seconds_in_delay
 
-listCrypto = []
-
 while isOk:
     subject = "New trades removed on " + time.strftime("%d/%m/%Y - %H:%M:%S")
     message = ""
 
-    listCrypto = client.getAllActiveTrades(listCrypto, account, max_danger)
+    listCrypto = client.getAllActiveTrades(account, max_danger)
     for crypto in listCrypto:
         print("Found " + crypto.cryptoName 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 

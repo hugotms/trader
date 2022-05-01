@@ -20,9 +20,3 @@ class Crypto:
         
         return self
     
-    def to_csv(self):
-        return (self.cryptoName + ","
-            + str(self.owned) + "," 
-            + str(self.current) + "," 
-            + str(self.higher) + ","
-            + str(self.danger)) 

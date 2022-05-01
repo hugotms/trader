@@ -1,5 +1,5 @@
 from server import web
-from server import fs
+from server import db
 
 import json
 import time
@@ -14,11 +14,10 @@ class BitpandaPro:
     baseUrl = "https://api.exchange.bitpanda.com/public/v1"
 
     def __init__(self):
-        self.filesystem = fs.File().new()
+        self.database = db.Mongo().new()
 
     def new(self):
-        if self.filesystem is None:
-            print("Unable to use file. Please check permissions")
+        if self.database is None:
             return None
         
         if os.getenv('EXCHANGE_API_KEY') is None:
@@ -246,7 +245,7 @@ class BitpandaPro:
         return self
 
 
-    def getAllActiveTrades(self, listCrypto, account, max_danger):
+    def getAllActiveTrades(self, account, max_danger):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -293,7 +292,7 @@ class BitpandaPro:
                                 active.setHigher()
                                 break
         
-        for crypto in listCrypto:
+        for crypto in self.database.findActive():
             isFound = False
 
             for trade in active_trades:
@@ -309,14 +308,15 @@ class BitpandaPro:
                         trade.weeklyDanger = crypto.weeklyDanger
                         trade.monthlyDanger = crypto.monthlyDanger
                 
-                    if int(self.filesystem.getLastDanger(trade)) > max_danger % 2:
+                    if int(self.database.getLastDanger(trade)) > max_danger % 2:
                         trade.danger += 1
 
             if isFound == False:
-                self.filesystem.putInFile(crypto)
+                self.database.putInHistory(crypto)
 
         for trade in active_trades:
             self.calculateDanger(trade)
+            self.database.putInActive(trade)
 
         return active_trades
     
@@ -341,6 +341,10 @@ class BitpandaPro:
         if client.getStatusCode() != 201:
             print("Error while trying to stop trade")
             return 0
+        
+        crypto.current = float(client.getData()["price"]) * crypto.owned
+        crypto.setHigher()
+        self.database.putInActive(crypto)
 
         return percentage
     

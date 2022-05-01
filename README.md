@@ -12,6 +12,8 @@ No active trade is necessarry to allow the program to run. If you have some runn
 
 You will also need a computer with Docker (or Podman) installed in order to run the program. If you are aware of what you're doing, you could also run this program bare metal, on any computer that support Python 3.8. You will however have to manage dependencies yourself.
 
+A running MongoDB instance is required for this program to work accordingly.
+
 The server you will run this program on must be able to access outside world on port 443/TCP and 27017/TCP and must be able to resolve URLs (must have configured nameservers).
 
 If you want to receive mail alert on action took by the bot, please make sure that outside world is also reachable on port defined for your SMTP server.
@@ -79,7 +81,6 @@ services:
     image: mongo:5.0-focal
     restart: always
     environment:
-      MONGO_INITDB_DATABASE: trader
       MONGO_INITDB_ROOT_USERNAME: trader
       MONGO_INITDB_ROOT_PASSWORD: secure
 ````
