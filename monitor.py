@@ -135,7 +135,7 @@ while isOk:
     if message != "":
         print(message)
 
-    account.actualize(client)
+    client.actualizeAccount(account)
 
     if (delay > 0):
         delay -= refresh_time
