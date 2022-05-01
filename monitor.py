@@ -11,7 +11,7 @@ from server import mail
 def stop(exchange_client, crypto, account, taxe_rate):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == 0:
-        return "Unable to stop trade on " + crypto.cryptoName + ".\n"
+        return "Unable to stop trade on " + crypto.cryptoName + ".\n\n"
     
     account.amount += crypto.current * percentage
 
@@ -31,7 +31,7 @@ def stop(exchange_client, crypto, account, taxe_rate):
         account.addLoss(loss)
         message += " (LOST: " + str(round(loss, 2)) + "€)"
     
-    return message + ".\n"
+    return message + ".\n\n"
 
 def report(account, taxe_rate):
     message = "\nDAILY STATS:\n\tGAINED:\t" + \
@@ -89,7 +89,7 @@ def checkUpdate():
     version = has_update(repo="hugotms/trader", at="github", current_version=os.getenv('TRADER_VERSION'))
     if version != False:
         message = "\n############# UPDATE #############\n" + \
-            "A new version of Trader is available ! It is highly recommended to upgrade.\n" + \
+            "\nA new version of Trader is available ! It is highly recommended to upgrade.\n" + \
             "Currently, you are on version " + os.getenv('TRADER_VERSION') + " and latest is " + \
             str(version) + ".\nNote that this new version may include security patches, bug fixes and new features.\n"
     
@@ -173,7 +173,7 @@ while isOk:
             + "%)")
 
         if crypto.current < 10:
-            trading_message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n"
+            trading_message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n\n"
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             trading_message += "Loosing money on " + crypto.cryptoName + ". "
@@ -191,7 +191,7 @@ while isOk:
             crypto.loaded = False
     
     if trading_message != "":
-        message += "\n############# TRADES #############\n"
+        message += "############# TRADES #############\n"
     
     message += trading_message
     
@@ -199,7 +199,7 @@ while isOk:
     if report_send == True and time(00,00) <= time.time() <= time(2,00):
         report_message = report(account, taxe_rate)
         report_send = False
-        message += "\n############# REPORT #############\n"
+        message += "############# REPORT #############\n"
     
     message += report_message
 
@@ -211,7 +211,7 @@ while isOk:
     
     if message != "":
         print("\n" + subject)
-        print(message)
+        print("\n" + message)
 
     client.actualizeAccount(account)
 
