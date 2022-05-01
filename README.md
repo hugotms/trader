@@ -82,7 +82,7 @@ services:
       MONGO_INITDB_DATABASE: trader
       MONGO_INITDB_ROOT_USERNAME: trader
       MONGO_INITDB_ROOT_PASSWORD: secure
-```
+````
 
 ## Disclaimer
 
