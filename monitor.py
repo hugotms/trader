@@ -1,6 +1,8 @@
 import os
 import time
+import datetime
 
+from datetime import timedelta
 from lastversion import has_update
 
 from server import exchange
@@ -31,13 +33,67 @@ def stop(exchange_client, crypto, account, taxe_rate):
     
     return message + ".\n"
 
+def report(account, taxe_rate):
+    message = "\nDAILY STATS:\n\tGAINED:\t" + \
+        str(round(account.dailyProfit, 2)) + "€\n\tLOST:\t" + \
+        str(round(account.dailyLoss, 2)) + "€\n"
+
+    if taxe_rate != 0.0:
+        message += "\tTAXES:\t" + str(round(account.dailyProfit * taxe_rate, 2)) + \
+            "€\n"
+
+    if account.dailyProfit * (1 - taxe_rate) > account.dailyLoss:
+        message += "\tPROFIT:\t" + str(round(account.dailyProfit * (1 - taxe_rate) - account.dailyLoss, 2)) + \
+            "€\n"
+    
+    account.dailyProfit = 0
+    account.dailyLoss = 0
+    
+    today = datetime.datetime.now()
+    if today.weekday() == 6:
+        message += "\nWEEKLY STATS:\n\tGAINED:\t" + \
+            str(round(account.weeklyProfit, 2)) + "€\n\tLOST:\t" + \
+            str(round(account.weeklyLoss, 2)) + "€\n"
+
+        if taxe_rate != 0.0:
+            message += "\tTAXES:\t" + str(round(account.weeklyProfit * taxe_rate, 2)) + \
+                "€\n"
+
+        if account.weeklyProfit * (1 - taxe_rate) > account.weeklyLoss:
+            message += "\tPROFIT:\t" + str(round(account.weeklyProfit * (1 - taxe_rate) - account.weeklyLoss, 2)) + \
+                "€\n" 
+    
+        account.weeklyProfit = 0
+        account.weeklyLoss = 0
+    
+    if today.month != (today + timedelta(days=1)).month:
+        message += "\nMONTHLY STATS:\n\tGAINED:\t" + \
+            str(round(account.monthlyProfit, 2)) + "€\n\tLOST:\t" + \
+            str(round(account.monthlyLoss, 2)) + "€\n"
+
+        if taxe_rate != 0.0:
+            message += "\tTAXES:\t" + str(round(account.monthlyProfit * taxe_rate, 2)) + \
+                "€\n"
+
+        if account.monthlyProfit * (1 - taxe_rate) > account.monthlyLoss:
+            message += "\tPROFIT:\t" + str(round(account.monthlyProfit * (1 - taxe_rate) - account.monthlyLoss, 2)) + \
+                "€\n" 
+    
+        account.monthlyProfit = 0
+        account.monthlyLoss = 0
+
+    return message
+
 def checkUpdate():
+    message = ""
     version = has_update(repo="hugotms/trader", at="github", current_version=os.getenv('TRADER_VERSION'))
     if version != False:
-        print("A new version of Trader is available ! It is highly recommended to upgrade.\n" + \
+        message = "\n############# UPDATE #############\n" + \
+            "A new version of Trader is available ! It is highly recommended to upgrade.\n" + \
             "Currently, you are on version " + os.getenv('TRADER_VERSION') + " and latest is " + \
-            str(version) + ".\n Note that this new version may include security patches, bug fixes and new features.\n"
-        )
+            str(version) + ".\nNote that this new version may include security patches, bug fixes and new features.\n"
+    
+    return message
         
 isOk = True
 
@@ -48,9 +104,6 @@ refresh_time = os.getenv('MINUTES_REFRESH_TIME')
 taxe_rate = os.getenv('TAXE_RATE')
 smtp_sending = os.getenv('SEND_ALERT_MAIL')
 latest_release = os.getenv('TRADER_VERSION')
-
-if latest_release is not None:
-    checkUpdate()
 
 if min_recovered is None:
     print("Default recovered rate is 0.95")
@@ -104,9 +157,12 @@ if account is None:
 seconds_in_delay = 2 * 3600
 delay = seconds_in_delay
 
+report_send = False
+
 while isOk:
-    subject = "New trades removed on " + time.strftime("%d/%m/%Y - %H:%M:%S")
+    subject = "New trading update - " + time.strftime("%d/%m/%Y - %H:%M:%S")
     message = ""
+    trading_message = ""
 
     for crypto in client.getAllActiveTrades(account, max_danger):
         print("Found " + crypto.cryptoName 
@@ -117,27 +173,44 @@ while isOk:
             + "%)")
 
         if crypto.current < 10:
-            message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n"
+            trading_message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n"
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
-            message += "Loosing money on " + crypto.cryptoName + ". "
-            message += stop(client, crypto, account, taxe_rate)
+            trading_message += "Loosing money on " + crypto.cryptoName + ". "
+            trading_message += stop(client, crypto, account, taxe_rate)
 
         elif crypto.danger > max_danger:
-            message += crypto.cryptoName + " is too dangerous. "
-            message += stop(client, crypto, account, taxe_rate)
+            trading_message += crypto.cryptoName + " is too dangerous. "
+            trading_message += stop(client, crypto, account, taxe_rate)
         
         elif crypto.danger >= max_danger % 2 and crypto.current * account.takerFee >= crypto.placed * min_profit:
-            message += crypto.cryptoName + " has reached its profit level. "
-            message += stop(client, crypto, account, taxe_rate)
+            trading_message += crypto.cryptoName + " has reached its profit level. "
+            trading_message += stop(client, crypto, account, taxe_rate)
         
         if delay < 0:
             crypto.loaded = False
     
+    if trading_message != "":
+        message += "\n############# TRADES #############\n"
+    
+    message += trading_message
+    
+    report_message = ""
+    if report_send == True and time(00,00) <= time.time() <= time(2,00):
+        report_message = report(account, taxe_rate)
+        report_send = False
+        message += "\n############# REPORT #############\n"
+    
+    message += report_message
+
+    if latest_release is not None and message != "":
+        message += checkUpdate()
+
     if smtp_sending == True and message != "":
         smtp.send(subject=subject, plain=message)
     
     if message != "":
+        print("\n" + subject)
         print(message)
 
     client.actualizeAccount(account)
@@ -146,5 +219,6 @@ while isOk:
         delay -= refresh_time
     else:
         delay = seconds_in_delay
+        report_send = True
 
     time.sleep(refresh_time)
