@@ -167,8 +167,11 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto):
+    def calculateDanger(self, crypto, max_danger):
         danger = 0
+
+        if int(self.database.getLastDanger(crypto)) > max_danger % 2:
+            danger += 1
 
         res = self.getPrices(crypto, time_unit='MINUTES')
         if res is None:
@@ -316,26 +319,23 @@ class BitpandaPro:
             isFound = False
 
             for trade in active_trades:
-                if crypto.cryptoName == trade.cryptoName:
+                if crypto["_id"] == trade.cryptoName:
                     isFound = True
-                    trade.placed = crypto.placed
 
-                    if crypto.higher > trade.current:
-                        trade.higher = crypto.higher
+                    if float(crypto["higher"]) > trade.current:
+                        trade.higher = float(crypto["higher"])
                     
-                    if crypto.loaded:
+                    if bool(crypto["loaded"]) == True:
                         trade.loaded = True
-                        trade.weeklyDanger = crypto.weeklyDanger
-                        trade.monthlyDanger = crypto.monthlyDanger
-                
-                    if int(self.database.getLastDanger(trade)) > max_danger % 2:
-                        trade.danger += 1
+                        trade.dailyDanger = int(crypto["dailyDanger"])
+                        trade.weeklyDanger = int(crypto["weeklyDanger"])
+                        trade.monthlyDanger = int(crypto["monthlyDanger"])
 
             if isFound == False:
                 self.database.putInHistory(crypto)
 
         for trade in active_trades:
-            self.calculateDanger(trade)
+            self.calculateDanger(trade, max_danger)
             self.database.putInActive(trade)
 
         return active_trades
@@ -362,7 +362,7 @@ class BitpandaPro:
             print("Error while trying to stop trade")
             return 0
         
-        crypto.current = float(client.getData()["price"]) * crypto.owned
+        crypto.current = self.getPrice(crypto.cryptoName) * crypto.owned
         crypto.setHigher()
         self.database.putInActive(crypto)
 
