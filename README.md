@@ -12,7 +12,7 @@ No active trade is necessarry to allow the program to run. If you have some runn
 
 You will also need a computer with Docker (or Podman) installed in order to run the program. If you are aware of what you're doing, you could also run this program bare metal, on any computer that support Python 3.8. You will however have to manage dependencies yourself.
 
-The server you will run this program on must be able to access outside world on port 443/TCP and must be able to resolve URLs (must have configured nameservers).
+The server you will run this program on must be able to access outside world on port 443/TCP and 27017/TCP and must be able to resolve URLs (must have configured nameservers).
 
 If you want to receive mail alert on action took by the bot, please make sure that outside world is also reachable on port defined for your SMTP server.
 
@@ -21,6 +21,11 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
 | `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API            | yes      | None       |
+| `MONGO_DB_HOST`       | The MongoDB hostname (FQDN or IP)            | yes      | None       |
+| `MONGO_DB_PASSWORD`       | The MongoDB password            | yes      | None       |
+| `MONGO_DB_NAME`       | The MongoDB database            | no      | trader       |
+| `MONGO_DB_USER`       | The MongoDB username            | no      | trader       |
+| `MONGO_DB_PORT`       | The MongoDB port            | no      | 27017       |
 | `MIN_RECOVERED_RATE`       | The rate you want to get if stock goes down            | no      | 0.95       |
 | `MIN_PROFIT_RATE`          | The rate from which you may take profit if considered dangerous        | no      | 1.05       |
 | `MAX_DANGER`              | The maximum danger level an action can be running       | no         | 10        |
@@ -34,7 +39,6 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `SMTP_FROM`       | The email address which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_KEY`       | The token used to connect to your account (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_TO`       | The email addresses to whom you want to send the email separated by a comma (default to `SMTP_FROM`)            | no      | None       |
-| `CSV_FILE_PATH`       | The path you want your CSV to be saved (usage is not recommended if used with the container runtime)            | no      | /data/cryptos.csv       |
 
 ## Build
 
@@ -44,12 +48,40 @@ In order to build the image, you need to clone this repository then simply run (
 docker build -t trader:2.0.0 https://raw.githubusercontent.com/hugotms/trader/v2.0.0/Dockerfile
 ```
 
-## Run
+## Deploy
+
+### CLI
 
 After the image has been built, you can now run it like so (add any non required extra environment variables you want to modify preceeded by a `-e`) :
 
 ```bash
-docker run -d --name trader -e EXCHANGE_API_KEY=token trader:2.0.0
+docker run -d --name trader -e EXCHANGE_API_KEY=token -e MONGO_DB_HOST=hostname -e MONGO_DB_PASSWORD=secure trader:2.0.0
+```
+
+### Docker-compose
+
+If you prefer the docker-compose solution, here is a simple example of a stack:
+
+````yaml
+version: '3.1'
+services:
+  trader:
+    image: trader:2.0.0
+    restart: unless-stopped
+    depends_on: mongo_db
+    environment:
+      EXCHANGE_API_KEY: token
+      MONGO_DB_HOST: mongo_db
+      MONGO_DB_PASSWORD: secure
+      # add here any non required variable
+
+  mongo_db:
+    image: mongo:5.0-focal
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: trader
+      MONGO_INITDB_ROOT_USERNAME: trader
+      MONGO_INITDB_ROOT_PASSWORD: secure
 ```
 
 ## Disclaimer
