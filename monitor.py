@@ -153,8 +153,8 @@ if account is None:
     isOk = False
 
 # 2 hours delay between full danger calculation
-# First run to be executed will be longer than others
-seconds_in_delay = 2 * 3600
+hours = 2
+seconds_in_delay = hours * 3600
 delay = seconds_in_delay
 
 report_send = False
@@ -196,7 +196,7 @@ while isOk:
     message += trading_message
     
     report_message = ""
-    if report_send == True and datetime.time(00,00) <= datetime.datetime.utcnow().time() <= datetime.time(2,00):
+    if report_send == True and datetime.time(00,00) <= datetime.datetime.utcnow().time() <= datetime.time(hours,00):
         report_message = report(account, taxe_rate)
         report_send = False
         message += "############# REPORT #############\n"
