@@ -13,7 +13,7 @@ def stop(exchange_client, crypto, account, taxe_rate):
     if percentage == 0:
         return "Unable to stop trade on " + crypto.cryptoName + ".\n\n"
     
-    account.amount += crypto.current * percentage
+    account.available += crypto.current * percentage
 
     message = "Removed all current action on " + crypto.cryptoName + " at " + str(round(crypto.current, 2)) + "€"
 
