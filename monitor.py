@@ -82,13 +82,13 @@ def report(account, taxe_rate):
         account.monthlyProfit = 0
         account.monthlyLoss = 0
 
-    return message
+    return message + "\n"
 
 def checkUpdate():
     message = ""
     version = has_update(repo="hugotms/trader", at="github", current_version=os.getenv('TRADER_VERSION'))
     if version != False:
-        message = "\n############# UPDATE #############\n" + \
+        message = "############# UPDATE #############\n" + \
             "\nA new version of Trader is available ! It is highly recommended to upgrade.\n" + \
             "Currently, you are on version " + os.getenv('TRADER_VERSION') + " and latest is " + \
             str(version) + ".\nNote that this new version may include security patches, bug fixes and new features.\n"
@@ -191,7 +191,7 @@ while isOk:
             crypto.loaded = False
     
     if trading_message != "":
-        message += "############# TRADES #############\n"
+        message += "############# TRADES #############\n\n"
     
     message += trading_message
     
