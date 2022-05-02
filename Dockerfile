@@ -8,18 +8,16 @@ RUN git clone --branch $TRADER_VERSION https://github.com/hugotms/trader.git ./
 
 FROM python:3.8-slim as run
 
-RUN mkdir -p /app && \
-    groupadd trader && \
-    useradd -m -g trader trader && \
-    chown -R trader:trader /app
-
-WORKDIR /app
+RUN groupadd trader && \
+    useradd -m -g trader trader
 
 USER trader
 
-COPY --from=clone /tarder .
+WORKDIR /app
+
+COPY --from=clone /trader .
 
 RUN pip install -r requirements.txt
 
-CMD ["/app/monitor.py"]
+CMD ["monitor.py"]
 ENTRYPOINT ["python","-u"]
