@@ -1,6 +1,6 @@
 FROM alpine/git:latest as clone
 
-ENV TRADER_VERSION=v2.0.0
+ENV TRADER_VERSION=v2.0.1
 
 WORKDIR /trader
 
