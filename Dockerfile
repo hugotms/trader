@@ -1,22 +1,23 @@
-FROM python:3.8
+FROM alpine/git:latest as clone
 
-ENV TRADER_VERSION=v1.2.0
+ENV TRADER_VERSION=v2.0.0
 
-RUN mkdir -p /app && \
-    mkdir -p /data && \
-    groupadd trader && \
-    useradd -m -g trader trader && \
-    chown -R trader:trader /app && \
-    chown -R trader:trader /data
+WORKDIR /trader
 
-VOLUME ["/data"]
+RUN git clone --branch $TRADER_VERSION https://github.com/hugotms/trader.git ./
 
-WORKDIR /app
+FROM python:3.8-slim as run
+
+RUN groupadd trader && \
+    useradd -m -g trader trader
 
 USER trader
 
-RUN git clone --branch $TRADER_VERSION https://github.com/hugotms/trader.git ./ && \
-    pip install -r requirements.txt
+WORKDIR /app
 
-CMD ["/app/monitor.py"]
+COPY --from=clone /trader .
+
+RUN pip install -r requirements.txt
+
+CMD ["monitor.py"]
 ENTRYPOINT ["python","-u"]

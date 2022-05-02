@@ -1,11 +1,12 @@
 from server import web
-from server import fs
+from server import db
 
 import json
 import time
 import os
 
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 from data import account
 from data import assets
@@ -14,11 +15,10 @@ class BitpandaPro:
     baseUrl = "https://api.exchange.bitpanda.com/public/v1"
 
     def __init__(self):
-        self.filesystem = fs.File().new()
+        self.database = db.Mongo().new()
 
     def new(self):
-        if self.filesystem is None:
-            print("Unable to use file. Please check permissions")
+        if self.database is None:
             return None
         
         if os.getenv('EXCHANGE_API_KEY') is None:
@@ -99,15 +99,53 @@ class BitpandaPro:
         
         res = json.loads(response)
 
-        new = account.Account(id=res['account_id'], amount=res['amount'])
+        new = account.Account(id=res['account_id'], available=res['amount'])
 
         response = self.getAccountFees()
         if response is not None:
             res = json.loads(response)
             new.makerFee = res['makerFee']
             new.takerFee = res['takerFee']
+        
+        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        if response is not None:
+            response = json.loads(response)
+            new.dailyProfit = float(response["profit"])
+            new.dailyLoss = float(response["loss"])
+        
+        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(weeks=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        if response is not None:
+            response = json.loads(response)
+            new.weeklyProfit = float(response["profit"])
+            new.weeklyLoss = float(response["loss"])
+        
+        response = self.database.getPastPerformance((datetime.utcnow() - relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        if response is not None:
+            response = json.loads(response)
+            new.monthlyProfit = float(response["profit"])
+            new.monthlyLoss = float(response["loss"])
 
         return new
+    
+    def actualizeAccount(self, account):
+        available = 0
+        fees = None
+        
+        response = self.getAccountDetails()
+        if response is not None:
+            available = json.loads(response)['amount']
+        
+        if account.available != available:
+            print("Uneven account balance between local and remote")
+            account.available = available
+        
+        response = self.getAccountFees()
+        if response is not None:
+            fees = json.loads(response)
+        
+        if fees is not None:
+            account.takerFee = fees['takerFee']
+            account.makerFee = fees['makerFee']
     
     def getPrices(self, crypto, time_unit=None):
         if time_unit is None:
@@ -148,8 +186,11 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto):
+    def calculateDanger(self, crypto, max_danger):
         danger = 0
+
+        if int(self.database.getLastDanger(crypto)) > max_danger % 2:
+            danger += 1
 
         res = self.getPrices(crypto, time_unit='MINUTES')
         if res is None:
@@ -246,7 +287,7 @@ class BitpandaPro:
         return self
 
 
-    def getAllActiveTrades(self, listCrypto, account, max_danger):
+    def getAllActiveTrades(self, account, max_danger):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -293,30 +334,28 @@ class BitpandaPro:
                                 active.setHigher()
                                 break
         
-        for crypto in listCrypto:
+        for crypto in self.database.findActives(self.watching_cryptos):
             isFound = False
 
             for trade in active_trades:
-                if crypto.cryptoName == trade.cryptoName:
+                if crypto["_id"] == trade.cryptoName:
                     isFound = True
-                    trade.placed = crypto.placed
 
-                    if crypto.higher > trade.current:
-                        trade.higher = crypto.higher
+                    if float(crypto["higher"]) > trade.current:
+                        trade.higher = float(crypto["higher"])
                     
-                    if crypto.loaded:
+                    if bool(crypto["loaded"]) == True:
                         trade.loaded = True
-                        trade.weeklyDanger = crypto.weeklyDanger
-                        trade.monthlyDanger = crypto.monthlyDanger
-                
-                    if int(self.filesystem.getLastDanger(trade)) > max_danger % 2:
-                        trade.danger += 1
+                        trade.dailyDanger = int(crypto["dailyDanger"])
+                        trade.weeklyDanger = int(crypto["weeklyDanger"])
+                        trade.monthlyDanger = int(crypto["monthlyDanger"])
 
             if isFound == False:
-                self.filesystem.putInFile(crypto)
+                self.database.putInHistory(crypto)
 
         for trade in active_trades:
-            self.calculateDanger(trade)
+            self.calculateDanger(trade, max_danger)
+            self.database.putInActive(trade)
 
         return active_trades
     
@@ -341,6 +380,10 @@ class BitpandaPro:
         if client.getStatusCode() != 201:
             print("Error while trying to stop trade")
             return 0
+        
+        crypto.current = self.getPrice(crypto.cryptoName) * crypto.owned
+        crypto.setHigher()
+        self.database.putInActive(crypto)
 
         return percentage
     
