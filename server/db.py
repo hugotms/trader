@@ -145,14 +145,22 @@ class Mongo:
         
         return self
     
-    def findActive(self):
+    def findActives(self, watching_cryptos):
         self.connect()
         if self.client is None:
             return []
+
+        query = {}
+        if len(watching_cryptos) != 0:
+            query = {
+                "_id": {
+                    "$in": watching_cryptos
+                }
+            }    
         
-        return self.find("actives")
+        return self.find("actives", query)
     
-    def getPastPerformance(self, past):
+    def getPastPerformance(self, past, cryptoName=None):
         self.connect()
         if self.client is None:
             return None
@@ -165,6 +173,9 @@ class Mongo:
                 "$gt": past
             }
         }
+
+        if cryptoName is not None:
+            query["cryptoName"] = cryptoName
 
         for item in self.find("history", query):
             placed = float(item["placed"])

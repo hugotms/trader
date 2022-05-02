@@ -334,7 +334,7 @@ class BitpandaPro:
                                 active.setHigher()
                                 break
         
-        for crypto in self.database.findActive():
+        for crypto in self.database.findActives(self.watching_cryptos):
             isFound = False
 
             for trade in active_trades:
