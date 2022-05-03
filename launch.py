@@ -55,4 +55,4 @@ while isOk == True:
 
     time.sleep(parameters.refresh_time)
 
-    isOk = parameters.actualize()
+    parameters.actualize()
