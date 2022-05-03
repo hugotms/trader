@@ -64,9 +64,9 @@ class Params:
             self.smtp = mail.SMTP(
                 self.smtp_host, 
                 self.smtp_port, 
+                self.smtp_key, 
                 self.smtp_from, 
-                self.smtp_key, 
-                self.smtp_key, 
+                self.smtp_as, 
                 self.smtp_to
             )
 
