@@ -2,8 +2,10 @@ import json
 
 class Crypto:
 
-    def __init__(self, cryptoName, owned, placed, current):
-        self.cryptoName = cryptoName
+    def __init__(self, instrument_code, base, currency, owned, placed, current):
+        self.instrument_code = instrument_code
+        self.base = base
+        self.currency = currency
         self.owned = owned
         self.placed = placed
         self.current = current
