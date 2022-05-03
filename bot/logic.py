@@ -1,4 +1,3 @@
-import os
 import time
 import datetime
 
@@ -81,9 +80,9 @@ def report(account, taxe_rate):
 
     return message + "\n"
 
-def checkUpdate():
+def checkUpdate(current_version):
     message = ""
-    version = has_update(repo="hugotms/trader", at="github", current_version=os.getenv('TRADER_VERSION'))
+    version = has_update(repo="hugotms/trader", at="github", current_version=current_version)
     if version != False:
         message = "############# UPDATE #############\n" + \
             "\nA new version of Trader is available ! It is highly recommended to upgrade.\n" + \

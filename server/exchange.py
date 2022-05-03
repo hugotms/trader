@@ -14,32 +14,16 @@ from data import assets
 class BitpandaPro:
     baseUrl = "https://api.exchange.bitpanda.com/public/v1"
 
-    def __init__(self):
-        self.database = db.Mongo().new()
-
-    def new(self):
-        if self.database is None:
-            return None
-        
-        if os.getenv('EXCHANGE_API_KEY') is None:
-            print("Required API key was not set")
-            return None
-        
-        self.watching_cryptos = []
-        if os.getenv('WATCHING_CRYPTOS') is not None:
-            self.watching_cryptos = os.getenv('WATCHING_CRYPTOS').split(',')
-        
-        self.watching_currencies = []
-        if os.getenv('WATCHING_CURRENCIES') is not None:
-            self.watching_currencies = os.getenv('WATCHING_CURRENCIES').split(',')
-        
+    def __init__(self, api_key, database, watching_cryptos, watching_currencies):
         self.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + os.getenv('EXCHANGE_API_KEY')
+            'Authorization': 'Bearer ' + api_key
             }
         
-        return self
+        self.database = database
+        self.watching_cryptos = watching_cryptos
+        self.watching_currencies = watching_currencies
     
     def getAccountDetails(self):
         amount = 0

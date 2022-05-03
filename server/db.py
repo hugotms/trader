@@ -1,37 +1,16 @@
 import pymongo
-import os
 import json
 
 from datetime import datetime
 
 class Mongo:
 
-    def __init__(self):
-        self.hostname = os.getenv('MONGO_DB_HOST')
-        self.port = os.getenv('MONGO_DB_PORT')
-        self.db_name = os.getenv('MONGO_DB_NAME')
-        self.user = os.getenv('MONGO_DB_USER')
-        self.password = os.getenv('MONGO_DB_PASSWORD')
-
-        if self.user is None:
-            print("Default DB user is trader")
-            self.user = "trader"
-
-        if self.db_name is None:
-            print("Default DB name is trader")
-            self.db_name = "trader" 
-
-    def new(self):
-        if self.hostname is None or self.password is None:
-            print("Required DB variables not set")
-            return None
-        
-        if self.port is None:
-            print("Default DB port is 27017")
-            self.port = 27017
-        self.port = int(self.port)
-
-        return self
+    def __init__(self, hostname, port, db_name, user, password):
+        self.hostname = hostname
+        self.port = port
+        self.db_name = db_name
+        self.user = user
+        self.password = password
 
     def connect(self):    
         try:
@@ -60,6 +39,28 @@ class Mongo:
     def delete(self, table, query):
         if self.client[table].delete_one(query) is None:
             print("Unable to delete data on " + table)
+    
+    def findVar(self, var_name, current_value, default=None):
+        self.connect()
+        if self.client is None and current_value is None:
+            return default
+        
+        elif self.client is None:
+            return current_value
+
+        query = {
+            "_id": var_name
+        }
+
+        res = self.find("parameters", query)
+
+        if len(res) == 0 and current_value is None:
+            return default
+        
+        elif len(res) == 0:
+            return current_value
+
+        return res[0]["value"]
     
     def putInActive(self, crypto):
         self.connect()
