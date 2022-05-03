@@ -1,14 +1,18 @@
+ARG VERSION=v2.1.0
+
 FROM alpine/git:latest as clone
 
-ENV TRADER_VERSION=v2.0.1
+ARG VERSION
 
 WORKDIR /trader
 
-RUN git clone --branch $TRADER_VERSION https://github.com/hugotms/trader.git ./
+RUN git clone --branch $VERSION https://github.com/hugotms/trader.git ./
 
 FROM python:3.8-slim as run
 
-ENV TRADER_VERSION=v2.0.1
+ARG VERSION
+
+ENV TRADER_VERSION=$VERSION
 
 RUN groupadd trader && \
     useradd -m -g trader trader
