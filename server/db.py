@@ -68,12 +68,14 @@ class Mongo:
         
         isFound = False
         for active in self.find("actives"):
-            if active["_id"] == crypto.cryptoName:
+            if active["_id"] == crypto.instrument_code:
                 isFound = True
                 break
         
         if isFound == True:
             data = {
+                "base": crypto.base,
+                "currency": crypto.currency,
                 "owned": crypto.owned,
                 "placed": crypto.placed,
                 "current": crypto.current,
@@ -86,14 +88,16 @@ class Mongo:
             }
 
             query = {
-                "_id": crypto.cryptoName
+                "_id": crypto.instrument_code
             }
 
             self.update("actives", data, query)
         
         else:
             data = {
-                "_id": crypto.cryptoName,
+                "_id": crypto.instrument_code,
+                "base": crypto.base,
+                "currency": crypto.currency,
                 "owned": crypto.owned,
                 "placed": crypto.placed,
                 "current": crypto.current,
@@ -129,7 +133,9 @@ class Mongo:
 
             data = {
                 "date": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-                "cryptoName": crypto["_id"],
+                "instrument_code": crypto["_id"],
+                "base": crypto["base"],
+                "currency": crypto["currency"],
                 "owned": crypto["owned"],
                 "placed": crypto["placed"],
                 "current": crypto["current"],
@@ -145,22 +151,25 @@ class Mongo:
         
         return self
     
-    def findActives(self, watching_cryptos):
+    def findActives(self, watching_cryptos, watching_currencies):
         self.connect()
         if self.client is None:
             return []
 
         query = {}
         if len(watching_cryptos) != 0:
-            query = {
-                "_id": {
-                    "$in": watching_cryptos
-                }
-            }    
+            query["_id"] = {
+                "$in": watching_cryptos
+            }
+        
+        if len(watching_currencies) != 0:
+            query["currency"] = {
+                "$in": watching_currencies
+            }
         
         return self.find("actives", query)
     
-    def getPastPerformance(self, past, cryptoName=None):
+    def getPastPerformance(self, past, watching_cryptos, watching_currencies, instrument_code=None):
         self.connect()
         if self.client is None:
             return None
@@ -174,8 +183,24 @@ class Mongo:
             }
         }
 
-        if cryptoName is not None:
-            query["cryptoName"] = cryptoName
+        if len(watching_cryptos) != 0:
+            query["_id"] = {
+                "$in": watching_cryptos
+            }
+        
+        if len(watching_currencies) != 0:
+            query["currency"] = {
+                "$in": watching_currencies
+            }
+
+        if instrument_code is not None and len(watching_cryptos) != 0 and instrument_code not in watching_cryptos:
+            return None
+        
+        elif instrument_code is not None and len(watching_currencies) != 0 and instrument_code.split('_')[1] not in watching_currencies:
+            return None
+        
+        elif instrument_code is not None:
+            query["instrument_code"] = instrument_code
 
         for item in self.find("history", query):
             placed = float(item["placed"])
@@ -197,7 +222,7 @@ class Mongo:
             return 0
         
         query = {
-            "cryptoName": crypto.cryptoName
+            "instrument_code": crypto.instrument_code
         }
 
         res = self.find("history", query)

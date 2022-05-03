@@ -29,6 +29,10 @@ class BitpandaPro:
         if os.getenv('WATCHING_CRYPTOS') is not None:
             self.watching_cryptos = os.getenv('WATCHING_CRYPTOS').split(',')
         
+        self.watching_currencies = []
+        if os.getenv('WATCHING_CURRENCIES') is not None:
+            self.watching_currencies = os.getenv('WATCHING_CURRENCIES').split(',')
+        
         self.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -107,19 +111,19 @@ class BitpandaPro:
             new.makerFee = res['makerFee']
             new.takerFee = res['takerFee']
         
-        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
         if response is not None:
             response = json.loads(response)
             new.dailyProfit = float(response["profit"])
             new.dailyLoss = float(response["loss"])
         
-        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(weeks=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(weeks=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
         if response is not None:
             response = json.loads(response)
             new.weeklyProfit = float(response["profit"])
             new.weeklyLoss = float(response["loss"])
         
-        response = self.database.getPastPerformance((datetime.utcnow() - relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        response = self.database.getPastPerformance((datetime.utcnow() - relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
         if response is not None:
             response = json.loads(response)
             new.monthlyProfit = float(response["profit"])
@@ -158,7 +162,7 @@ class BitpandaPro:
         tz = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         tz2 = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.cryptoName + "?unit=" + time_unit + "&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
+        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + time_unit + "&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
@@ -173,12 +177,12 @@ class BitpandaPro:
                 "close": float(client.getData()[0]['close'])
             })
     
-    def getPrice(self, cryptoName):
+    def getPrice(self, instrument_code):
         header = {
             "Accept": "application/json"
         }
 
-        client = web.Api(BitpandaPro.baseUrl + "/market-ticker/" + cryptoName, headers=header).send()
+        client = web.Api(BitpandaPro.baseUrl + "/market-ticker/" + instrument_code, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get market tickers")
@@ -308,7 +312,11 @@ class BitpandaPro:
         trade_names = []
         ignored_trades = []
         for item in trades:
-            if len(self.watching_cryptos) == 0 or (len(self.watching_cryptos) != 0 and item['trade']['instrument_code'] in self.watching_cryptos):
+            if (
+                (len(self.watching_cryptos) == 0 and len(self.watching_currencies) == 0) 
+                or (len(self.watching_cryptos) != 0 and item['trade']['instrument_code'] in self.watching_cryptos)
+                or (len(self.watching_currencies) != 0 and item['trade']['instrument_code'].split("_")[1] in self.watching_currencies)
+                ):
                 if item['trade']['side'] == "SELL":
                     ignored_trades.append(item['trade']['instrument_code'])
 
@@ -317,7 +325,9 @@ class BitpandaPro:
 
                     if item['trade']['instrument_code'] not in trade_names:
                         active_trades.append(assets.Crypto(
-                            cryptoName=item['trade']['instrument_code'],
+                            instrument_code=item['trade']['instrument_code'],
+                            base=item['trade']['instrument_code'].split('_')[0],
+                            currency=item['trade']['instrument_code'].split('_')[1],
                             owned=float(item['trade']['amount']) * account.makerFee,
                             placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
                             current=amount
@@ -327,18 +337,18 @@ class BitpandaPro:
                         
                     else:
                         for active in active_trades:
-                            if active.cryptoName == item['trade']['instrument_code']:
+                            if active.instrument_code == item['trade']['instrument_code']:
                                 active.owned += float(item['trade']['amount']) * account.makerFee
                                 active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
                                 active.current += amount
                                 active.setHigher()
                                 break
         
-        for crypto in self.database.findActives(self.watching_cryptos):
+        for crypto in self.database.findActives(self.watching_cryptos, self.watching_currencies):
             isFound = False
 
             for trade in active_trades:
-                if crypto["_id"] == trade.cryptoName:
+                if crypto["_id"] == trade.instrument_code:
                     isFound = True
 
                     if float(crypto["higher"]) > trade.current:
@@ -362,7 +372,7 @@ class BitpandaPro:
     def stopTrade(self, crypto, account):
         percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.owned)) * account.takerFee * account.makerFee
         body = {
-            "instrument_code": crypto.cryptoName,
+            "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "MARKET",
             "amount": str(round(crypto.owned * percentage, 4))
@@ -381,7 +391,7 @@ class BitpandaPro:
             print("Error while trying to stop trade")
             return 0
         
-        crypto.current = self.getPrice(crypto.cryptoName) * crypto.owned
+        crypto.current = self.getPrice(crypto.instrument_code) * crypto.owned
         crypto.setHigher()
         self.database.putInActive(crypto)
 

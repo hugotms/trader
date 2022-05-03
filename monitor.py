@@ -11,11 +11,11 @@ from server import mail
 def stop(exchange_client, crypto, account, taxe_rate):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == 0:
-        return "Unable to stop trade on " + crypto.cryptoName + ".\n\n"
+        return "Unable to stop trade on " + crypto.instrument_code + ".\n\n"
     
     account.available += crypto.current * percentage
 
-    message = "Removed all current action on " + crypto.cryptoName + " at " + str(round(crypto.current, 2)) + "€"
+    message = "Removed all current action on " + crypto.instrument_code + " at " + str(round(crypto.current, 2)) + "€"
 
     if crypto.current * percentage > crypto.placed and taxe_rate != 0.0:
         profit = crypto.current * percentage - crypto.placed
@@ -165,7 +165,7 @@ while isOk:
     trading_message = ""
 
     for crypto in client.getAllActiveTrades(account, max_danger):
-        print("Found " + crypto.cryptoName 
+        print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
             + "€ / DANGER: " + str(crypto.danger) 
@@ -173,18 +173,18 @@ while isOk:
             + "%)")
 
         if crypto.current < 10:
-            trading_message += "No action can be done on " + crypto.cryptoName + " (less than 10€).\n\n"
+            trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n\n"
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
-            trading_message += "Loosing money on " + crypto.cryptoName + ". "
+            trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(client, crypto, account, taxe_rate)
 
         elif crypto.danger > max_danger:
-            trading_message += crypto.cryptoName + " is too dangerous. "
+            trading_message += crypto.instrument_code + " is too dangerous. "
             trading_message += stop(client, crypto, account, taxe_rate)
         
         elif crypto.danger >= max_danger % 2 and crypto.current * account.takerFee >= crypto.placed * min_profit:
-            trading_message += crypto.cryptoName + " has reached its profit level. "
+            trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(client, crypto, account, taxe_rate)
         
         if delay < 0:
