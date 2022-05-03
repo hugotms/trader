@@ -91,7 +91,7 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate):
+def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate, delay):
     trading_message = ""
 
     for crypto in exchange_client.getAllActiveTrades(account, max_danger):

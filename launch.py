@@ -29,7 +29,8 @@ while isOk == True:
             parameters.min_recovered, 
             parameters.min_profit, 
             parameters.max_danger, 
-            parameters.taxe_rate
+            parameters.taxe_rate,
+            delay
         )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours,00):
