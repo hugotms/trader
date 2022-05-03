@@ -118,7 +118,8 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
         if delay < 0:
-            crypto.loaded = False #la valeur n'est pas actualisé en BDD ?!
+            crypto.loaded = False
+            exchange_client.database.putInActive(crypto)
         
     exchange_client.actualizeAccount(account)
 
