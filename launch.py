@@ -19,7 +19,7 @@ hours = 2
 seconds_in_delay = hours * 3600
 delay = seconds_in_delay
 
-report_send = False
+report_send = True
 
 while isOk == True:
     subject = "New trading update - " + time.strftime("%d/%m/%Y - %H:%M:%S")
@@ -39,7 +39,7 @@ while isOk == True:
         report_send = False
 
     if parameters.latest_bot_release is not None and message != "":
-        message += logic.checkUpdate(latest_bot_release)
+        message += logic.checkUpdate(parameters.latest_bot_release)
 
     if parameters.smtp is not None and message != "":
         parameters.smtp.send(subject=subject, plain=message)
