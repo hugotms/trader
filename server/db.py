@@ -203,7 +203,8 @@ class Mongo:
         elif instrument_code is not None:
             query["instrument_code"] = instrument_code
 
-        for item in self.find("history", query):
+        res = self.find("history", query)
+        for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
 
@@ -214,7 +215,8 @@ class Mongo:
         
         return json.dumps({
             "profit": profit,
-            "loss": loss
+            "loss": loss,
+            "trades": len(res)
         })
 
     def getLastDanger(self, crypto):

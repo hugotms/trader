@@ -100,18 +100,21 @@ class BitpandaPro:
             response = json.loads(response)
             new.dailyProfit = float(response["profit"])
             new.dailyLoss = float(response["loss"])
+            new.dailyTrade = int(response["trades"])
         
         response = self.database.getPastPerformance((datetime.utcnow() - timedelta(weeks=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
         if response is not None:
             response = json.loads(response)
             new.weeklyProfit = float(response["profit"])
             new.weeklyLoss = float(response["loss"])
+            new.weeklyTrade = int(response["trades"])
         
         response = self.database.getPastPerformance((datetime.utcnow() - relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
         if response is not None:
             response = json.loads(response)
             new.monthlyProfit = float(response["profit"])
             new.monthlyLoss = float(response["loss"])
+            new.monthlyTrade = int(response["trades"])
 
         return new
     

@@ -30,7 +30,8 @@ def stop(exchange_client, crypto, account, taxe_rate):
     return message + ".\n\n"
 
 def report(account, taxe_rate):
-    message = "\nDAILY STATS:\n\tGAINED:\t" + \
+    message = "\nDAILY STATS:\n\tTRADES:\t" + \
+        str(account.dailyTrade) + "\n\tGAINED:\t" + \
         str(round(account.dailyProfit, 2)) + "€\n\tLOST:\t" + \
         str(round(account.dailyLoss, 2)) + "€\n"
 
@@ -44,10 +45,12 @@ def report(account, taxe_rate):
     
     account.dailyProfit = 0
     account.dailyLoss = 0
+    account.dailyTrade = 0
     
     today = datetime.datetime.now()
     if today.weekday() == 6:
-        message += "\nWEEKLY STATS:\n\tGAINED:\t" + \
+        message += "\nWEEKLY STATS:\n\tTRADES:\t" + \
+            str(account.weeklyTrade) + "\n\tGAINED:\t" + \
             str(round(account.weeklyProfit, 2)) + "€\n\tLOST:\t" + \
             str(round(account.weeklyLoss, 2)) + "€\n"
 
@@ -61,9 +64,11 @@ def report(account, taxe_rate):
     
         account.weeklyProfit = 0
         account.weeklyLoss = 0
+        account.weeklyTrade = 0
     
     if today.month != (today + timedelta(days=1)).month:
-        message += "\nMONTHLY STATS:\n\tGAINED:\t" + \
+        message += "\nMONTHLY STATS:\n\tTRADES:\t" + \
+            str(account.monthlyTrade) + "\n\tGAINED:\t" + \
             str(round(account.monthlyProfit, 2)) + "€\n\tLOST:\t" + \
             str(round(account.monthlyLoss, 2)) + "€\n"
 
@@ -77,6 +82,7 @@ def report(account, taxe_rate):
     
         account.monthlyProfit = 0
         account.monthlyLoss = 0
+        account.monthlyTrade = 0
 
     return message + "\n"
 
