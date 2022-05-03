@@ -5,9 +5,6 @@ import datetime
 from datetime import timedelta
 from lastversion import has_update
 
-from server import exchange
-from server import mail
-
 def stop(exchange_client, crypto, account, taxe_rate):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == 0:
@@ -94,77 +91,11 @@ def checkUpdate():
             str(version) + ".\nNote that this new version may include security patches, bug fixes and new features.\n"
     
     return message
-        
-isOk = True
 
-min_recovered = os.getenv('MIN_RECOVERED_RATE')
-min_profit = os.getenv('MIN_PROFIT_RATE')
-max_danger = os.getenv('MAX_DANGER')
-refresh_time = os.getenv('MINUTES_REFRESH_TIME')
-taxe_rate = os.getenv('TAXE_RATE')
-smtp_sending = os.getenv('SEND_ALERT_MAIL')
-latest_release = os.getenv('TRADER_VERSION')
-
-if min_recovered is None:
-    print("Default recovered rate is 0.95")
-    min_recovered = 0.95
-min_recovered = float(min_recovered)
-
-if min_profit is None:
-    print("Default profit rate is 1.05")
-    min_profit = 1.05
-min_profit = float(min_profit)
-
-if max_danger is None:
-    print("Default max danger is 10")
-    max_danger = 10
-max_danger = int(max_danger)
-
-if refresh_time is None:
-    print("Default refresh time is 10 minutes")
-    refresh_time = 10
-refresh_time = int(refresh_time) * 60
-
-if taxe_rate is None:
-    print("Defaut taxe rate is 0.0")
-    taxe_rate = 0.0
-taxe_rate = float(taxe_rate)
-
-if smtp_sending is None or smtp_sending.lower() != "true":
-    print("By default, you will not be alerted of any variation")
-    smtp_sending = False
-else:
-    smtp_sending = True
-
-client = exchange.BitpandaPro().new()
-
-smtp = None
-account = None
-
-if client is not None:
-    account = client.getAccount()
-
-if smtp_sending == True:
-    smtp = mail.SMTP().new()
-    if smtp is None:
-        isOk = False
-
-if account is None:
-    isOk = False
-
-# 2 hours delay between full danger calculation
-hours = 2
-seconds_in_delay = hours * 3600
-delay = seconds_in_delay
-
-report_send = False
-
-while isOk:
-    subject = "New trading update - " + time.strftime("%d/%m/%Y - %H:%M:%S")
-    message = ""
+def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate):
     trading_message = ""
 
-    for crypto in client.getAllActiveTrades(account, max_danger):
+    for crypto in exchange_client.getAllActiveTrades(account, max_danger):
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -177,48 +108,22 @@ while isOk:
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
-            trading_message += stop(client, crypto, account, taxe_rate)
+            trading_message += stop(exchange_client, crypto, account, taxe_rate)
 
         elif crypto.danger > max_danger:
             trading_message += crypto.instrument_code + " is too dangerous. "
-            trading_message += stop(client, crypto, account, taxe_rate)
+            trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
         elif crypto.danger >= max_danger % 2 and crypto.current * account.takerFee >= crypto.placed * min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
-            trading_message += stop(client, crypto, account, taxe_rate)
+            trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
         if delay < 0:
-            crypto.loaded = False
-    
+            crypto.loaded = False #la valeur n'est pas actualisé en BDD ?!
+        
+    exchange_client.actualizeAccount(account)
+
     if trading_message != "":
-        message += "############# TRADES #############\n\n"
+        return "############# TRADES #############\n\n" + trading_message
     
-    message += trading_message
-    
-    report_message = ""
-    if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours,00):
-        report_message = report(account, taxe_rate)
-        report_send = False
-        message += "############# REPORT #############\n"
-    
-    message += report_message
-
-    if latest_release is not None and message != "":
-        message += checkUpdate()
-
-    if smtp_sending == True and message != "":
-        smtp.send(subject=subject, plain=message)
-    
-    if message != "":
-        print("\n" + subject)
-        print("\n" + message)
-
-    client.actualizeAccount(account)
-
-    if (delay > 0):
-        delay -= refresh_time
-    else:
-        delay = seconds_in_delay
-        report_send = True
-
-    time.sleep(refresh_time)
+    return ""
