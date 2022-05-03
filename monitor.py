@@ -196,7 +196,7 @@ while isOk:
     message += trading_message
     
     report_message = ""
-    if report_send == True and datetime.time(00,00) <= datetime.datetime.utcnow().time() <= datetime.time(hours,00):
+    if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours,00):
         report_message = report(account, taxe_rate)
         report_send = False
         message += "############# REPORT #############\n"
