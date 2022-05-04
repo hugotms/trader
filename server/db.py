@@ -12,9 +12,10 @@ class Mongo:
         self.user = user
         self.password = password
 
-    def connect(self):    
         try:
-            client = pymongo.MongoClient("mongodb://" + self.hostname + ":" + str(self.port) + "/", 
+            client = pymongo.MongoClient(
+                host=self.hostname,
+                port=self.port, 
                 username=self.user, 
                 password=self.password
             )
@@ -23,8 +24,8 @@ class Mongo:
 
         except Exception:
             print("Unable to connect to database")
-            self.client = None
-    
+            self.client = None   
+        
     def find(self, table, query={}):
         return list(self.client[table].find(query))
     
@@ -41,7 +42,6 @@ class Mongo:
             print("Unable to delete data on " + table)
     
     def findVar(self, var_name, current_value, default=None):
-        self.connect()
         if self.client is None and current_value is None:
             return default
         
@@ -63,7 +63,6 @@ class Mongo:
         return res[0]["value"]
     
     def putInActive(self, crypto):
-        self.connect()
         if self.client is None:
             return None
         
@@ -117,7 +116,6 @@ class Mongo:
         return self
     
     def putInHistory(self, crypto):
-        self.connect()
         if self.client is None:
             return None
         
@@ -156,7 +154,6 @@ class Mongo:
         return self
     
     def findActives(self, watching_cryptos, watching_currencies):
-        self.connect()
         if self.client is None:
             return []
 
@@ -174,7 +171,6 @@ class Mongo:
         return self.find("actives", query)
     
     def getPastPerformance(self, past, watching_cryptos, watching_currencies, instrument_code=None):
-        self.connect()
         if self.client is None:
             return None
         
@@ -231,7 +227,6 @@ class Mongo:
         })
 
     def getLastDanger(self, crypto):
-        self.connect()
         if self.client is None:
             return 0
         
