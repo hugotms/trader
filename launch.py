@@ -35,7 +35,7 @@ while isOk == True:
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours,00):
         message += "############# REPORT #############\n"
-        message += logic.report(account, parameters.taxe_rate)
+        message += logic.report(parameters.database, parameters.watching_cryptos, parameters.watching_currencies, parameters.taxe_rate)
         report_send = False
 
     if parameters.latest_bot_release is not None and message != "":

@@ -81,6 +81,7 @@ class Mongo:
                 "placed": crypto.placed,
                 "current": crypto.current,
                 "higher": crypto.higher,
+                "placed_on": crypto.placed_on,
                 "danger": crypto.danger,
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
@@ -103,6 +104,7 @@ class Mongo:
                 "placed": crypto.placed,
                 "current": crypto.current,
                 "higher": crypto.higher,
+                "placed_on": crypto.placed_on,
                 "danger": crypto.danger,
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
@@ -141,6 +143,7 @@ class Mongo:
                 "placed": crypto["placed"],
                 "current": crypto["current"],
                 "higher": crypto["higher"],
+                "placed_on": crypto["placed_on"],
                 "danger": crypto["danger"],
                 "loaded": crypto["loaded"],
                 "dailyDanger": crypto["dailyDanger"],
@@ -175,12 +178,14 @@ class Mongo:
         if self.client is None:
             return None
         
+        print(past.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
         profit = 0
         loss = 0
+        volume = 0
 
         query = {
             "date": {
-                "$gt": past
+                "$gt": past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
         }
 
@@ -207,16 +212,22 @@ class Mongo:
         for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
+            placed_on = datetime.strptime(item["placed_on"], "%Y-%m-%dT%H:%M:%S.%fZ").time()
 
             if current > placed:
                 profit += current - placed
             else:
                 loss += placed - current
+
+            volume += current
+            if past.time() <= placed_on:
+                volume += placed
         
         return json.dumps({
             "profit": profit,
             "loss": loss,
-            "trades": len(res)
+            "trades": len(res),
+            "volume": volume
         })
 
     def getLastDanger(self, crypto):

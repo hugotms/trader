@@ -6,7 +6,6 @@ import time
 import os
 
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 from data import account
 from data import assets
@@ -94,27 +93,6 @@ class BitpandaPro:
             res = json.loads(response)
             new.makerFee = res['makerFee']
             new.takerFee = res['takerFee']
-        
-        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
-        if response is not None:
-            response = json.loads(response)
-            new.dailyProfit = float(response["profit"])
-            new.dailyLoss = float(response["loss"])
-            new.dailyTrade = int(response["trades"])
-        
-        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(weeks=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
-        if response is not None:
-            response = json.loads(response)
-            new.weeklyProfit = float(response["profit"])
-            new.weeklyLoss = float(response["loss"])
-            new.weeklyTrade = int(response["trades"])
-        
-        response = self.database.getPastPerformance((datetime.utcnow() - relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
-        if response is not None:
-            response = json.loads(response)
-            new.monthlyProfit = float(response["profit"])
-            new.monthlyLoss = float(response["loss"])
-            new.monthlyTrade = int(response["trades"])
 
         return new
     
@@ -317,7 +295,8 @@ class BitpandaPro:
                             currency=item['trade']['instrument_code'].split('_')[1],
                             owned=float(item['trade']['amount']) * account.makerFee,
                             placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
-                            current=amount
+                            current=amount,
+                            placed_on=item['trade']['time']
                             ).setHigher())
                         
                         trade_names.append(item['trade']['instrument_code'])

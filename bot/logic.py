@@ -1,7 +1,9 @@
 import time
 import datetime
+import json
 
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from lastversion import has_update
 
 def stop(exchange_client, crypto, account, taxe_rate):
@@ -15,74 +17,77 @@ def stop(exchange_client, crypto, account, taxe_rate):
 
     if crypto.current * percentage > crypto.placed and taxe_rate != 0.0:
         profit = crypto.current * percentage - crypto.placed
-        account.addProfit(profit)
         message += " (NET: " + str(round(profit * (1 - taxe_rate), 2)) + "€ / TAXES: " + \
             str(round(profit * taxe_rate, 2)) + "€)"
     elif crypto.current * percentage > crypto.placed:
         profit = crypto.current * percentage - crypto.placed
-        account.addProfit(profit)
         message += " (WON: " + str(round(crypto.current * percentage - crypto.placed, 2)) + "€)"
     elif crypto.current * percentage < crypto.placed:
         loss = crypto.placed - crypto.current * percentage
-        account.addLoss(loss)
         message += " (LOST: " + str(round(loss, 2)) + "€)"
     
     return message + ".\n\n"
 
-def report(account, taxe_rate):
+def report(database, watching_cryptos, watching_currencies, taxe_rate):
+    response = database.getPastPerformance(datetime.datetime.now() - timedelta(days=1), watching_cryptos, watching_currencies)
+    if response is None:
+        return ""
+    response = json.loads(response)
+
     message = "\nDAILY STATS:\n\tTRADES:\t" + \
-        str(account.dailyTrade) + "\n\tGAINED:\t" + \
-        str(round(account.dailyProfit, 2)) + "€\n\tLOST:\t" + \
-        str(round(account.dailyLoss, 2)) + "€\n"
+        str(response["trades"]) + "\n\tGAINED:\t" + \
+        str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
+        str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
+        str(round(response["volume"], 2)) + "€\n"
 
     if taxe_rate != 0.0:
-        message += "\tTAXES:\t" + str(round(account.dailyProfit * taxe_rate, 2)) + \
+        message += "\tTAXES:\t" + str(round(response["profit"] * taxe_rate, 2)) + \
             "€\n"
 
-    if account.dailyProfit * (1 - taxe_rate) > account.dailyLoss:
-        message += "\tPROFIT:\t" + str(round(account.dailyProfit * (1 - taxe_rate) - account.dailyLoss, 2)) + \
+    if response["profit"] * (1 - taxe_rate) > response["loss"]:
+        message += "\tPROFIT:\t" + str(round(response["profit"] * (1 - taxe_rate) - response["loss"], 2)) + \
             "€\n"
-    
-    account.dailyProfit = 0
-    account.dailyLoss = 0
-    account.dailyTrade = 0
     
     today = datetime.datetime.now()
     if today.weekday() == 6:
+        response = database.getPastPerformance(datetime.datetime.now() - timedelta(weeks=1), watching_cryptos, watching_currencies)
+        if response is None:
+            return message
+        response = json.loads(response)
+
         message += "\nWEEKLY STATS:\n\tTRADES:\t" + \
-            str(account.weeklyTrade) + "\n\tGAINED:\t" + \
-            str(round(account.weeklyProfit, 2)) + "€\n\tLOST:\t" + \
-            str(round(account.weeklyLoss, 2)) + "€\n"
+            str(response["trades"]) + "\n\tGAINED:\t" + \
+            str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
+            str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
+            str(round(response["volume"], 2)) + "€\n"
 
         if taxe_rate != 0.0:
-            message += "\tTAXES:\t" + str(round(account.weeklyProfit * taxe_rate, 2)) + \
+            message += "\tTAXES:\t" + str(round(response["profit"] * taxe_rate, 2)) + \
                 "€\n"
 
-        if account.weeklyProfit * (1 - taxe_rate) > account.weeklyLoss:
-            message += "\tPROFIT:\t" + str(round(account.weeklyProfit * (1 - taxe_rate) - account.weeklyLoss, 2)) + \
-                "€\n" 
-    
-        account.weeklyProfit = 0
-        account.weeklyLoss = 0
-        account.weeklyTrade = 0
+        if response["profit"] * (1 - taxe_rate) > response["loss"]:
+            message += "\tPROFIT:\t" + str(round(response["profit"] * (1 - taxe_rate) - response["loss"], 2)) + \
+                "€\n"
     
     if today.month != (today + timedelta(days=1)).month:
+        response = database.getPastPerformance(datetime.datetime.now() - relativedelta(months=1), watching_cryptos, watching_currencies)
+        if response is None:
+            return message
+        response = json.loads(response)
+
         message += "\nMONTHLY STATS:\n\tTRADES:\t" + \
-            str(account.monthlyTrade) + "\n\tGAINED:\t" + \
-            str(round(account.monthlyProfit, 2)) + "€\n\tLOST:\t" + \
-            str(round(account.monthlyLoss, 2)) + "€\n"
+            str(response["trades"]) + "\n\tGAINED:\t" + \
+            str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
+            str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
+            str(round(response["volume"], 2)) + "€\n"
 
         if taxe_rate != 0.0:
-            message += "\tTAXES:\t" + str(round(account.monthlyProfit * taxe_rate, 2)) + \
+            message += "\tTAXES:\t" + str(round(response["profit"] * taxe_rate, 2)) + \
                 "€\n"
 
-        if account.monthlyProfit * (1 - taxe_rate) > account.monthlyLoss:
-            message += "\tPROFIT:\t" + str(round(account.monthlyProfit * (1 - taxe_rate) - account.monthlyLoss, 2)) + \
-                "€\n" 
-    
-        account.monthlyProfit = 0
-        account.monthlyLoss = 0
-        account.monthlyTrade = 0
+        if response["profit"] * (1 - taxe_rate) > response["loss"]:
+            message += "\tPROFIT:\t" + str(round(response["profit"] * (1 - taxe_rate) - response["loss"], 2)) + \
+                "€\n"
 
     return message + "\n"
 
