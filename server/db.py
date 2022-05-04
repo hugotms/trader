@@ -174,7 +174,6 @@ class Mongo:
         if self.client is None:
             return None
         
-        print(past.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
         profit = 0
         loss = 0
         volume = 0
