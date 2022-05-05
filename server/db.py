@@ -185,7 +185,7 @@ class Mongo:
         }
 
         if len(watching_cryptos) != 0:
-            query["_id"] = {
+            query["instrument_code"] = {
                 "$in": watching_cryptos
             }
         
@@ -207,7 +207,10 @@ class Mongo:
         for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
-            placed_on = datetime.strptime(item["placed_on"], "%Y-%m-%dT%H:%M:%S.%fZ").time()
+
+            placed_on = None
+            if "placed_on" in item:
+                placed_on = datetime.strptime(item["placed_on"], "%Y-%m-%dT%H:%M:%S.%fZ").time()
 
             if current > placed:
                 profit += current - placed
@@ -215,7 +218,7 @@ class Mongo:
                 loss += placed - current
 
             volume += current
-            if past.time() <= placed_on:
+            if placed_on is not None and past.time() <= placed_on:
                 volume += placed
         
         return json.dumps({
