@@ -19,7 +19,7 @@ hours = 2
 seconds_in_delay = hours * 3600
 delay = seconds_in_delay
 
-report_send = True
+report_send = False
 
 while isOk == True:
     subject = "New trading update - " + time.strftime("%d/%m/%Y - %H:%M:%S")
@@ -33,10 +33,9 @@ while isOk == True:
             delay
         )
 
-    if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours,00):
+    if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):
         message += "############# REPORT #############\n"
         message += logic.report(parameters.database, parameters.watching_cryptos, parameters.watching_currencies, parameters.taxe_rate)
-        report_send = False
 
     if parameters.latest_bot_release is not None and message != "":
         message += logic.checkUpdate(parameters.latest_bot_release)
@@ -50,6 +49,7 @@ while isOk == True:
 
     if (delay > 0):
         delay -= parameters.refresh_time
+        report_send = False
     else:
         delay = seconds_in_delay
         report_send = True
