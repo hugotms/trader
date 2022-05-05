@@ -20,6 +20,8 @@ If you want to receive mail alert on action took by the bot, please make sure th
 
 ## Variables
 
+### Envrionment variables only
+
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
 | `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API            | yes      | None       |
@@ -28,6 +30,11 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `MONGO_DB_NAME`       | The MongoDB database            | no      | trader       |
 | `MONGO_DB_USER`       | The MongoDB username            | no      | trader       |
 | `MONGO_DB_PORT`       | The MongoDB port            | no      | 27017       |
+
+### Other variables
+
+| Variable      | Description       | Required | Default |
+|---------------|-------------------|----------|---------|
 | `MIN_RECOVERED_RATE`       | The rate you want to get if stock goes down            | no      | 0.95       |
 | `MIN_PROFIT_RATE`          | The rate from which you may take profit if considered dangerous        | no      | 1.05       |
 | `MAX_DANGER`              | The maximum danger level an action can be running       | no         | 10        |
