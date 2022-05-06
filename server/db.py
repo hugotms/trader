@@ -210,7 +210,7 @@ class Mongo:
 
             placed_on = None
             if "placed_on" in item:
-                placed_on = datetime.strptime(item["placed_on"], "%Y-%m-%dT%H:%M:%S.%fZ").time()
+                placed_on = datetime.strptime(item["placed_on"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
             if current > placed:
                 profit += current - placed
@@ -218,7 +218,7 @@ class Mongo:
                 loss += placed - current
 
             volume += current
-            if placed_on is not None and past.time() <= placed_on:
+            if placed_on is not None and past <= placed_on:
                 volume += placed
         
         return json.dumps({
