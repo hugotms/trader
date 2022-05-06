@@ -6,7 +6,6 @@ import time
 import os
 
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 from data import account
 from data import assets
@@ -14,32 +13,16 @@ from data import assets
 class BitpandaPro:
     baseUrl = "https://api.exchange.bitpanda.com/public/v1"
 
-    def __init__(self):
-        self.database = db.Mongo().new()
-
-    def new(self):
-        if self.database is None:
-            return None
-        
-        if os.getenv('EXCHANGE_API_KEY') is None:
-            print("Required API key was not set")
-            return None
-        
-        self.watching_cryptos = []
-        if os.getenv('WATCHING_CRYPTOS') is not None:
-            self.watching_cryptos = os.getenv('WATCHING_CRYPTOS').split(',')
-        
-        self.watching_currencies = []
-        if os.getenv('WATCHING_CURRENCIES') is not None:
-            self.watching_currencies = os.getenv('WATCHING_CURRENCIES').split(',')
-        
+    def __init__(self, api_key, database, watching_cryptos, watching_currencies):
         self.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + os.getenv('EXCHANGE_API_KEY')
+            'Authorization': 'Bearer ' + api_key
             }
         
-        return self
+        self.database = database
+        self.watching_cryptos = watching_cryptos
+        self.watching_currencies = watching_currencies
     
     def getAccountDetails(self):
         amount = 0
@@ -110,24 +93,6 @@ class BitpandaPro:
             res = json.loads(response)
             new.makerFee = res['makerFee']
             new.takerFee = res['takerFee']
-        
-        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
-        if response is not None:
-            response = json.loads(response)
-            new.dailyProfit = float(response["profit"])
-            new.dailyLoss = float(response["loss"])
-        
-        response = self.database.getPastPerformance((datetime.utcnow() - timedelta(weeks=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
-        if response is not None:
-            response = json.loads(response)
-            new.weeklyProfit = float(response["profit"])
-            new.weeklyLoss = float(response["loss"])
-        
-        response = self.database.getPastPerformance((datetime.utcnow() - relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ"), self.watching_cryptos, self.watching_currencies)
-        if response is not None:
-            response = json.loads(response)
-            new.monthlyProfit = float(response["profit"])
-            new.monthlyLoss = float(response["loss"])
 
         return new
     
@@ -330,7 +295,8 @@ class BitpandaPro:
                             currency=item['trade']['instrument_code'].split('_')[1],
                             owned=float(item['trade']['amount']) * account.makerFee,
                             placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
-                            current=amount
+                            current=amount,
+                            placed_on=item['trade']['time']
                             ).setHigher())
                         
                         trade_names.append(item['trade']['instrument_code'])

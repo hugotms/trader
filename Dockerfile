@@ -1,4 +1,4 @@
-ARG VERSION=v2.1.0
+ARG VERSION=v2.2.0
 
 FROM alpine/git:latest as clone
 
@@ -25,5 +25,5 @@ COPY --from=clone /trader .
 
 RUN pip install -r requirements.txt
 
-CMD ["monitor.py"]
+CMD ["launch.py"]
 ENTRYPOINT ["python","-u"]

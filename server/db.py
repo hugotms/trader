@@ -1,41 +1,21 @@
 import pymongo
-import os
 import json
 
 from datetime import datetime
 
 class Mongo:
 
-    def __init__(self):
-        self.hostname = os.getenv('MONGO_DB_HOST')
-        self.port = os.getenv('MONGO_DB_PORT')
-        self.db_name = os.getenv('MONGO_DB_NAME')
-        self.user = os.getenv('MONGO_DB_USER')
-        self.password = os.getenv('MONGO_DB_PASSWORD')
+    def __init__(self, hostname, port, db_name, user, password):
+        self.hostname = hostname
+        self.port = port
+        self.db_name = db_name
+        self.user = user
+        self.password = password
 
-        if self.user is None:
-            print("Default DB user is trader")
-            self.user = "trader"
-
-        if self.db_name is None:
-            print("Default DB name is trader")
-            self.db_name = "trader" 
-
-    def new(self):
-        if self.hostname is None or self.password is None:
-            print("Required DB variables not set")
-            return None
-        
-        if self.port is None:
-            print("Default DB port is 27017")
-            self.port = 27017
-        self.port = int(self.port)
-
-        return self
-
-    def connect(self):    
         try:
-            client = pymongo.MongoClient("mongodb://" + self.hostname + ":" + str(self.port) + "/", 
+            client = pymongo.MongoClient(
+                host=self.hostname,
+                port=self.port, 
                 username=self.user, 
                 password=self.password
             )
@@ -44,8 +24,8 @@ class Mongo:
 
         except Exception:
             print("Unable to connect to database")
-            self.client = None
-    
+            self.client = None   
+        
     def find(self, table, query={}):
         return list(self.client[table].find(query))
     
@@ -61,8 +41,28 @@ class Mongo:
         if self.client[table].delete_one(query) is None:
             print("Unable to delete data on " + table)
     
+    def findVar(self, var_name, current_value, default=None):
+        if self.client is None and current_value is None:
+            return default
+        
+        elif self.client is None:
+            return current_value
+
+        query = {
+            "_id": var_name
+        }
+
+        res = self.find("parameters", query)
+
+        if len(res) == 0 and current_value is None:
+            return default
+        
+        elif len(res) == 0:
+            return current_value
+
+        return res[0]["value"]
+    
     def putInActive(self, crypto):
-        self.connect()
         if self.client is None:
             return None
         
@@ -80,6 +80,7 @@ class Mongo:
                 "placed": crypto.placed,
                 "current": crypto.current,
                 "higher": crypto.higher,
+                "placed_on": crypto.placed_on,
                 "danger": crypto.danger,
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
@@ -102,6 +103,7 @@ class Mongo:
                 "placed": crypto.placed,
                 "current": crypto.current,
                 "higher": crypto.higher,
+                "placed_on": crypto.placed_on,
                 "danger": crypto.danger,
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
@@ -114,7 +116,6 @@ class Mongo:
         return self
     
     def putInHistory(self, crypto):
-        self.connect()
         if self.client is None:
             return None
         
@@ -140,6 +141,7 @@ class Mongo:
                 "placed": crypto["placed"],
                 "current": crypto["current"],
                 "higher": crypto["higher"],
+                "placed_on": crypto["placed_on"],
                 "danger": crypto["danger"],
                 "loaded": crypto["loaded"],
                 "dailyDanger": crypto["dailyDanger"],
@@ -152,7 +154,6 @@ class Mongo:
         return self
     
     def findActives(self, watching_cryptos, watching_currencies):
-        self.connect()
         if self.client is None:
             return []
 
@@ -170,21 +171,21 @@ class Mongo:
         return self.find("actives", query)
     
     def getPastPerformance(self, past, watching_cryptos, watching_currencies, instrument_code=None):
-        self.connect()
         if self.client is None:
             return None
         
         profit = 0
         loss = 0
+        volume = 0
 
         query = {
             "date": {
-                "$gt": past
+                "$gt": past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
         }
 
         if len(watching_cryptos) != 0:
-            query["_id"] = {
+            query["instrument_code"] = {
                 "$in": watching_cryptos
             }
         
@@ -202,22 +203,32 @@ class Mongo:
         elif instrument_code is not None:
             query["instrument_code"] = instrument_code
 
-        for item in self.find("history", query):
+        res = self.find("history", query)
+        for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
+
+            placed_on = None
+            if "placed_on" in item:
+                placed_on = datetime.strptime(item["placed_on"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
             if current > placed:
                 profit += current - placed
             else:
                 loss += placed - current
+
+            volume += current
+            if placed_on is not None and past <= placed_on:
+                volume += placed
         
         return json.dumps({
             "profit": profit,
-            "loss": loss
+            "loss": loss,
+            "trades": len(res),
+            "volume": volume
         })
 
     def getLastDanger(self, crypto):
-        self.connect()
         if self.client is None:
             return 0
         

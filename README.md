@@ -20,6 +20,8 @@ If you want to receive mail alert on action took by the bot, please make sure th
 
 ## Variables
 
+### Envrionment variables only
+
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
 | `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API            | yes      | None       |
@@ -28,6 +30,11 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `MONGO_DB_NAME`       | The MongoDB database            | no      | trader       |
 | `MONGO_DB_USER`       | The MongoDB username            | no      | trader       |
 | `MONGO_DB_PORT`       | The MongoDB port            | no      | 27017       |
+
+### Other variables
+
+| Variable      | Description       | Required | Default |
+|---------------|-------------------|----------|---------|
 | `MIN_RECOVERED_RATE`       | The rate you want to get if stock goes down            | no      | 0.95       |
 | `MIN_PROFIT_RATE`          | The rate from which you may take profit if considered dangerous        | no      | 1.05       |
 | `MAX_DANGER`              | The maximum danger level an action can be running       | no         | 10        |
@@ -48,7 +55,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 In order to build the image, you need to clone this repository then simply run (replace `docker` by `podman` if needed) :
 
 ```bash
-docker build -t trader:2.1.0 https://raw.githubusercontent.com/hugotms/trader/v2.1.0/Dockerfile
+docker build -t trader:2.2.0 https://raw.githubusercontent.com/hugotms/trader/v2.2.0/Dockerfile
 ```
 
 ## Deploy
@@ -58,7 +65,7 @@ docker build -t trader:2.1.0 https://raw.githubusercontent.com/hugotms/trader/v2
 After the image has been built, you can now run it like so (add any non required extra environment variables you want to modify preceeded by a `-e`) :
 
 ```bash
-docker run -d --name trader -e EXCHANGE_API_KEY=token -e MONGO_DB_HOST=hostname -e MONGO_DB_PASSWORD=secure trader:2.1.0
+docker run -d --name trader -e EXCHANGE_API_KEY=token -e MONGO_DB_HOST=hostname -e MONGO_DB_PASSWORD=secure trader:2.2.0
 ```
 
 ### Docker-compose
@@ -69,7 +76,7 @@ If you prefer the docker-compose solution, here is a simple example of a stack:
 version: '3.1'
 services:
   trader:
-    image: trader:2.1.0
+    image: trader:2.2.0
     restart: unless-stopped
     depends_on: mongo_db
     environment:

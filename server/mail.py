@@ -1,53 +1,40 @@
-import os
 import smtplib
 
 from email.mime import multipart, text
 
 class SMTP:
 
-    def new(self):
-        self.smtp_host = os.getenv('SMTP_HOST')
-        self.smtp_port = os.getenv('SMTP_PORT')
-        self.smtp_from = os.getenv('SMTP_FROM')
-        self.smtp_as = os.getenv('SMTP_AS')
-        self.smtp_key = os.getenv('SMTP_KEY')
-        self.smtp_to = os.getenv('SMTP_TO')
+    def __init__(self, host, port, password, from_addr, alias, to_addrs):
+        self.host = host
+        self.port = port
+        self.password = password
+        self.from_addr = from_addr
+        self.alias = alias
+        self.to_addrs = to_addrs
 
-        if (self.smtp_host is None 
-            or self.smtp_port is None
-            or self.smtp_from is None 
-            or self.smtp_key is None):
-
-            print("Required SMTP variables not set")
-            return None
-        
-        self.smtp_port = int(self.smtp_port)
-
-        if self.smtp_as is None:
-            self.smtp_as = self.smtp_from
+        if self.alias is None:
+            self.alias = self.from_addr
         else:
-            self.smtp_as = self.smtp_as + ' <' + self.smtp_from + '>'
+            self.alias = self.alias + ' <' + self.from_addr + '>'
 
-        if self.smtp_to is None:
-            self.smtp_to = self.smtp_from
-        
-        return self
+        if self.to_addrs is None:
+            self.to_addrs = self.from_addr
 
     def send(self, subject, plain, html=None):
         try:
             mail = multipart.MIMEMultipart()
-            mail['From'] = self.smtp_as
-            mail['To'] = self.smtp_to
+            mail['From'] = self.alias
+            mail['To'] = self.to_addrs
             mail['Subject'] = subject
             mail.attach(text.MIMEText(plain, 'plain'))
 
             if html is not None:
                 mail.attach(text.MIMEText(html, 'html'))
 
-            client = smtplib.SMTP(host=self.smtp_host, port=self.smtp_port)
+            client = smtplib.SMTP(host=self.host, port=self.port)
             client.starttls()
-            client.login(user=self.smtp_from, password=self.smtp_key)
-            client.sendmail(from_addr=self.smtp_from, to_addrs=self.smtp_to.split(','), msg=mail.as_string())
+            client.login(user=self.from_addr, password=self.password)
+            client.sendmail(from_addr=self.from_addr, to_addrs=self.to_addrs.split(','), msg=mail.as_string())
             client.quit()
         except Exception:
             print("Failed to send mail")
