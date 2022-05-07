@@ -208,6 +208,7 @@ class Mongo:
             query["instrument_code"] = instrument_code
 
         res = self.find("history", query)
+        trades = len(res)
         for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
@@ -223,12 +224,13 @@ class Mongo:
 
             volume += current
             if placed_on is not None and past <= placed_on:
+                trades += 1
                 volume += placed
         
         return json.dumps({
             "profit": profit,
             "loss": loss,
-            "trades": len(res),
+            "trades": trades,
             "volume": volume
         })
 
