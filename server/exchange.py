@@ -213,8 +213,14 @@ class BitpandaPro:
             return self
         res = json.loads(res)
 
-        if account.available * 10 >= res['volume']:
+        if account.available >= res['volume']:
             danger += 2
+
+        if account.available * 10 >= res['volume']:
+            danger += 1
+        
+        elif account.available * 20 < res['volume']:
+            danger -= 2
 
         if res['open'] > res['close']:
             crypto.dailyDanger += 2

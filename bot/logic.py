@@ -154,6 +154,9 @@ def trade(exchange_client, account, max_danger, max_concurrent_trades):
         return ""
 
     for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, account):
+        if crypto.danger < 1:
+            crypto.danger = 1
+        
         if account.available / crypto.danger > 10:
             trading_message += start(exchange_client, crypto, account)
 
