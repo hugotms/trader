@@ -38,13 +38,13 @@ def start(exchange_client, crypto, account):
     return "Placed action on " + crypto.instrument_code + " for " + str(round(crypto.placed, 2)) + \
         "€ (OWNED: " + str(round(crypto.owned, 4)) + ").\n\n"
 
-def report(database, watching_cryptos, watching_currencies, taxe_rate):
-    response = database.getPastPerformance(datetime.datetime.now() - timedelta(days=1), watching_cryptos, watching_currencies)
+def report(database, watching_cryptos, ignore_cryptos, watching_currencies, taxe_rate):
+    response = database.getPastPerformance(datetime.datetime.now() - timedelta(days=1), watching_cryptos, ignore_cryptos, watching_currencies)
     if response is None:
         return ""
     response = json.loads(response)
 
-    message = "\nDAILY STATS:\n\tTRADES:\t" + \
+    message = "\nDAILY STATS:\n\tORDERS:\t" + \
         str(response["trades"]) + "\n\tGAINED:\t" + \
         str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
         str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
@@ -60,12 +60,12 @@ def report(database, watching_cryptos, watching_currencies, taxe_rate):
     
     today = datetime.datetime.now()
     if today.weekday() == 6:
-        response = database.getPastPerformance(datetime.datetime.now() - timedelta(weeks=1), watching_cryptos, watching_currencies)
+        response = database.getPastPerformance(datetime.datetime.now() - timedelta(weeks=1), watching_cryptos, ignore_cryptos, watching_currencies)
         if response is None:
             return message
         response = json.loads(response)
 
-        message += "\nWEEKLY STATS:\n\tTRADES:\t" + \
+        message += "\nWEEKLY STATS:\n\tORDERS:\t" + \
             str(response["trades"]) + "\n\tGAINED:\t" + \
             str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
             str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
@@ -80,12 +80,12 @@ def report(database, watching_cryptos, watching_currencies, taxe_rate):
                 "€\n"
     
     if today.month != (today + timedelta(days=1)).month:
-        response = database.getPastPerformance(datetime.datetime.now() - relativedelta(months=1), watching_cryptos, watching_currencies)
+        response = database.getPastPerformance(datetime.datetime.now() - relativedelta(months=1), watching_cryptos, ignore_cryptos, watching_currencies)
         if response is None:
             return message
         response = json.loads(response)
 
-        message += "\nMONTHLY STATS:\n\tTRADES:\t" + \
+        message += "\nMONTHLY STATS:\n\tORDERS:\t" + \
             str(response["trades"]) + "\n\tGAINED:\t" + \
             str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
             str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \

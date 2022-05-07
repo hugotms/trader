@@ -153,12 +153,17 @@ class Mongo:
         
         return self
     
-    def findActives(self, watching_cryptos, watching_currencies):
+    def findActives(self, watching_cryptos, ignore_cryptos, watching_currencies):
         if self.client is None:
             return []
 
         query = {}
-        if len(watching_cryptos) != 0:
+        if len(ignore_cryptos) != 0:
+            query["_id"] = {
+                "$nin": ignore_cryptos
+            }
+        
+        elif len(watching_cryptos) != 0:
             query["_id"] = {
                 "$in": watching_cryptos
             }
@@ -170,7 +175,7 @@ class Mongo:
         
         return self.find("actives", query)
     
-    def getPastPerformance(self, past, watching_cryptos, watching_currencies, instrument_code=None):
+    def getPastPerformance(self, past, watching_cryptos, ignore_cryptos, watching_currencies, instrument_code=None):
         if self.client is None:
             return None
         
@@ -184,7 +189,12 @@ class Mongo:
             }
         }
 
-        if len(watching_cryptos) != 0:
+        if len(ignore_cryptos) != 0:
+            query["instrument_code"] = {
+                "$nin": ignore_cryptos
+            }
+        
+        elif len(watching_cryptos) != 0:
             query["instrument_code"] = {
                 "$in": watching_cryptos
             }
@@ -193,14 +203,8 @@ class Mongo:
             query["currency"] = {
                 "$in": watching_currencies
             }
-
-        if instrument_code is not None and len(watching_cryptos) != 0 and instrument_code not in watching_cryptos:
-            return None
         
-        elif instrument_code is not None and len(watching_currencies) != 0 and instrument_code.split('_')[1] not in watching_currencies:
-            return None
-        
-        elif instrument_code is not None:
+        if instrument_code is not None:
             query["instrument_code"] = instrument_code
 
         res = self.find("history", query)

@@ -26,6 +26,7 @@ class Params:
         self.latest_bot_release = os.getenv('TRADER_VERSION')
 
         self.watching_cryptos = os.getenv('WATCHING_CRYPTOS')
+        self.ignore_cryptos = os.getenv('IGNORE_CRYPTOS')
         self.watching_currencies = os.getenv('WATCHING_CURRENCIES')
 
         self.smtp_sending = os.getenv('SEND_ALERT_MAIL')
@@ -39,6 +40,7 @@ class Params:
     
     def actualize(self):
         self.watching_cryptos = self.database.findVar("watching_cryptos", self.watching_cryptos, [])
+        self.ignore_cryptos = self.database.findVar("ignore_cryptos", self.ignore_cryptos, [])
         self.watching_currencies = self.database.findVar("watching_currencies", self.watching_currencies, [])
         self.min_recovered = self.database.findVar("min_recovered", self.min_recovered, 0.95)
         self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.05)
@@ -63,7 +65,7 @@ class Params:
             self.smtp_sending = False
             self.smtp = None
         
-        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key, self.database, self.watching_cryptos, self.watching_currencies)
+        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key, self.database, self.watching_cryptos, self.ignore_cryptos, self.watching_currencies)
 
         if self.smtp_sending == True: 
             self.smtp = mail.SMTP(
@@ -116,6 +118,9 @@ class Params:
         
         if self.watching_cryptos is not None:
             self.watching_cryptos = self.watching_cryptos.split(',')
+        
+        if self.ignore_cryptos is not None:
+            self.ignore_cryptos = self.ignore_cryptos.split(',')
         
         if self.watching_currencies is not None:
             self.watching_currencies = self.watching_currencies.split(',')
