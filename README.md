@@ -2,7 +2,7 @@
 
 This algorithm has been created by Hugo TOMASI in order to be used with Bitpanda Pro API server. It is used to monitor your trades fluctuation and cancel them if necessary.
 
-In any case would this program be allowed to buy stocks on your behalf.
+In any case would this program be allowed to buy stocks on your behalf, unless you specify it (see variables below).
 
 ## Requirements
 
@@ -42,6 +42,8 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `WATCHING_CRYPTOS`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to look for and thus ignore the rest.            | no      | None       |
 | `WATCHING_CURRENCIES`       | By default, the bot watches all currencies for which you have trades going on. You can, however, specify currencies to look for and thus ignore the rest.            | no      | None       |
 | `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
+| `MAKE_TRADE`          | If set to `true`, allow the bot to start trades on your behalf based on calculation.        | no      | False     |
+| `MAX_CONCURRENT_TRADES`          | Specify the number of concurrent trade the bot is allowed to place (required if `MAKE_TRADE="True"`)        | no      | 0     |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
 | `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_PORT`       | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |

@@ -28,6 +28,16 @@ def stop(exchange_client, crypto, account, taxe_rate):
     
     return message + ".\n\n"
 
+def start(exchange_client, crypto, account):
+    res = exchange_client.makeTrade(crypto, account)
+    if res == False:
+        return "Unable to make trade on " + crypto.instrument_code + ".\n\n"
+    
+    account.available -= crypto.placed
+
+    return "Placed action on " + crypto.instrument_code + " for " + str(round(crypto.placed, 2)) + \
+        "€ (OWNED: " + str(round(crypto.owned, 4)) + ").\n\n"
+
 def report(database, watching_cryptos, watching_currencies, taxe_rate):
     response = database.getPastPerformance(datetime.datetime.now() - timedelta(days=1), watching_cryptos, watching_currencies)
     if response is None:
@@ -124,17 +134,30 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             trading_message += crypto.instrument_code + " is too dangerous. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
-        elif crypto.danger >= max_danger % 2 and crypto.current * account.takerFee >= crypto.placed * min_profit:
+        elif crypto.danger >= int(max_danger / 2) and crypto.current * account.takerFee >= crypto.placed * min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
         if delay < 0:
             crypto.loaded = False
             exchange_client.database.putInActive(crypto)
-        
-    exchange_client.actualizeAccount(account)
 
     if trading_message != "":
-        return "############# TRADES #############\n\n" + trading_message
+        return "############## SOLD ##############\n\n" + trading_message
+    
+    return ""
+
+def trade(exchange_client, account, max_danger, max_concurrent_trades):
+    trading_message = ""
+
+    if account.available < 10:
+        return ""
+
+    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, account):
+        if account.available / crypto.danger > 10:
+            trading_message += start(exchange_client, crypto, account)
+
+    if trading_message != "":
+        return "############# BOUGHT #############\n\n" + trading_message
     
     return ""

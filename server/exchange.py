@@ -5,7 +5,7 @@ import json
 import time
 import os
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from data import account
 from data import assets
@@ -134,12 +134,12 @@ class BitpandaPro:
             return None
         
         if client.getData() == []:
-            print("No prices data were found for time unit " + time_unit)
             return None
 
         return json.dumps({
                 "open": float(client.getData()[0]['open']),
-                "close": float(client.getData()[0]['close'])
+                "close": float(client.getData()[0]['close']),
+                "volume": float(client.getData()[0]['volume'])
             })
     
     def getPrice(self, instrument_code):
@@ -155,10 +155,10 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto, max_danger):
+    def calculateDanger(self, crypto, account, max_danger):
         danger = 0
 
-        if int(self.database.getLastDanger(crypto)) > max_danger % 2:
+        if int(self.database.getLastDanger(crypto)) > int(max_danger / 2):
             danger += 1
 
         res = self.getPrices(crypto, time_unit='MINUTES')
@@ -201,12 +201,20 @@ class BitpandaPro:
         crypto.dailyDanger = 0
         crypto.weeklyDanger = 0
         crypto.monthlyDanger = 0
+
+        if date.today().weekday() == 4:
+            crypto.dailyDanger += 1
+        elif date.today().weekday() >= 5:
+            crypto.dailyDanger += 2
         
         res = self.getPrices(crypto, time_unit='DAYS')
         if res is None:
             crypto.danger += danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
             return self
         res = json.loads(res)
+
+        if account.available * 10 >= res['volume']:
+            danger += 2
 
         if res['open'] > res['close']:
             crypto.dailyDanger += 2
@@ -277,38 +285,40 @@ class BitpandaPro:
         trade_names = []
         ignored_trades = []
         for item in trades:
-            if (
-                (len(self.watching_cryptos) == 0 and len(self.watching_currencies) == 0) 
-                or (len(self.watching_cryptos) != 0 and item['trade']['instrument_code'] in self.watching_cryptos)
-                or (len(self.watching_currencies) != 0 and item['trade']['instrument_code'].split("_")[1] in self.watching_currencies)
-                ):
-                if item['trade']['side'] == "SELL":
-                    ignored_trades.append(item['trade']['instrument_code'])
+            if len(self.watching_cryptos) != 0 and item['trade']['instrument_code'] not in self.watching_cryptos:
+                continue
+            
+            elif len(self.watching_currencies) != 0 and item['trade']['instrument_code'].split("_")[1] not in self.watching_currencies:
+                continue
+            
+            elif item['trade']['instrument_code'] in ignored_trades:
+                continue
 
-                elif item['trade']['instrument_code'] not in ignored_trades:
-                    amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee
+            elif item['trade']['side'] == "SELL":
+                ignored_trades.append(item['trade']['instrument_code'])
+                continue
 
-                    if item['trade']['instrument_code'] not in trade_names:
-                        active_trades.append(assets.Crypto(
-                            instrument_code=item['trade']['instrument_code'],
-                            base=item['trade']['instrument_code'].split('_')[0],
-                            currency=item['trade']['instrument_code'].split('_')[1],
-                            owned=float(item['trade']['amount']) * account.makerFee,
-                            placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
-                            current=amount,
-                            placed_on=item['trade']['time']
-                            ).setHigher())
-                        
-                        trade_names.append(item['trade']['instrument_code'])
-                        
-                    else:
-                        for active in active_trades:
-                            if active.instrument_code == item['trade']['instrument_code']:
-                                active.owned += float(item['trade']['amount']) * account.makerFee
-                                active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
-                                active.current += amount
-                                active.setHigher()
-                                break
+            amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee
+            
+            if item['trade']['instrument_code'] not in trade_names:
+                active_trades.append(assets.Crypto(
+                    instrument_code=item['trade']['instrument_code'],
+                    base=item['trade']['instrument_code'].split('_')[0],
+                    currency=item['trade']['instrument_code'].split('_')[1],
+                    owned=float(item['trade']['amount']) * account.makerFee,
+                    placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
+                    current=amount,
+                    placed_on=item['trade']['time']
+                    ).setHigher())
+                
+                trade_names.append(item['trade']['instrument_code'])
+                
+            else:
+                active = active_trades[trade_names.index(item['trade']['instrument_code'])]
+                active.owned += float(item['trade']['amount']) * account.makerFee
+                active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
+                active.current += amount
+                active.setHigher()
         
         for crypto in self.database.findActives(self.watching_cryptos, self.watching_currencies):
             isFound = False
@@ -330,10 +340,63 @@ class BitpandaPro:
                 self.database.putInHistory(crypto)
 
         for trade in active_trades:
-            self.calculateDanger(trade, max_danger)
+            self.calculateDanger(trade, account, max_danger)
             self.database.putInActive(trade)
 
         return active_trades
+    
+    def findProfitable(self, max_concurrent_trades, max_danger, account):
+        header = {
+            "Accept": "application/json"
+        }
+
+        actives = self.database.findActives(self.watching_cryptos, self.watching_currencies)
+        if len(actives) >= max_concurrent_trades:
+            return []
+        
+        ignored_trades = []
+        for trade in actives:
+            ignored_trades.append(trade["_id"])
+        
+        client = web.Api(BitpandaPro.baseUrl + "/instruments", headers=header).send()
+
+        if client.getStatusCode() != 200:
+            print("Error while trying to get available cryptos")
+            return []
+
+        available_cryptos = []
+        for item in client.getData():
+            pair = item["base"]["code"] + "_" + item["quote"]["code"]
+
+            if pair in ignored_trades:
+                continue
+
+            elif len(self.watching_cryptos) != 0 and pair not in self.watching_cryptos:
+                continue
+            
+            elif len(self.watching_currencies) != 0 and item["quote"]["code"] not in self.watching_currencies:
+                continue
+
+            available_cryptos.append(assets.Crypto(
+                pair, 
+                item["base"]["code"], 
+                item["quote"]["code"], 
+                0, 
+                0, 
+                0, 
+                ""
+            ))
+        
+        profitable_trades = []
+        for crypto in available_cryptos:
+            self.calculateDanger(crypto, account, max_danger)
+            
+            if crypto.danger != 0 and crypto.danger < int(max_danger / 2):
+                profitable_trades.append(crypto)
+
+        profitable_trades.sort(key=lambda x: x.danger)
+
+        return profitable_trades[:max_concurrent_trades]
     
     def stopTrade(self, crypto, account):
         percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.owned)) * account.takerFee * account.makerFee
@@ -363,3 +426,28 @@ class BitpandaPro:
 
         return percentage
     
+    def makeTrade(self, crypto, account):
+        current_price = self.getPrice(crypto.instrument_code)
+        amount = (account.available * account.maker_fee / crypto.danger) / current_price
+        body = {
+            "instrument_code": crypto.instrument_code,
+            "side": "BUY",
+            "type": "MARKET",
+            "amount": str(round(amount, 4))
+        }
+
+        if client.getStatusCode() == 429:
+            print("Too many requests at once")
+            time.sleep(60)
+            client.send()
+        
+        time.sleep(1)
+
+        if client.getStatusCode() != 201:
+            print("Error while trying to make trade")
+            return False
+        
+        crypto.owned = amount
+        crypto.placed = amount * current_price
+
+        return True

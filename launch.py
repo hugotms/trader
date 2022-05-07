@@ -23,7 +23,8 @@ report_send = False
 
 while isOk == True:
     subject = "New trading update - " + time.strftime("%d/%m/%Y - %H:%M:%S")
-    message = logic.monitor(
+    message = ""
+    message += logic.monitor(
             parameters.exchange_client, 
             account, 
             parameters.min_recovered, 
@@ -32,6 +33,11 @@ while isOk == True:
             parameters.taxe_rate,
             delay
         )
+    
+    parameters.exchange_client.actualizeAccount(account)
+
+    if parameters.make_trade == True:
+        message += logic.trade(parameters.exchange_client, account, parameters.max_danger, parameters.max_concurrent_trades)
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):
         message += "############# REPORT #############\n"

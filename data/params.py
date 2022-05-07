@@ -20,6 +20,9 @@ class Params:
         self.max_danger = os.getenv('MAX_DANGER')
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
         self.taxe_rate = os.getenv('TAXE_RATE')
+        self.make_trade = os.getenv('MAKE_TRADE')
+        self.max_concurrent_trades = os.getenv('MAX_CONCURRENT_TRADES')
+
         self.latest_bot_release = os.getenv('TRADER_VERSION')
 
         self.watching_cryptos = os.getenv('WATCHING_CRYPTOS')
@@ -42,6 +45,8 @@ class Params:
         self.max_danger = self.database.findVar("max_danger", self.max_danger, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
+        self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
+        self.max_concurrent_trades = self.database.findVar("max_concurrent_trades", self.max_concurrent_trades, 0)
 
         if self.smtp_sending == True:
             self.smtp_host = self.database.findVar("smtp_host", self.smtp_host)
