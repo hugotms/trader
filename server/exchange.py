@@ -452,6 +452,8 @@ class BitpandaPro:
             "amount": str(round(amount, 4))
         }
 
+        client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
+        
         if client.getStatusCode() == 429:
             print("Too many requests at once")
             time.sleep(60)
