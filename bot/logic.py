@@ -123,6 +123,9 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             + " / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
             + "%)")
 
+        if crypto.danger == -100:
+            print("Danger could not be properly set for " + crypto.instrument_code)
+
         if crypto.current < 10:
             trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n\n"
         

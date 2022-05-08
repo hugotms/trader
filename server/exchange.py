@@ -164,7 +164,7 @@ class BitpandaPro:
 
         res = self.getPrices(crypto, time_unit='MINUTES')
         if res is None:
-            crypto.danger += danger
+            crypto.danger = -100
             return self
         res = json.loads(res)
 
@@ -180,7 +180,7 @@ class BitpandaPro:
         
         res = self.getPrices(crypto, time_unit='HOURS')
         if res is None:
-            crypto.danger += danger
+            crypto.danger = -100
             return self
         res = json.loads(res)
 
@@ -210,7 +210,7 @@ class BitpandaPro:
         
         res = self.getPrices(crypto, time_unit='DAYS')
         if res is None:
-            crypto.danger += danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
+            crypto.danger = -100
             return self
         res = json.loads(res)
 
@@ -235,7 +235,7 @@ class BitpandaPro:
 
         res = self.getPrices(crypto, time_unit='WEEKS')
         if res is None:
-            crypto.danger += danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
+            crypto.danger = -100
             return self
         res = json.loads(res)
 
@@ -251,7 +251,7 @@ class BitpandaPro:
         
         res = self.getPrices(crypto, time_unit='MONTHS')
         if res is None:
-            crypto.danger += danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
+            crypto.danger = -100
             return self
         res = json.loads(res)
 
@@ -407,7 +407,7 @@ class BitpandaPro:
         for crypto in available_cryptos:
             self.calculateDanger(crypto, account, max_danger)
             
-            if crypto.danger != 0 and crypto.danger < int(max_danger / 2):
+            if crypto.danger != -100 and crypto.danger < int(max_danger / 2):
                 profitable_trades.append(crypto)
             
             time.sleep(1)
