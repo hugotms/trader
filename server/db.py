@@ -214,7 +214,7 @@ class Mongo:
             query["currency"] = {
                 "$in": watching_currencies
             }
-            query2["_id"] = {
+            query2["currency"] = {
                 "$in": watching_currencies
             }
         
@@ -229,18 +229,15 @@ class Mongo:
             placed = float(item["placed"])
             current = float(item["current"])
 
-            placed_on = None
-            if "placed_on" in item:
-                placed_on = datetime.strptime(item["placed_on"], "%Y-%m-%dT%H:%M:%S.%fZ")
-
             if current > placed:
                 profit += current - placed
             else:
                 loss += placed - current
 
             volume += current
-            if placed_on is not None and past <= placed_on:
-                volume += placed
+        
+        for item in res2:
+            volume += float(item["placed"])
         
         return json.dumps({
             "profit": profit,
