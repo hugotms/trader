@@ -352,6 +352,7 @@ class BitpandaPro:
         for trade in active_trades:
             self.calculateDanger(trade, account, max_danger)
             self.database.putInActive(trade)
+            time.sleep(1)
 
         return active_trades
     
@@ -406,6 +407,8 @@ class BitpandaPro:
             
             if crypto.danger != 0 and crypto.danger < int(max_danger / 2):
                 profitable_trades.append(crypto)
+            
+            time.sleep(1)
 
         profitable_trades.sort(key=lambda x: x.danger)
 
