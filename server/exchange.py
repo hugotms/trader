@@ -441,7 +441,7 @@ class BitpandaPro:
     
     def makeTrade(self, crypto, account):
         current_price = self.getPrice(crypto.instrument_code)
-        amount = (account.available * account.maker_fee / crypto.danger) / current_price
+        amount = (account.available * account.makerFee / crypto.danger) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
