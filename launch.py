@@ -37,7 +37,12 @@ while isOk == True:
     parameters.exchange_client.actualizeAccount(account)
 
     if parameters.make_trade == True:
-        message += logic.trade(parameters.exchange_client, account, parameters.max_danger, parameters.max_concurrent_trades)
+        message += logic.trade(
+            parameters.exchange_client, 
+            account, 
+            parameters.max_danger, 
+            parameters.max_concurrent_trades
+        )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):
         message += "############# REPORT #############\n"

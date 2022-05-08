@@ -114,6 +114,12 @@ class Params:
             print("DB port must be a number")
             return False
         
+        if self.make_trade is None or self.make_trade.lower() != "true":
+            print("By default, no new trade will be done on your behalf")
+            self.make_trade = False
+        else:
+            self.make_trade = True
+        
         self.database = db.Mongo(self.db_hostname, self.db_port, self.db_name, self.db_user, self.db_password)
         
         if self.watching_cryptos is not None:
@@ -130,6 +136,13 @@ class Params:
                 self.smtp_port = int(self.smtp_port)
             except Exception:
                 print("SMTP port must be a number")
+                return False
+        
+        if self.make_trade == True:
+            try:
+                self.max_concurrent_trades = int(self.max_concurrent_trades)
+            except Exception:
+                print("Max concurrent trades must be a number")
                 return False
         
         self.actualize()
