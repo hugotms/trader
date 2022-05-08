@@ -365,6 +365,8 @@ class BitpandaPro:
         if len(actives) >= max_concurrent_trades:
             return []
         
+        amount_to_return = max_concurrent_trades - len(actives)
+
         ignored_trades = []
         for trade in actives:
             ignored_trades.append(trade["_id"])
@@ -412,7 +414,7 @@ class BitpandaPro:
 
         profitable_trades.sort(key=lambda x: x.danger)
 
-        return profitable_trades[:max_concurrent_trades]
+        return profitable_trades[:amount_to_return]
     
     def stopTrade(self, crypto, account):
         percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.owned)) * account.takerFee * account.makerFee
