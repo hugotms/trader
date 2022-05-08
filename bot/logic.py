@@ -59,7 +59,7 @@ def report(database, watching_cryptos, ignore_cryptos, watching_currencies, taxe
             "€\n"
     
     today = datetime.datetime.now()
-    if today.weekday() == 6:
+    if today.weekday() == 0:
         response = database.getPastPerformance(datetime.datetime.now() - timedelta(weeks=1), watching_cryptos, ignore_cryptos, watching_currencies)
         if response is None:
             return message

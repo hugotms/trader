@@ -188,9 +188,17 @@ class Mongo:
                 "$gt": past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
         }
+        query2 = {
+            "placed_on": {
+                "$gt": past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            }
+        }
 
         if len(ignore_cryptos) != 0:
             query["instrument_code"] = {
+                "$nin": ignore_cryptos
+            }
+            query2["_id"] = {
                 "$nin": ignore_cryptos
             }
         
@@ -198,17 +206,25 @@ class Mongo:
             query["instrument_code"] = {
                 "$in": watching_cryptos
             }
+            query2["_id"] = {
+                "$in": watching_cryptos
+            }
         
         if len(watching_currencies) != 0:
             query["currency"] = {
                 "$in": watching_currencies
             }
+            query2["_id"] = {
+                "$in": watching_currencies
+            }
         
         if instrument_code is not None:
             query["instrument_code"] = instrument_code
+            query2["_id"] = instrument_code
 
         res = self.find("history", query)
-        trades = len(res)
+        res2 = self.find("actives", query2)
+        trades = len(res) + len(res2)
         for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
@@ -224,7 +240,6 @@ class Mongo:
 
             volume += current
             if placed_on is not None and past <= placed_on:
-                trades += 1
                 volume += placed
         
         return json.dumps({
