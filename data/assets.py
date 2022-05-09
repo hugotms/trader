@@ -15,6 +15,7 @@ class Crypto:
         self.dailyDanger = 0
         self.weeklyDanger = 0
         self.monthlyDanger = 0
+        self.precision = 4
 
     def setHigher(self):
         self.higher = self.placed

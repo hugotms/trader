@@ -85,7 +85,8 @@ class Mongo:
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
                 "weeklyDanger": crypto.weeklyDanger,
-                "monthlyDanger": crypto.monthlyDanger
+                "monthlyDanger": crypto.monthlyDanger,
+                "precision": crypto.precision
             }
 
             query = {
@@ -108,7 +109,8 @@ class Mongo:
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
                 "weeklyDanger": crypto.weeklyDanger,
-                "monthlyDanger": crypto.monthlyDanger
+                "monthlyDanger": crypto.monthlyDanger,
+                "precision": crypto.precision
             }
 
             self.create("actives", data)
@@ -146,7 +148,8 @@ class Mongo:
                 "loaded": crypto["loaded"],
                 "dailyDanger": crypto["dailyDanger"],
                 "weeklyDanger": crypto["weeklyDanger"],
-                "monthlyDanger": crypto["monthlyDanger"]
+                "monthlyDanger": crypto["monthlyDanger"],
+                "precision": crypto["precision"]
             }
 
             self.create("history", data)

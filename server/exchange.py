@@ -345,14 +345,38 @@ class BitpandaPro:
                         trade.dailyDanger = int(crypto["dailyDanger"])
                         trade.weeklyDanger = int(crypto["weeklyDanger"])
                         trade.monthlyDanger = int(crypto["monthlyDanger"])
+                        trade.precision = int(crypto["precision"])
 
             if isFound == False:
                 self.database.putInHistory(crypto)
 
         for trade in active_trades:
+            wait = 1
+            client = None
+            status_code = 0
+
+            if trade.loaded == False:
+                header = {
+                    "Accept": "application/json"
+                }
+
+                client = web.Api(BitpandaPro.baseUrl + "/instruments", headers=header).send()
+                status_code = client.getStatusCode()
+                
+            if status_code == 200:
+                for item in client.getData():
+                    pair = item["base"]["code"] + "_" + item["quote"]["code"]
+
+                    if pair != trade.instrument_code:
+                        continue
+
+                    trade.precision = int(item["amount_precision"])
+
+                wait += 1
+            
             self.calculateDanger(trade, account, max_danger, min_profit)
             self.database.putInActive(trade)
-            time.sleep(1)
+            time.sleep(wait)
 
         return active_trades
     
@@ -379,6 +403,9 @@ class BitpandaPro:
 
         available_cryptos = []
         for item in client.getData():
+            if item["state"] != "ACTIVE":
+                continue
+
             pair = item["base"]["code"] + "_" + item["quote"]["code"]
 
             if pair in ignored_trades:
@@ -392,8 +419,8 @@ class BitpandaPro:
             
             elif len(self.watching_currencies) != 0 and item["quote"]["code"] not in self.watching_currencies:
                 continue
-
-            available_cryptos.append(assets.Crypto(
+            
+            new = assets.Crypto(
                 pair, 
                 item["base"]["code"], 
                 item["quote"]["code"], 
@@ -401,7 +428,10 @@ class BitpandaPro:
                 0, 
                 0, 
                 ""
-            ))
+            )
+            new.precision = int(item["amount_precision"])
+
+            available_cryptos.append(new)
         
         profitable_trades = []
         for crypto in available_cryptos:
@@ -422,7 +452,7 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "MARKET",
-            "amount": str(round(crypto.owned * percentage, 4))
+            "amount": str(round(crypto.owned * percentage, crypto.precision))
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
@@ -451,7 +481,7 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
             "type": "MARKET",
-            "amount": str(round(amount, 4))
+            "amount": str(round(amount, crypto.precision))
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
