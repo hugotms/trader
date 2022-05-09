@@ -41,7 +41,8 @@ while isOk == True:
             parameters.exchange_client, 
             account, 
             parameters.max_danger, 
-            parameters.max_concurrent_trades
+            parameters.max_concurrent_trades,
+            parameters.min_profit
         )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):

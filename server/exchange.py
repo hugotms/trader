@@ -156,10 +156,10 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto, account, max_danger):
+    def calculateDanger(self, crypto, account, max_danger, min_profit):
         danger = 0
 
-        if int(self.database.getLastDanger(crypto)) > int(max_danger / 2):
+        if self.database.getLastDanger(crypto, min_profit) > int(max_danger / 2):
             danger += 1
 
         res = self.getPrices(crypto, time_unit='MINUTES')
@@ -271,7 +271,7 @@ class BitpandaPro:
         return self
 
 
-    def getAllActiveTrades(self, account, max_danger):
+    def getAllActiveTrades(self, account, max_danger, min_profit):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -350,13 +350,13 @@ class BitpandaPro:
                 self.database.putInHistory(crypto)
 
         for trade in active_trades:
-            self.calculateDanger(trade, account, max_danger)
+            self.calculateDanger(trade, account, max_danger, min_profit)
             self.database.putInActive(trade)
             time.sleep(1)
 
         return active_trades
     
-    def findProfitable(self, max_concurrent_trades, max_danger, account):
+    def findProfitable(self, max_concurrent_trades, max_danger, min_profit, account):
         header = {
             "Accept": "application/json"
         }
@@ -405,7 +405,7 @@ class BitpandaPro:
         
         profitable_trades = []
         for crypto in available_cryptos:
-            self.calculateDanger(crypto, account, max_danger)
+            self.calculateDanger(crypto, account, max_danger, min_profit)
             
             if crypto.danger != -100 and crypto.danger < int(max_danger / 2):
                 profitable_trades.append(crypto)

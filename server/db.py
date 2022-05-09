@@ -246,7 +246,7 @@ class Mongo:
             "volume": volume
         })
 
-    def getLastDanger(self, crypto):
+    def getLastDanger(self, crypto, min_profit):
         if self.client is None:
             return 0
         
@@ -257,6 +257,13 @@ class Mongo:
         res = self.find("history", query)
         if len(res) == 0:
             return 0
+
+        danger = int(res[0]["danger"])
+        higher = float(res[0]["higher"])
+        current = float(res[0]["current"])
+
+        if higher > current and (higher - current) / higher >= min_profit:
+            danger += 1
         
-        return res[0]["danger"]
+        return danger
     

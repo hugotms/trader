@@ -107,7 +107,7 @@ def checkUpdate(current_version):
     if version != False:
         message = "############# UPDATE #############\n" + \
             "\nA new version of Trader is available ! It is highly recommended to upgrade.\n" + \
-            "Currently, you are on version " + os.getenv('TRADER_VERSION') + " and latest is " + \
+            "Currently, you are on version " + current_version + " and latest is " + \
             str(version) + ".\nNote that this new version may include security patches, bug fixes and new features.\n"
     
     return message
@@ -115,7 +115,7 @@ def checkUpdate(current_version):
 def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate, delay):
     trading_message = ""
 
-    for crypto in exchange_client.getAllActiveTrades(account, max_danger):
+    for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_profit):
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -151,13 +151,13 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
     
     return ""
 
-def trade(exchange_client, account, max_danger, max_concurrent_trades):
+def trade(exchange_client, account, max_danger, max_concurrent_trades, min_profit):
     trading_message = ""
 
     if account.available < 10:
         return ""
 
-    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, account):
+    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_profit, account):
         print("Potential with " + crypto.instrument_code + " (DANGER: " + str(crypto.danger) + ")")
 
         if crypto.danger < 1:
