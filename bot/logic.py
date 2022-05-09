@@ -31,7 +31,7 @@ def stop(exchange_client, crypto, account, taxe_rate):
 def start(exchange_client, crypto, account):
     res = exchange_client.makeTrade(crypto, account)
     if res == False:
-        return "Unable to make trade on " + crypto.instrument_code + ".\n\n"
+        return ""
     
     account.available -= crypto.placed
 
