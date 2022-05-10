@@ -9,7 +9,7 @@ from lastversion import has_update
 def stop(exchange_client, crypto, account, taxe_rate):
     percentage = exchange_client.stopTrade(crypto, account)
     if percentage == False:
-        return "Unable to stop trade on " + crypto.instrument_code + ".\n\n"
+        return "Unable to stop trade on " + crypto.instrument_code + ".\n"
     
     account.available += crypto.current * account.takerFee
 
