@@ -26,7 +26,16 @@ class BitpandaPro:
         self.watching_currencies = watching_currencies
     
     def truncate(self, number, precision):
-        return float(int(number * (10**precision))/(10**precision))
+        res = str(float(int(number * (10**precision))/(10**precision)))
+        res_precision = len(res.split('.')[1])
+
+        if res_precision == precision:
+            return res
+        
+        for i in range(precision - res_precision):
+            res += '0'
+        
+        return res
     
     def getAccountDetails(self):
         amount = 0
@@ -470,7 +479,7 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "STOP",
-            "amount": str(self.truncate(crypto.owned * account.takerFee, crypto.precision)),
+            "amount": self.truncate(crypto.owned * account.takerFee, crypto.precision),
             "price": str(round(crypto.higher * min_recovered / crypto.owned, 2)),
             "trigger_price": str(round((crypto.higher / crypto.owned) * account.makerFee * 0.99, 2))
         }
@@ -514,7 +523,7 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "MARKET",
-            "amount": str(self.truncate(crypto.owned * account.takerFee, crypto.precision))
+            "amount": self.truncate(crypto.owned * account.takerFee, crypto.precision)
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
@@ -543,7 +552,7 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
             "type": "MARKET",
-            "amount": str(self.truncate(amount, crypto.precision))
+            "amount": self.truncate(amount, crypto.precision)
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
