@@ -468,6 +468,8 @@ class BitpandaPro:
                 print("Too many requests at once")
                 return False
 
+            time.sleep(1)
+            
             if client.getStatusCode() != 204:
                 print("Error while trying to cancel stop order")
                 return False
@@ -491,7 +493,7 @@ class BitpandaPro:
             time.sleep(60)
             client.send()
         
-        time.sleep(2)
+        time.sleep(1)
 
         if client.getStatusCode() != 201:
             print("Error while trying to create stop order")
@@ -511,6 +513,8 @@ class BitpandaPro:
                 print("Too many requests at once")
                 time.sleep(60)
                 client.send()
+
+            time.sleep(1)
 
             if client.getStatusCode() != 204:
                 print("Error while trying to cancel stop order")
@@ -533,7 +537,7 @@ class BitpandaPro:
             time.sleep(60)
             client.send()
         
-        time.sleep(2)
+        time.sleep(1)
 
         if client.getStatusCode() != 201:
             print("Error while trying to stop trade")

@@ -27,7 +27,7 @@ def stop(exchange_client, crypto, account, taxe_rate):
         loss = crypto.placed - crypto.current * account.takerFee
         message += " (LOST: " + str(round(loss, 2)) + "€)"
     
-    return message + ".\n\n"
+    return message + ".\n"
 
 def start(exchange_client, crypto, account):
     if exchange_client.makeTrade(crypto, account) == False:
@@ -36,7 +36,7 @@ def start(exchange_client, crypto, account):
     account.available -= crypto.placed
 
     return "Placed action on " + crypto.instrument_code + " for " + str(round(crypto.placed, 2)) + \
-        "€ (OWNED: " + str(round(crypto.owned, 4)) + ").\n\n"
+        "€ (OWNED: " + str(round(crypto.owned, 4)) + ").\n"
 
 def report(database, watching_cryptos, ignore_cryptos, watching_currencies, taxe_rate):
     response = database.getPastPerformance(datetime.datetime.now() - timedelta(days=1), watching_cryptos, ignore_cryptos, watching_currencies)
@@ -150,15 +150,13 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             exchange_client.database.putInActive(crypto)
 
     if trading_message != "":
-        return "############## SOLD ##############\n\n" + trading_message
-    
-    return ""
+        print(trading_message)
 
 def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recovered):
     trading_message = ""
 
     if account.available < 10:
-        return ""
+        return None
 
     for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_recovered, account):
         print("Potential with " + crypto.instrument_code + " (DANGER: " + str(crypto.danger) + ")")
@@ -170,6 +168,4 @@ def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recov
             trading_message += start(exchange_client, crypto, account)
 
     if trading_message != "":
-        return "############# BOUGHT #############\n\n" + trading_message
-    
-    return ""
+        print(trading_message)

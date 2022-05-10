@@ -22,9 +22,10 @@ delay = seconds_in_delay
 report_send = False
 
 while isOk == True:
-    subject = "New trading update - " + time.strftime("%d/%m/%Y - %H:%M:%S")
+    subject = "New trading update - " + time.strftime("%d/%m/%Y")
     message = ""
-    message += logic.monitor(
+    
+    logic.monitor(
             parameters.exchange_client, 
             account, 
             parameters.min_recovered, 
@@ -37,7 +38,7 @@ while isOk == True:
     parameters.exchange_client.actualizeAccount(account)
 
     if parameters.make_trade == True:
-        message += logic.trade(
+        logic.trade(
             parameters.exchange_client, 
             account, 
             parameters.max_danger, 
