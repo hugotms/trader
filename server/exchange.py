@@ -486,7 +486,6 @@ class BitpandaPro:
 
         if client.getStatusCode() != 201:
             print("Error while trying to create stop order")
-            print(client.getData())
         
         if client.getStatusCode() == 201:
             crypto.stop_id = client.getData()["order_id"]
@@ -539,7 +538,7 @@ class BitpandaPro:
     
     def makeTrade(self, crypto, account):
         current_price = self.getPrice(crypto.instrument_code)
-        amount = (account.available / crypto.danger) / current_price
+        amount = (account.available * account.makerFee / crypto.danger) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
@@ -558,9 +557,9 @@ class BitpandaPro:
             print("Error while trying to buy crypto")
             return False
         
-        crypto.owned = amount * account.makerFee
-        crypto.placed = amount * current_price * account.makerFee
-        crypto.current = amount * current_price * account.makerFee
+        crypto.owned = amount
+        crypto.placed = amount * current_price
+        crypto.current = amount * current_price
         crypto.setHigher()
 
         return True
