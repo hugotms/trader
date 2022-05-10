@@ -127,7 +127,7 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             crypto.danger = int(max_danger / 2) + 1
 
         if crypto.current < 10:
-            trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n\n"
+            trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"
         
         elif crypto.current * account.takerFee < crypto.higher * min_recovered:
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
