@@ -74,6 +74,7 @@ class Mongo:
         
         if isFound == True:
             data = {
+                "stop_id": crypto.stop_id,
                 "base": crypto.base,
                 "currency": crypto.currency,
                 "owned": crypto.owned,
@@ -98,6 +99,7 @@ class Mongo:
         else:
             data = {
                 "_id": crypto.instrument_code,
+                "stop_id": crypto.stop_id,
                 "base": crypto.base,
                 "currency": crypto.currency,
                 "owned": crypto.owned,
@@ -249,7 +251,7 @@ class Mongo:
             "volume": volume
         })
 
-    def getLastDanger(self, crypto, min_profit):
+    def getLastDanger(self, crypto, min_recovered):
         if self.client is None:
             return 0
         
@@ -265,7 +267,7 @@ class Mongo:
         higher = float(res[0]["higher"])
         current = float(res[0]["current"])
 
-        if higher > current and (higher - current) / higher >= min_profit:
+        if higher > current and (higher - current) / higher >= min_recovered:
             danger += 1
         
         return danger

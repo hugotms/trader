@@ -8,29 +8,29 @@ from lastversion import has_update
 
 def stop(exchange_client, crypto, account, taxe_rate):
     percentage = exchange_client.stopTrade(crypto, account)
-    if percentage == 0:
+    if percentage == False:
         return "Unable to stop trade on " + crypto.instrument_code + ".\n\n"
     
-    account.available += crypto.current * percentage
+    account.available += crypto.current * account.takerFee
+    crypto.active = False
 
     message = "Removed all current action on " + crypto.instrument_code + " at " + str(round(crypto.current, 2)) + "€"
 
-    if crypto.current * percentage > crypto.placed and taxe_rate != 0.0:
-        profit = crypto.current * percentage - crypto.placed
+    if crypto.current * account.takerFee > crypto.placed and taxe_rate != 0.0:
+        profit = crypto.current * account.takerFee - crypto.placed
         message += " (NET: " + str(round(profit * (1 - taxe_rate), 2)) + "€ / TAXES: " + \
             str(round(profit * taxe_rate, 2)) + "€)"
-    elif crypto.current * percentage > crypto.placed:
-        profit = crypto.current * percentage - crypto.placed
-        message += " (WON: " + str(round(crypto.current * percentage - crypto.placed, 2)) + "€)"
-    elif crypto.current * percentage < crypto.placed:
-        loss = crypto.placed - crypto.current * percentage
+    elif crypto.current * account.takerFee > crypto.placed:
+        profit = crypto.current * account.takerFee - crypto.placed
+        message += " (WON: " + str(round(crypto.current * account.takerFee - crypto.placed, 2)) + "€)"
+    elif crypto.current * account.takerFee < crypto.placed:
+        loss = crypto.placed - crypto.current * account.takerFee
         message += " (LOST: " + str(round(loss, 2)) + "€)"
     
     return message + ".\n\n"
 
 def start(exchange_client, crypto, account):
-    res = exchange_client.makeTrade(crypto, account)
-    if res == False:
+    if exchange_client.makeTrade(crypto, account) == False:
         return ""
     
     account.available -= crypto.placed
@@ -115,7 +115,7 @@ def checkUpdate(current_version):
 def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate, delay):
     trading_message = ""
 
-    for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_profit):
+    for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_recovered):
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -142,6 +142,9 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
+        if crypto.active == True and (crypto.higher == crypto.current or crypto.stop_id == ""):
+            exchange_client.incrementTrade(crypto, account, min_recovered)
+        
         if delay < 0:
             crypto.loaded = False
             exchange_client.database.putInActive(crypto)
@@ -151,13 +154,13 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
     
     return ""
 
-def trade(exchange_client, account, max_danger, max_concurrent_trades, min_profit):
+def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recovered):
     trading_message = ""
 
     if account.available < 10:
         return ""
 
-    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_profit, account):
+    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_recovered, account):
         print("Potential with " + crypto.instrument_code + " (DANGER: " + str(crypto.danger) + ")")
 
         if crypto.danger < 1:

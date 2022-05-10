@@ -12,10 +12,12 @@ class Crypto:
         self.placed_on = placed_on
         self.danger = 0
         self.loaded = False
+        self.active = True
         self.dailyDanger = 0
         self.weeklyDanger = 0
         self.monthlyDanger = 0
         self.precision = 4
+        self.stop_id = ""
 
     def setHigher(self):
         self.higher = self.placed

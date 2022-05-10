@@ -42,7 +42,7 @@ while isOk == True:
             account, 
             parameters.max_danger, 
             parameters.max_concurrent_trades,
-            parameters.min_profit
+            parameters.min_recovered
         )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):

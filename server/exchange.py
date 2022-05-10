@@ -25,6 +25,9 @@ class BitpandaPro:
         self.ignore_cryptos = ignore_cryptos
         self.watching_currencies = watching_currencies
     
+    def truncate(self, number, precision):
+        return float(int(number * (10**precision))/(10**precision))
+    
     def getAccountDetails(self):
         amount = 0
 
@@ -156,10 +159,10 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto, account, max_danger, min_profit):
+    def calculateDanger(self, crypto, account, max_danger, min_recovered):
         danger = 0
 
-        if self.database.getLastDanger(crypto, min_profit) > int(max_danger / 2):
+        if self.database.getLastDanger(crypto, min_recovered) > int(max_danger / 2):
             danger += 1
 
         res = self.getPrices(crypto, time_unit='MINUTES')
@@ -271,7 +274,7 @@ class BitpandaPro:
         return self
 
 
-    def getAllActiveTrades(self, account, max_danger, min_profit):
+    def getAllActiveTrades(self, account, max_danger, min_recovered):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -337,6 +340,8 @@ class BitpandaPro:
                 if crypto["_id"] == trade.instrument_code:
                     isFound = True
 
+                    trade.stop_id = crypto["stop_id"]
+
                     if float(crypto["higher"]) > trade.current:
                         trade.higher = float(crypto["higher"])
                     
@@ -374,13 +379,13 @@ class BitpandaPro:
 
                 wait += 1
             
-            self.calculateDanger(trade, account, max_danger, min_profit)
+            self.calculateDanger(trade, account, max_danger, min_recovered)
             self.database.putInActive(trade)
             time.sleep(wait)
 
         return active_trades
     
-    def findProfitable(self, max_concurrent_trades, max_danger, min_profit, account):
+    def findProfitable(self, max_concurrent_trades, max_danger, min_recovered, account):
         header = {
             "Accept": "application/json"
         }
@@ -435,7 +440,7 @@ class BitpandaPro:
         
         profitable_trades = []
         for crypto in available_cryptos:
-            self.calculateDanger(crypto, account, max_danger, min_profit)
+            self.calculateDanger(crypto, account, max_danger, min_recovered)
             
             if crypto.danger != -100 and crypto.danger < int(max_danger / 2):
                 profitable_trades.append(crypto)
@@ -446,13 +451,71 @@ class BitpandaPro:
 
         return profitable_trades[:amount_to_return]
     
+    def incrementTrade(self, crypto, account, min_recovered):
+        if crypto.stop_id != "":
+            client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
+                
+            if client.getStatusCode() == 429:
+                print("Too many requests at once")
+                return False
+
+            if client.getStatusCode() != 204:
+                print("Error while trying to cancel stop order")
+                return False
+                
+            crypto.stop_id = ""
+            self.database.putInActive(crypto)
+
+        body = {
+            "instrument_code": crypto.instrument_code,
+            "side": "SELL",
+            "type": "STOP",
+            "amount": str(self.truncate(crypto.owned * account.takerFee, crypto.precision)),
+            "price": str(round(crypto.higher * min_recovered / crypto.owned, 2)),
+            "trigger_price": str(round((crypto.higher / crypto.owned) * account.makerFee * 0.99, 2))
+        }
+        
+        client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
+        
+        if client.getStatusCode() == 429:
+            print("Too many requests at once")
+            time.sleep(60)
+            client.send()
+        
+        time.sleep(2)
+
+        if client.getStatusCode() != 201:
+            print("Error while trying to create stop order")
+            print(client.getData())
+        
+        if client.getStatusCode() == 201:
+            crypto.stop_id = client.getData()["order_id"]
+        
+        self.database.putInActive(crypto)
+
+        return True
+    
     def stopTrade(self, crypto, account):
-        percentage = (1 - ((0.01 * crypto.owned / crypto.current) / crypto.owned)) * account.takerFee * account.makerFee
+        if crypto.stop_id != "":
+            client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
+            
+            if client.getStatusCode() == 429:
+                print("Too many requests at once")
+                time.sleep(60)
+                client.send()
+
+            if client.getStatusCode() != 204:
+                print("Error while trying to cancel stop order")
+                return False
+            
+            crypto.stop_id = ""
+            self.database.putInActive(crypto)
+        
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "MARKET",
-            "amount": str(round(crypto.owned * percentage, crypto.precision))
+            "amount": str(self.truncate(crypto.owned * account.takerFee, crypto.precision))
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
@@ -462,26 +525,26 @@ class BitpandaPro:
             time.sleep(60)
             client.send()
         
-        time.sleep(1)
+        time.sleep(2)
 
         if client.getStatusCode() != 201:
             print("Error while trying to stop trade")
-            return 0
+            return False
         
         crypto.current = self.getPrice(crypto.instrument_code) * crypto.owned
         crypto.setHigher()
         self.database.putInActive(crypto)
 
-        return percentage
+        return True
     
     def makeTrade(self, crypto, account):
         current_price = self.getPrice(crypto.instrument_code)
-        amount = (account.available * account.makerFee / crypto.danger) / current_price
+        amount = (account.available / crypto.danger) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
             "type": "MARKET",
-            "amount": str(round(amount, crypto.precision))
+            "amount": str(self.truncate(amount, crypto.precision))
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
@@ -489,15 +552,15 @@ class BitpandaPro:
         if client.getStatusCode() == 429:
             print("Too many requests at once")
             time.sleep(60)
-            client.send()
-        
-        time.sleep(1)
+            return False
 
         if client.getStatusCode() != 201:
-            print("Error while trying to make trade")
+            print("Error while trying to buy crypto")
             return False
         
-        crypto.owned = amount
-        crypto.placed = amount * current_price
+        crypto.owned = amount * account.makerFee
+        crypto.placed = amount * current_price * account.makerFee
+        crypto.current = amount * current_price * account.makerFee
+        crypto.setHigher()
 
         return True
