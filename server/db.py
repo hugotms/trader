@@ -74,6 +74,7 @@ class Mongo:
         
         if isFound == True:
             data = {
+                "stop_id": crypto.stop_id,
                 "base": crypto.base,
                 "currency": crypto.currency,
                 "owned": crypto.owned,
@@ -85,7 +86,8 @@ class Mongo:
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
                 "weeklyDanger": crypto.weeklyDanger,
-                "monthlyDanger": crypto.monthlyDanger
+                "monthlyDanger": crypto.monthlyDanger,
+                "precision": crypto.precision
             }
 
             query = {
@@ -97,6 +99,7 @@ class Mongo:
         else:
             data = {
                 "_id": crypto.instrument_code,
+                "stop_id": crypto.stop_id,
                 "base": crypto.base,
                 "currency": crypto.currency,
                 "owned": crypto.owned,
@@ -108,7 +111,8 @@ class Mongo:
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
                 "weeklyDanger": crypto.weeklyDanger,
-                "monthlyDanger": crypto.monthlyDanger
+                "monthlyDanger": crypto.monthlyDanger,
+                "precision": crypto.precision
             }
 
             self.create("actives", data)
@@ -146,19 +150,25 @@ class Mongo:
                 "loaded": crypto["loaded"],
                 "dailyDanger": crypto["dailyDanger"],
                 "weeklyDanger": crypto["weeklyDanger"],
-                "monthlyDanger": crypto["monthlyDanger"]
+                "monthlyDanger": crypto["monthlyDanger"],
+                "precision": crypto["precision"]
             }
 
             self.create("history", data)
         
         return self
     
-    def findActives(self, watching_cryptos, watching_currencies):
+    def findActives(self, watching_cryptos, ignore_cryptos, watching_currencies):
         if self.client is None:
             return []
 
         query = {}
-        if len(watching_cryptos) != 0:
+        if len(ignore_cryptos) != 0:
+            query["_id"] = {
+                "$nin": ignore_cryptos
+            }
+        
+        elif len(watching_cryptos) != 0:
             query["_id"] = {
                 "$in": watching_cryptos
             }
@@ -170,7 +180,7 @@ class Mongo:
         
         return self.find("actives", query)
     
-    def getPastPerformance(self, past, watching_cryptos, watching_currencies, instrument_code=None):
+    def getPastPerformance(self, past, watching_cryptos, ignore_cryptos, watching_currencies, instrument_code=None):
         if self.client is None:
             return None
         
@@ -183,9 +193,25 @@ class Mongo:
                 "$gt": past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
         }
+        query2 = {
+            "placed_on": {
+                "$gt": past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            }
+        }
 
-        if len(watching_cryptos) != 0:
+        if len(ignore_cryptos) != 0:
             query["instrument_code"] = {
+                "$nin": ignore_cryptos
+            }
+            query2["_id"] = {
+                "$nin": ignore_cryptos
+            }
+        
+        elif len(watching_cryptos) != 0:
+            query["instrument_code"] = {
+                "$in": watching_cryptos
+            }
+            query2["_id"] = {
                 "$in": watching_cryptos
             }
         
@@ -193,24 +219,20 @@ class Mongo:
             query["currency"] = {
                 "$in": watching_currencies
             }
-
-        if instrument_code is not None and len(watching_cryptos) != 0 and instrument_code not in watching_cryptos:
-            return None
+            query2["currency"] = {
+                "$in": watching_currencies
+            }
         
-        elif instrument_code is not None and len(watching_currencies) != 0 and instrument_code.split('_')[1] not in watching_currencies:
-            return None
-        
-        elif instrument_code is not None:
+        if instrument_code is not None:
             query["instrument_code"] = instrument_code
+            query2["_id"] = instrument_code
 
         res = self.find("history", query)
+        res2 = self.find("actives", query2)
+        trades = len(res) + len(res2)
         for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
-
-            placed_on = None
-            if "placed_on" in item:
-                placed_on = datetime.strptime(item["placed_on"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
             if current > placed:
                 profit += current - placed
@@ -218,17 +240,18 @@ class Mongo:
                 loss += placed - current
 
             volume += current
-            if placed_on is not None and past <= placed_on:
-                volume += placed
+        
+        for item in res2:
+            volume += float(item["placed"])
         
         return json.dumps({
             "profit": profit,
             "loss": loss,
-            "trades": len(res),
+            "trades": trades,
             "volume": volume
         })
 
-    def getLastDanger(self, crypto):
+    def getLastDanger(self, crypto, min_recovered):
         if self.client is None:
             return 0
         
@@ -239,6 +262,13 @@ class Mongo:
         res = self.find("history", query)
         if len(res) == 0:
             return 0
+
+        danger = int(res[0]["danger"])
+        higher = float(res[0]["higher"])
+        current = float(res[0]["current"])
+
+        if higher > current and (higher - current) / higher >= min_recovered:
+            danger += 1
         
-        return res[0]["danger"]
+        return danger
     

@@ -2,7 +2,7 @@
 
 This algorithm has been created by Hugo TOMASI in order to be used with Bitpanda Pro API server. It is used to monitor your trades fluctuation and cancel them if necessary.
 
-In any case would this program be allowed to buy stocks on your behalf.
+In any case would this program be allowed to buy stocks on your behalf, unless you specify it (see variables below).
 
 ## Requirements
 
@@ -40,8 +40,11 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `MAX_DANGER`              | The maximum danger level an action can be running       | no         | 10        |
 | `MINUTES_REFRESH_TIME`       | The number of minutes between two checks            | no      | 10       |
 | `WATCHING_CRYPTOS`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to look for and thus ignore the rest.            | no      | None       |
+| `IGNORE_CRYPTOS`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to ignore. Note that if both this variable and `WATCHING_CRYPTOS` are set, this one will take precedence.            | no      | None       |
 | `WATCHING_CURRENCIES`       | By default, the bot watches all currencies for which you have trades going on. You can, however, specify currencies to look for and thus ignore the rest.            | no      | None       |
 | `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
+| `MAKE_TRADE`          | If set to `true`, allow the bot to start trades on your behalf based on calculation.        | no      | False     |
+| `MAX_CONCURRENT_TRADES`          | Specify the number of concurrent trade the bot is allowed to place (required if `MAKE_TRADE="True"`)        | no      | 0     |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
 | `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_PORT`       | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
@@ -55,7 +58,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 In order to build the image, you need to clone this repository then simply run (replace `docker` by `podman` if needed) :
 
 ```bash
-docker build -t trader:2.2.0 https://raw.githubusercontent.com/hugotms/trader/v2.2.0/Dockerfile
+docker build -t trader:3.0.0 https://raw.githubusercontent.com/hugotms/trader/v3.0.0/Dockerfile
 ```
 
 ## Deploy
@@ -65,7 +68,7 @@ docker build -t trader:2.2.0 https://raw.githubusercontent.com/hugotms/trader/v2
 After the image has been built, you can now run it like so (add any non required extra environment variables you want to modify preceeded by a `-e`) :
 
 ```bash
-docker run -d --name trader -e EXCHANGE_API_KEY=token -e MONGO_DB_HOST=hostname -e MONGO_DB_PASSWORD=secure trader:2.2.0
+docker run -d --name trader -e EXCHANGE_API_KEY=token -e MONGO_DB_HOST=hostname -e MONGO_DB_PASSWORD=secure trader:3.0.0
 ```
 
 ### Docker-compose
@@ -76,7 +79,7 @@ If you prefer the docker-compose solution, here is a simple example of a stack:
 version: '3.1'
 services:
   trader:
-    image: trader:2.2.0
+    image: trader:3.0.0
     restart: unless-stopped
     depends_on: mongo_db
     environment:

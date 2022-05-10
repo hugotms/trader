@@ -22,8 +22,10 @@ delay = seconds_in_delay
 report_send = False
 
 while isOk == True:
-    subject = "New trading update - " + time.strftime("%d/%m/%Y - %H:%M:%S")
-    message = logic.monitor(
+    subject = "New trading update - " + time.strftime("%d/%m/%Y")
+    message = ""
+    
+    logic.monitor(
             parameters.exchange_client, 
             account, 
             parameters.min_recovered, 
@@ -32,10 +34,27 @@ while isOk == True:
             parameters.taxe_rate,
             delay
         )
+    
+    parameters.exchange_client.actualizeAccount(account)
+
+    if parameters.make_trade == True:
+        logic.trade(
+            parameters.exchange_client, 
+            account, 
+            parameters.max_danger, 
+            parameters.max_concurrent_trades,
+            parameters.min_recovered
+        )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):
         message += "############# REPORT #############\n"
-        message += logic.report(parameters.database, parameters.watching_cryptos, parameters.watching_currencies, parameters.taxe_rate)
+        message += logic.report(
+            parameters.database, 
+            parameters.watching_cryptos, 
+            parameters.ignore_cryptos, 
+            parameters.watching_currencies, 
+            parameters.taxe_rate
+        )
 
     if parameters.latest_bot_release is not None and message != "":
         message += logic.checkUpdate(parameters.latest_bot_release)
