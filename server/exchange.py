@@ -449,6 +449,9 @@ class BitpandaPro:
         
         profitable_trades = []
         for crypto in available_cryptos:
+            if crypto.precision == 0:
+                continue
+            
             self.calculateDanger(crypto, account, max_danger, min_recovered)
             
             if crypto.danger != -100 and crypto.danger < int(max_danger / 2):
