@@ -12,7 +12,6 @@ def stop(exchange_client, crypto, account, taxe_rate):
         return "Unable to stop trade on " + crypto.instrument_code + ".\n\n"
     
     account.available += crypto.current * account.takerFee
-    crypto.active = False
 
     message = "Removed all current action on " + crypto.instrument_code + " at " + str(round(crypto.current, 2)) + "€"
 
@@ -142,7 +141,7 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
-        if crypto.active == True and (crypto.higher == crypto.current or crypto.stop_id == ""):
+        elif crypto.higher == crypto.current or crypto.stop_id == "":
             exchange_client.incrementTrade(crypto, account, min_recovered)
         
         if delay < 0:
