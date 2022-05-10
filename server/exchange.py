@@ -469,7 +469,7 @@ class BitpandaPro:
                 return False
 
             time.sleep(1)
-            
+
             if client.getStatusCode() != 204:
                 print("Error while trying to cancel stop order")
                 return False
@@ -551,7 +551,7 @@ class BitpandaPro:
     
     def makeTrade(self, crypto, account):
         current_price = self.getPrice(crypto.instrument_code)
-        amount = (account.available * account.makerFee / crypto.danger) / current_price
+        amount = (account.available * 0.99 / crypto.danger) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
