@@ -201,7 +201,12 @@ class BitpandaPro:
         elif variation > 0.08:
             danger += 2
         
+        hourlyVolume = res['volume']
+        
         if crypto.loaded == True:
+            if hourlyVolume < crypto.dailyVolume / 24:
+                danger += 2
+            
             danger += crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
             crypto.danger += danger
             return self
@@ -242,6 +247,10 @@ class BitpandaPro:
             crypto.dailyDanger += 1
         elif variation > 0.12:
             crypto.dailyDanger += 2
+        
+        crypto.dailyVolume = res['volume']
+        if hourlyVolume < crypto.dailyVolume / 24:
+            danger += 2
 
         res = self.getPrices(crypto, time_unit='WEEKS')
         if res is None:
@@ -355,6 +364,7 @@ class BitpandaPro:
                     if bool(crypto["loaded"]) == True:
                         trade.loaded = True
                         trade.dailyDanger = int(crypto["dailyDanger"])
+                        trade.dailyVolume = float(crypto["dailyVolume"])
                         trade.weeklyDanger = int(crypto["weeklyDanger"])
                         trade.monthlyDanger = int(crypto["monthlyDanger"])
                         trade.precision = int(crypto["precision"])
