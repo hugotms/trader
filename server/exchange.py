@@ -484,9 +484,9 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "STOP",
-            "amount": self.truncate(crypto.owned * account.takerFee, crypto.precision),
-            "price": str(round(crypto.higher * min_recovered / crypto.owned, 2)),
-            "trigger_price": str(round((crypto.higher / crypto.owned) * account.makerFee * 0.99, 2))
+            "amount": self.truncate(crypto.owned * account.makerFee * account.takerFee, crypto.precision),
+            "price": self.truncate(crypto.higher * min_recovered / crypto.owned, 2),
+            "trigger_price": self.truncate((crypto.higher / crypto.owned) * account.makerFee * 0.99, 2)
         }
         
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
@@ -530,7 +530,7 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "MARKET",
-            "amount": self.truncate(crypto.owned * account.takerFee, crypto.precision)
+            "amount": self.truncate(crypto.owned * account.makerFee * account.takerFee, crypto.precision)
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
