@@ -141,7 +141,7 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
-        elif crypto.higher == crypto.current or crypto.stop_id == "":
+        elif crypto.higher * min_recovered > 10 and (crypto.higher == crypto.current or crypto.stop_id == ""):
             exchange_client.incrementTrade(crypto, account, min_recovered)
         
         if delay < 0:
@@ -154,7 +154,7 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
 def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recovered):
     trading_message = ""
 
-    if account.available < 10:
+    if account.available * min_recovered < 10:
         return None
 
     for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_recovered, account):
@@ -163,7 +163,7 @@ def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recov
         if crypto.danger < 1:
             crypto.danger = 1
         
-        if account.available * account.makerFee / crypto.danger > 10:
+        if account.available * account.makerFee * min_recovered / crypto.danger > 10:
             trading_message += start(exchange_client, crypto, account)
 
     if trading_message != "":
