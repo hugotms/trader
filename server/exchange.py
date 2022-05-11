@@ -110,16 +110,11 @@ class BitpandaPro:
         return new
     
     def actualizeAccount(self, account):
-        available = 0
         fees = None
         
         response = self.getAccountDetails()
         if response is not None:
-            available = json.loads(response)['amount']
-        
-        if account.available != available:
-            print("Uneven account balance between local and remote")
-            account.available = available
+            account.available = json.loads(response)['amount']
         
         response = self.getAccountFees()
         if response is not None:
