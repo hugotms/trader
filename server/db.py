@@ -264,7 +264,10 @@ class Mongo:
         higher = float(res[0]["higher"])
         current = float(res[0]["current"])
 
-        if higher > current and (higher - current) / higher >= min_recovered:
+        if higher > current:
+            danger += 1
+        
+        if higher * min_recovered >= current:
             danger += 1
         
         return danger
