@@ -7,8 +7,7 @@ from dateutil.relativedelta import relativedelta
 from lastversion import has_update
 
 def stop(exchange_client, crypto, account, taxe_rate):
-    percentage = exchange_client.stopTrade(crypto, account)
-    if percentage == False:
+    if exchange_client.stopTrade(crypto, account) == False:
         return "Unable to stop trade on " + crypto.instrument_code + ".\n"
     
     account.available += crypto.current * account.takerFee
