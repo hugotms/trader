@@ -471,7 +471,7 @@ class BitpandaPro:
 
         return profitable_trades[:amount_to_return]
     
-    def incrementTrade(self, crypto, account):
+    def incrementTrade(self, crypto, account, min_recovered):
         if crypto.stop_id != "":
             client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
                 
@@ -493,8 +493,8 @@ class BitpandaPro:
             "side": "SELL",
             "type": "STOP",
             "amount": self.truncate(crypto.owned * account.makerFee * account.takerFee, crypto.precision),
-            "price": self.truncate(crypto.higher * account.makerFee * 0.99 / crypto.owned, 2),
-            "trigger_price": self.truncate(crypto.higher * account.makerFee * 0.99 / crypto.owned, 2)
+            "price": self.truncate(crypto.higher * account.makerFee * min_recovered / crypto.owned, 2),
+            "trigger_price": self.truncate(crypto.higher * account.makerFee * min_recovered / crypto.owned, 2)
         }
         
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
