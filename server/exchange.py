@@ -44,8 +44,7 @@ class BitpandaPro:
 
         if client.getStatusCode() == 429:
             print("Too many requests at once")
-            time.sleep(60)
-            client.send()
+            return None
 
         time.sleep(1)
         
@@ -70,8 +69,7 @@ class BitpandaPro:
 
         if client.getStatusCode() == 429:
             print("Too many requests at once")
-            time.sleep(60)
-            client.send()
+            return None
 
         time.sleep(1)
         
@@ -297,8 +295,7 @@ class BitpandaPro:
 
         if client.getStatusCode() == 429:
             print("Too many requests at once")
-            time.sleep(60)
-            client.send()
+            return []
         
         time.sleep(1)
 
@@ -501,8 +498,7 @@ class BitpandaPro:
         
         if client.getStatusCode() == 429:
             print("Too many requests at once")
-            time.sleep(60)
-            client.send()
+            return False
         
         time.sleep(1)
 
@@ -522,8 +518,7 @@ class BitpandaPro:
             
             if client.getStatusCode() == 429:
                 print("Too many requests at once")
-                time.sleep(60)
-                client.send()
+                return False
 
             time.sleep(1)
 
@@ -545,8 +540,7 @@ class BitpandaPro:
 
         if client.getStatusCode() == 429:
             print("Too many requests at once")
-            time.sleep(60)
-            client.send()
+            return False
         
         time.sleep(1)
 
@@ -574,7 +568,6 @@ class BitpandaPro:
         
         if client.getStatusCode() == 429:
             print("Too many requests at once")
-            time.sleep(60)
             return False
 
         if client.getStatusCode() != 201:
