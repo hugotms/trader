@@ -27,6 +27,11 @@ class BitpandaPro:
     
     def truncate(self, number, precision):
         res = str(float(int(number * (10**precision))/(10**precision)))
+        rounded = round(number, precision)
+
+        if rounded < number:
+            res = str(rounded)
+
         res_precision = len(res.split('.')[1])
 
         if res_precision == precision:
