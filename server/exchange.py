@@ -166,7 +166,7 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto, account, max_danger, min_recovered):
+    def calculateDanger(self, crypto, account, max_danger, min_recovered, alreadyOwned=True):
         danger = 0
 
         if self.database.getLastDanger(crypto, min_recovered) > int(max_danger / 2):
@@ -178,15 +178,21 @@ class BitpandaPro:
             return self
         res = json.loads(res)
 
+        lastMinuteDanger = 0
         if res['open'] > res['close']:
-            danger += 2
+            lastMinuteDanger += 2
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
         if variation > 0.02:
-            danger += 1
+            lastMinuteDanger += 1
         elif variation > 0.06:
-            danger += 2
+            lastMinuteDanger += 2
+        
+        if alreadyOwned != True:
+            lastMinuteDanger *= -1
+        
+        danger += lastMinuteDanger
         
         res = self.getPrices(crypto, time_unit='HOURS')
         if res is None:
@@ -462,7 +468,7 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
-            self.calculateDanger(crypto, account, max_danger, min_recovered)
+            self.calculateDanger(crypto, account, max_danger, min_recovered, False)
             
             if crypto.danger != -100 and crypto.danger < int(max_danger / 2):
                 profitable_trades.append(crypto)
