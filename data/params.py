@@ -138,13 +138,6 @@ class Params:
                 print("SMTP port must be a number")
                 return False
         
-        if self.make_trade == True:
-            try:
-                self.max_concurrent_trades = int(self.max_concurrent_trades)
-            except Exception:
-                print("Max concurrent trades must be a number")
-                return False
-        
         self.actualize()
         
         try:
@@ -153,6 +146,7 @@ class Params:
             self.max_danger = int(self.max_danger)
             self.refresh_time = int(self.refresh_time) * 60
             self.taxe_rate = float(self.taxe_rate)
+            self.max_concurrent_trades = int(self.max_concurrent_trades)
         except Exception:
             print("Error while converting parameters from string")
             return False
