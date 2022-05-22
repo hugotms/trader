@@ -135,9 +135,6 @@ class BitpandaPro:
             "Accept": "application/json"
         }
 
-        if refresh_time != 0:
-            print(refresh_time)
-
         tz = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         tz2 = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
