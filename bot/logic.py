@@ -110,10 +110,10 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate, delay):
+def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate, delay, refresh_time):
     trading_message = ""
 
-    for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_recovered):
+    for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_recovered, refresh_time):
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -150,13 +150,13 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
     if trading_message != "":
         print(trading_message)
 
-def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recovered):
+def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recovered, refresh_time):
     trading_message = ""
 
     if account.available * min_recovered < 10:
         return None
 
-    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_recovered, account):
+    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_recovered, account, refresh_time):
         print("Potential with " + crypto.instrument_code + " (DANGER: " + str(crypto.danger) + ")")
 
         if crypto.danger < 1:

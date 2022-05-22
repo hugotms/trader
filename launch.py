@@ -32,7 +32,8 @@ while isOk == True:
             parameters.min_profit, 
             parameters.max_danger, 
             parameters.taxe_rate,
-            delay
+            delay,
+            parameters.refresh_time
         )
     
     parameters.exchange_client.actualizeAccount(account)
@@ -43,7 +44,8 @@ while isOk == True:
             account, 
             parameters.max_danger, 
             parameters.max_concurrent_trades,
-            parameters.min_recovered
+            parameters.min_recovered,
+            parameters.refresh_time
         )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):
@@ -73,6 +75,6 @@ while isOk == True:
         delay = seconds_in_delay
         report_send = True
 
-    time.sleep(parameters.refresh_time)
+    time.sleep(parameters.refresh_time * 60)
 
     parameters.actualize()

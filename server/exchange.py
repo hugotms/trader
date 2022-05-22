@@ -127,13 +127,16 @@ class BitpandaPro:
             account.takerFee = fees['takerFee']
             account.makerFee = fees['makerFee']
     
-    def getPrices(self, crypto, time_unit=None):
+    def getPrices(self, crypto, time_unit=None, refresh_time=0):
         if time_unit is None:
             return None
         
         header = {
             "Accept": "application/json"
         }
+
+        if refresh_time != 0:
+            print(refresh_time)
 
         tz = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         tz2 = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -146,11 +149,18 @@ class BitpandaPro:
         
         if client.getData() == []:
             return None
+        
+        if len(client.getData()) < refresh_time:
+            return None
+        
+        volume = 0.0
+        for i in range(refresh_time + 1):
+            volume += float(client.getData()[i]['volume'])
 
         return json.dumps({
                 "open": float(client.getData()[0]['open']),
-                "close": float(client.getData()[0]['close']),
-                "volume": float(client.getData()[0]['volume'])
+                "close": float(client.getData()[refresh_time]['close']),
+                "volume": volume
             })
     
     def getPrice(self, instrument_code):
@@ -166,7 +176,7 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto, account, max_danger, min_recovered, alreadyOwned=True):
+    def calculateDanger(self, crypto, account, max_danger, min_recovered, refresh_time, alreadyOwned=True):
         danger = 0
 
         if self.database.getLastDanger(crypto, min_recovered) > int(max_danger / 2):
@@ -193,6 +203,28 @@ class BitpandaPro:
             lastMinuteDanger *= -1
         
         danger += lastMinuteDanger
+
+        res = self.getPrices(crypto, time_unit='MINUTES', refresh_time=refresh_time)
+        if res is None:
+            crypto.danger = -100
+            return self
+        res = json.loads(res)
+
+        lastRefreshDanger = 0
+        if res['open'] > res['close']:
+            lastRefreshDanger += 2
+        
+        variation = abs((res['open'] - res['close']) / res['close'])
+        
+        if variation > 0.02:
+            lastRefreshDanger += 1
+        elif variation > 0.06:
+            lastRefreshDanger += 2
+        
+        if alreadyOwned != True:
+            lastRefreshDanger *= -1
+        
+        danger += lastRefreshDanger
         
         res = self.getPrices(crypto, time_unit='HOURS')
         if res is None:
@@ -299,7 +331,7 @@ class BitpandaPro:
         return self
 
 
-    def getAllActiveTrades(self, account, max_danger, min_recovered):
+    def getAllActiveTrades(self, account, max_danger, min_recovered, refresh_time):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -404,13 +436,13 @@ class BitpandaPro:
 
                 wait += 1
             
-            self.calculateDanger(trade, account, max_danger, min_recovered)
+            self.calculateDanger(trade, account, max_danger, min_recovered, refresh_time)
             self.database.putInActive(trade)
             time.sleep(wait)
 
         return active_trades
     
-    def findProfitable(self, max_concurrent_trades, max_danger, min_recovered, account):
+    def findProfitable(self, max_concurrent_trades, max_danger, min_recovered, account, refresh_time):
         header = {
             "Accept": "application/json"
         }
@@ -468,12 +500,12 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
-            self.calculateDanger(crypto, account, max_danger, min_recovered, False)
+            self.calculateDanger(crypto, account, max_danger, min_recovered, refresh_time, False)
             
             if crypto.danger != -100 and crypto.danger < int(max_danger / 2):
                 profitable_trades.append(crypto)
             
-            time.sleep(1)
+            time.sleep(2)
 
         profitable_trades.sort(key=lambda x: x.danger)
 
