@@ -147,7 +147,7 @@ class BitpandaPro:
         if client.getData() == []:
             return None
         
-        if len(client.getData()) < refresh_time:
+        if len(client.getData()) < refresh_time + 1:
             return None
         
         volume = 0.0
