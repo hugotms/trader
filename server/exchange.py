@@ -194,10 +194,10 @@ class BitpandaPro:
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.02:
-            lastMinuteDanger += 1
-        elif variation > 0.06:
+        if variation > 0.06:
             lastMinuteDanger += 2
+        elif variation > 0.02:
+            lastMinuteDanger += 1
         
         if alreadyOwned != True:
             lastMinuteDanger *= -1
@@ -218,14 +218,12 @@ class BitpandaPro:
         
             variation = abs((res['open'] - res['close']) / res['close'])
         
-            if variation > 0.03:
-                lastRefreshDanger += 1
-            elif variation > 0.07:
+            if variation > 0.07:
                 lastRefreshDanger += 2
+            elif variation > 0.03:
+                lastRefreshDanger += 1
         
-            lastRefreshDanger *= -1
-        
-            danger += lastRefreshDanger
+            danger -= lastRefreshDanger
         
         res = self.getPrices(crypto, time_unit='HOURS')
         if res is None:
@@ -238,10 +236,10 @@ class BitpandaPro:
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.05:
-            danger += 1
-        elif variation > 0.08:
+        if variation > 0.08:
             danger += 2
+        elif variation > 0.05:
+            danger += 1
         
         hourlyVolume = res['volume']
         
@@ -285,10 +283,10 @@ class BitpandaPro:
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.1:
-            crypto.dailyDanger += 1
-        elif variation > 0.12:
+        if variation > 0.12:
             crypto.dailyDanger += 2
+        elif variation > 0.1:
+            crypto.dailyDanger += 1
         
         crypto.dailyVolume = res['volume']
         if hourlyVolume < crypto.dailyVolume / 24:
@@ -305,10 +303,10 @@ class BitpandaPro:
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.1:
-            crypto.weeklyDanger += 1
-        elif variation > 0.2:
+        if variation > 0.2:
             crypto.weeklyDanger += 2
+        elif variation > 0.1:
+            crypto.weeklyDanger += 1
         
         res = self.getPrices(crypto, time_unit='MONTHS')
         if res is None:
@@ -321,10 +319,10 @@ class BitpandaPro:
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.3:
-            crypto.monthlyDanger += 1
-        elif variation > 0.4:
+        if variation > 0.4:
             crypto.monthlyDanger += 2
+        elif variation > 0.3:
+            crypto.monthlyDanger += 1
 
         crypto.danger += danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
         crypto.loaded = True
