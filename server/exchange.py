@@ -176,6 +176,9 @@ class BitpandaPro:
     def calculateDanger(self, crypto, account, max_danger, min_recovered, refresh_time, alreadyOwned=True):
         danger = 0
 
+        if crypto.current != 0 and crypto.current < crypto.placed:
+            danger += 1
+
         if self.database.getLastDanger(crypto, min_recovered) > int(max_danger / 2):
             danger += 1
 
@@ -201,27 +204,28 @@ class BitpandaPro:
         
         danger += lastMinuteDanger
 
-        res = self.getPrices(crypto, time_unit='MINUTES', refresh_time=refresh_time)
-        if res is None:
-            crypto.danger = -100
-            return self
-        res = json.loads(res)
+        if alreadyOwned != True and refresh_time > 1:
+            res = self.getPrices(crypto, time_unit='MINUTES', refresh_time=refresh_time)
+        
+            if res is None:
+                crypto.danger = -100
+                return self
+            res = json.loads(res)
 
-        lastRefreshDanger = 0
-        if res['open'] > res['close']:
-            lastRefreshDanger += 2
+            lastRefreshDanger = 0
+            if res['open'] > res['close']:
+                lastRefreshDanger += 2
         
-        variation = abs((res['open'] - res['close']) / res['close'])
+            variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.02:
-            lastRefreshDanger += 1
-        elif variation > 0.06:
-            lastRefreshDanger += 2
+            if variation > 0.03:
+                lastRefreshDanger += 1
+            elif variation > 0.07:
+                lastRefreshDanger += 2
         
-        if alreadyOwned != True:
             lastRefreshDanger *= -1
         
-        danger += lastRefreshDanger
+            danger += lastRefreshDanger
         
         res = self.getPrices(crypto, time_unit='HOURS')
         if res is None:
