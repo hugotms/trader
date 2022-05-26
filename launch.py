@@ -49,6 +49,7 @@ while isOk == True:
         )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):
+        report_send = False
         message += "############# REPORT #############\n"
         message += logic.report(
             parameters.database, 
@@ -70,7 +71,6 @@ while isOk == True:
 
     if (delay > 0):
         delay -= parameters.refresh_time
-        report_send = False
     else:
         delay = seconds_in_delay
         report_send = True
