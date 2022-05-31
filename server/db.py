@@ -263,11 +263,15 @@ class Mongo:
         danger = int(res[0]["danger"])
         higher = float(res[0]["higher"])
         current = float(res[0]["current"])
+        placed = float(res[0]["placed"])
 
         if higher > current:
             danger += 1
         
-        if higher * min_recovered >= current:
+        if higher * min_recovered <= current:
+            danger += 1
+        
+        if placed >= current:
             danger += 1
         
         return danger

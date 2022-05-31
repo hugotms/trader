@@ -366,15 +366,15 @@ class BitpandaPro:
                 ignored_trades.append(item['trade']['instrument_code'])
                 continue
 
-            amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee
+            amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee * account.takerFee
             
             if item['trade']['instrument_code'] not in trade_names:
                 active_trades.append(assets.Crypto(
                     instrument_code=item['trade']['instrument_code'],
                     base=item['trade']['instrument_code'].split('_')[0],
                     currency=item['trade']['instrument_code'].split('_')[1],
-                    owned=float(item['trade']['amount']) * account.makerFee,
-                    placed=float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee,
+                    owned=float(item['trade']['amount']),
+                    placed=float(item['trade']['amount']) * float(item['trade']['price']),
                     current=amount,
                     placed_on=item['trade']['time']
                     ).setHigher())
@@ -383,8 +383,8 @@ class BitpandaPro:
                 
             else:
                 active = active_trades[trade_names.index(item['trade']['instrument_code'])]
-                active.owned += float(item['trade']['amount']) * account.makerFee
-                active.placed += float(item['trade']['amount']) * float(item['trade']['price']) * account.makerFee
+                active.owned += float(item['trade']['amount'])
+                active.placed += float(item['trade']['amount']) * float(item['trade']['price'])
                 active.current += amount
                 active.setHigher()
         
@@ -532,8 +532,8 @@ class BitpandaPro:
             "side": "SELL",
             "type": "STOP",
             "amount": self.truncate(crypto.owned * account.makerFee * account.takerFee, crypto.precision),
-            "price": self.truncate(crypto.higher * account.makerFee * min_recovered / crypto.owned, 2),
-            "trigger_price": self.truncate(crypto.higher * account.makerFee * min_recovered / crypto.owned, 2)
+            "price": self.truncate(crypto.higher * min_recovered / crypto.owned, 2),
+            "trigger_price": self.truncate(crypto.higher * min_recovered / crypto.owned, 2)
         }
         
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
