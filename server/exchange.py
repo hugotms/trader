@@ -590,7 +590,7 @@ class BitpandaPro:
             print("Error while trying to stop trade")
             return False
         
-        crypto.current = self.getPrice(crypto.instrument_code) * crypto.owned
+        crypto.current = self.getPrice(crypto.instrument_code) * crypto.owned * account.makerFee * account.takerFee
         crypto.setHigher()
         self.database.putInActive(crypto)
 
