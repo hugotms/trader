@@ -85,6 +85,7 @@ class Mongo:
                 "danger": crypto.danger,
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
+                "dailyVolume": crypto.dailyVolume,
                 "weeklyDanger": crypto.weeklyDanger,
                 "monthlyDanger": crypto.monthlyDanger,
                 "precision": crypto.precision
@@ -110,6 +111,7 @@ class Mongo:
                 "danger": crypto.danger,
                 "loaded": crypto.loaded,
                 "dailyDanger": crypto.dailyDanger,
+                "dailyVolume": crypto.dailyVolume,
                 "weeklyDanger": crypto.weeklyDanger,
                 "monthlyDanger": crypto.monthlyDanger,
                 "precision": crypto.precision
@@ -146,12 +148,7 @@ class Mongo:
                 "current": crypto["current"],
                 "higher": crypto["higher"],
                 "placed_on": crypto["placed_on"],
-                "danger": crypto["danger"],
-                "loaded": crypto["loaded"],
-                "dailyDanger": crypto["dailyDanger"],
-                "weeklyDanger": crypto["weeklyDanger"],
-                "monthlyDanger": crypto["monthlyDanger"],
-                "precision": crypto["precision"]
+                "danger": crypto["danger"]
             }
 
             self.create("history", data)
@@ -266,8 +263,15 @@ class Mongo:
         danger = int(res[0]["danger"])
         higher = float(res[0]["higher"])
         current = float(res[0]["current"])
+        placed = float(res[0]["placed"])
 
-        if higher > current and (higher - current) / higher >= min_recovered:
+        if higher > current:
+            danger += 1
+        
+        if higher * min_recovered <= current:
+            danger += 1
+        
+        if placed >= current:
             danger += 1
         
         return danger

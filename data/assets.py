@@ -13,6 +13,7 @@ class Crypto:
         self.danger = 0
         self.loaded = False
         self.dailyDanger = 0
+        self.dailyVolume = 0
         self.weeklyDanger = 0
         self.monthlyDanger = 0
         self.precision = 4

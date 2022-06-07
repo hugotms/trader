@@ -7,23 +7,21 @@ from dateutil.relativedelta import relativedelta
 from lastversion import has_update
 
 def stop(exchange_client, crypto, account, taxe_rate):
-    percentage = exchange_client.stopTrade(crypto, account)
-    if percentage == False:
+    if exchange_client.stopTrade(crypto, account) == False:
         return "Unable to stop trade on " + crypto.instrument_code + ".\n"
     
-    account.available += crypto.current * account.takerFee
+    account.available += crypto.current
 
     message = "Removed all current action on " + crypto.instrument_code + " at " + str(round(crypto.current, 2)) + "€"
 
-    if crypto.current * account.takerFee > crypto.placed and taxe_rate != 0.0:
-        profit = crypto.current * account.takerFee - crypto.placed
+    if crypto.current > crypto.placed and taxe_rate != 0.0:
+        profit = crypto.current * - crypto.placed
         message += " (NET: " + str(round(profit * (1 - taxe_rate), 2)) + "€ / TAXES: " + \
             str(round(profit * taxe_rate, 2)) + "€)"
-    elif crypto.current * account.takerFee > crypto.placed:
-        profit = crypto.current * account.takerFee - crypto.placed
-        message += " (WON: " + str(round(crypto.current * account.takerFee - crypto.placed, 2)) + "€)"
-    elif crypto.current * account.takerFee < crypto.placed:
-        loss = crypto.placed - crypto.current * account.takerFee
+    elif crypto.current > crypto.placed:
+        message += " (WON: " + str(round(crypto.current - crypto.placed, 2)) + "€)"
+    elif crypto.current < crypto.placed:
+        loss = crypto.placed - crypto.current
         message += " (LOST: " + str(round(loss, 2)) + "€)"
     
     return message + ".\n"
@@ -111,10 +109,10 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate, delay):
+def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate, delay, refresh_time):
     trading_message = ""
 
-    for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_recovered):
+    for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_recovered, refresh_time):
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -127,9 +125,9 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             crypto.danger = int(max_danger / 2) + 1
 
         if crypto.current < 10:
-            trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n\n"
+            trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"
         
-        elif crypto.current * account.takerFee < crypto.higher * min_recovered:
+        elif crypto.current < crypto.higher * min_recovered:
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
 
@@ -137,11 +135,11 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             trading_message += crypto.instrument_code + " is too dangerous. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
-        elif crypto.danger >= int(max_danger / 2) and crypto.current * account.takerFee >= crypto.placed * min_profit:
+        elif crypto.danger >= int(max_danger / 2) and crypto.current >= crypto.placed * min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
-        elif crypto.higher == crypto.current or crypto.stop_id == "":
+        elif crypto.higher * min_recovered > 10 and (crypto.higher == crypto.current or crypto.stop_id == ""):
             exchange_client.incrementTrade(crypto, account, min_recovered)
         
         if delay < 0:
@@ -151,19 +149,18 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
     if trading_message != "":
         print(trading_message)
 
-def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recovered):
+def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recovered, refresh_time):
     trading_message = ""
 
-    if account.available < 10:
+    if account.available * account.takerFee * account.makerFee * min_recovered < 10:
         return None
 
-    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_recovered, account):
-        print("Potential with " + crypto.instrument_code + " (DANGER: " + str(crypto.danger) + ")")
+    for crypto in exchange_client.findProfitable(max_concurrent_trades, max_danger, min_recovered, account, refresh_time):
 
         if crypto.danger < 1:
             crypto.danger = 1
         
-        if account.available * account.makerFee / crypto.danger > 10:
+        if account.available * account.takerFee * account.makerFee * min_recovered / crypto.danger > 10:
             trading_message += start(exchange_client, crypto, account)
 
     if trading_message != "":
