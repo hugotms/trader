@@ -8,6 +8,7 @@ from lastversion import has_update
 
 def stop(exchange_client, crypto, account, taxe_rate):
     if exchange_client.stopTrade(crypto, account) == False:
+        crypto.failed = True
         return "Unable to stop trade on " + crypto.instrument_code + ".\n"
     
     account.available += crypto.current
@@ -111,6 +112,7 @@ def checkUpdate(current_version):
 
 def monitor(exchange_client, account, min_recovered, min_profit, max_danger, following, taxe_rate, delay, refresh_time):
     trading_message = ""
+    trading_alert = ""
 
     for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_recovered, refresh_time):
         print("Found " + crypto.instrument_code 
@@ -142,12 +144,19 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, fol
         elif crypto.higher * min_recovered > 10 and (crypto.higher == crypto.current or crypto.stop_id == ""):
             exchange_client.incrementTrade(crypto, account, min_recovered)
         
+        if crypto.failed == True and crypto.alerted == False:
+            trading_alert += "No action can be done on " + crypto.instrument_code + " due to an error.\n"
+            crypto.alerted = True
+
         if delay < 0:
             crypto.loaded = False
-            exchange_client.database.putInActive(crypto)
+        
+        exchange_client.database.putInActive(crypto)
 
     if trading_message != "":
         print(trading_message)
+    
+    return trading_alert
 
 def trade(exchange_client, account, max_danger, max_concurrent_trades, min_recovered, refresh_time):
     trading_message = ""

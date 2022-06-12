@@ -88,7 +88,9 @@ class Mongo:
                 "dailyVolume": crypto.dailyVolume,
                 "weeklyDanger": crypto.weeklyDanger,
                 "monthlyDanger": crypto.monthlyDanger,
-                "precision": crypto.precision
+                "precision": crypto.precision,
+                "failed": crypto.failed,
+                "alerted": crypto.alerted
             }
 
             query = {
@@ -114,7 +116,9 @@ class Mongo:
                 "dailyVolume": crypto.dailyVolume,
                 "weeklyDanger": crypto.weeklyDanger,
                 "monthlyDanger": crypto.monthlyDanger,
-                "precision": crypto.precision
+                "precision": crypto.precision,
+                "failed": crypto.failed,
+                "alerted": crypto.alerted
             }
 
             self.create("actives", data)

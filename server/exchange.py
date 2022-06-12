@@ -396,6 +396,8 @@ class BitpandaPro:
                     isFound = True
 
                     trade.stop_id = crypto["stop_id"]
+                    trade.failed = bool(crypto["failed"])
+                    trade.alerted = bool(crypto["alerted"])
 
                     if float(crypto["higher"]) > trade.current:
                         trade.higher = float(crypto["higher"])

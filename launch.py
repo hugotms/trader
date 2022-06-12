@@ -25,7 +25,7 @@ while isOk == True:
     subject = "New trading update - " + time.strftime("%d/%m/%Y")
     message = ""
     
-    logic.monitor(
+    alerts = logic.monitor(
             parameters.exchange_client, 
             account, 
             parameters.min_recovered, 
@@ -36,6 +36,10 @@ while isOk == True:
             delay,
             parameters.refresh_time
         )
+    
+    if alerts != "":
+        message += "############# ALERTS #############\n"
+        message += alerts
     
     parameters.exchange_client.actualizeAccount(account)
 
