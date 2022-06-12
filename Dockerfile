@@ -1,4 +1,4 @@
-ARG VERSION=v3.0.1
+ARG VERSION=v3.0.2
 
 FROM alpine/git:latest as clone
 
