@@ -109,7 +109,7 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, account, min_recovered, min_profit, max_danger, taxe_rate, delay, refresh_time):
+def monitor(exchange_client, account, min_recovered, min_profit, max_danger, following, taxe_rate, delay, refresh_time):
     trading_message = ""
 
     for crypto in exchange_client.getAllActiveTrades(account, max_danger, min_recovered, refresh_time):
@@ -135,7 +135,7 @@ def monitor(exchange_client, account, min_recovered, min_profit, max_danger, tax
             trading_message += crypto.instrument_code + " is too dangerous. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         
-        elif crypto.danger >= int(max_danger / 2) and crypto.current >= crypto.placed * min_profit:
+        elif (crypto.danger >= int(max_danger / 2) or following == False) and crypto.current >= crypto.placed * min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(exchange_client, crypto, account, taxe_rate)
         

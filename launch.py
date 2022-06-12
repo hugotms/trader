@@ -31,6 +31,7 @@ while isOk == True:
             parameters.min_recovered, 
             parameters.min_profit, 
             parameters.max_danger, 
+            parameters.following,
             parameters.taxe_rate,
             delay,
             parameters.refresh_time

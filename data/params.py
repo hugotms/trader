@@ -20,6 +20,7 @@ class Params:
         self.max_danger = os.getenv('MAX_DANGER')
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
         self.taxe_rate = os.getenv('TAXE_RATE')
+        self.following = os.getenv('FOLLOWING')
         self.make_trade = os.getenv('MAKE_TRADE')
         self.max_concurrent_trades = os.getenv('MAX_CONCURRENT_TRADES')
 
@@ -47,6 +48,7 @@ class Params:
         self.max_danger = self.database.findVar("max_danger", self.max_danger, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
+        self.following = self.database.findVar("following", self.following, True)
         self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
         self.max_concurrent_trades = self.database.findVar("max_concurrent_trades", self.max_concurrent_trades, 0)
 
@@ -113,6 +115,11 @@ class Params:
         except Exception:
             print("DB port must be a number")
             return False
+        
+        if self.following is None or self.following.lower() != "false":
+            self.following = True
+        else:
+            self.following = False
         
         if self.make_trade is None or self.make_trade.lower() != "true":
             print("By default, no new trade will be done on your behalf")
