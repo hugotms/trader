@@ -38,8 +38,8 @@ while isOk == True:
         )
     
     if alerts != "":
-        message += "############# ALERTS #############\n"
-        message += alerts
+        message += "############# ALERTS #############\n\n"
+        message += alerts + "\n"
     
     parameters.exchange_client.actualizeAccount(account)
 
