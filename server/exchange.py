@@ -210,9 +210,9 @@ class BitpandaPro:
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.08:
+        if variation > 0.05:
             danger += 2
-        elif variation > 0.05:
+        elif variation > 0.03:
             danger += 1
         
         hourlyVolume = res['volume']
@@ -258,9 +258,9 @@ class BitpandaPro:
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.12:
+        if variation > 0.1:
             crypto.dailyDanger += 2
-        elif variation > 0.1:
+        elif variation > 0.05:
             crypto.dailyDanger += 1
         
         crypto.dailyVolume = res['volume']
@@ -294,9 +294,9 @@ class BitpandaPro:
         
         variation = abs((res['open'] - res['close']) / res['close'])
         
-        if variation > 0.4:
+        if variation > 0.3:
             crypto.monthlyDanger += 2
-        elif variation > 0.3:
+        elif variation > 0.2:
             crypto.monthlyDanger += 1
 
         crypto.danger += danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
@@ -404,7 +404,7 @@ class BitpandaPro:
             client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + order_id, headers=self.headers).send()
 
             time.sleep(1)
-            
+
             if client.getStatusCode() != 200:
                 self.database.putInHistory(crypto)
                 continue
