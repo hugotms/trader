@@ -42,7 +42,7 @@ class BitpandaPro:
         
         return res
     
-    def getAccountDetails(self):
+    def getCurrencyBalance(self, currency_code):
         amount = 0
 
         client = web.Api(BitpandaPro.baseUrl + '/account/balances', headers=self.headers).send()
@@ -54,17 +54,14 @@ class BitpandaPro:
         time.sleep(1)
         
         if client.getStatusCode() != 200:
-            print("Error while trying to access account balance data")
+            print("Error while trying to access balance data")
             return None
         
         for item in client.getData()['balances']:
-            if item['currency_code'] == 'EUR':
+            if item['currency_code'] == currency_code:
                 amount += float(item['available'])
 
-        return json.dumps({
-                "account_id": client.getData()['account_id'],
-                "amount": amount
-            })
+        return amount
     
     def getAccountFees(self):
         makerFee = 1
@@ -95,14 +92,12 @@ class BitpandaPro:
             })
     
     def getAccount(self):
-        response = self.getAccountDetails()
+        response = self.getCurrencyBalance('EUR')
         if response is None:
             print("No account could be found")
             return None
-        
-        res = json.loads(response)
 
-        new = account.Account(id=res['account_id'], available=res['amount'])
+        new = account.Account(available=response)
 
         response = self.getAccountFees()
         if response is not None:
@@ -115,9 +110,9 @@ class BitpandaPro:
     def actualizeAccount(self, account):
         fees = None
         
-        response = self.getAccountDetails()
+        response = self.getCurrencyBalance('EUR')
         if response is not None:
-            account.available = json.loads(response)['amount']
+            account.available = response
         
         response = self.getAccountFees()
         if response is not None:
