@@ -564,7 +564,6 @@ class BitpandaPro:
         time.sleep(1)
 
         if client.getStatusCode() != 201:
-            print(self.truncate(crypto.owned, crypto.precision))
             print("Error while trying to stop trade")
             return False
         
