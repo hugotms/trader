@@ -75,6 +75,7 @@ class Mongo:
         if isFound == True:
             data = {
                 "stop_id": crypto.stop_id,
+                "market_id": crypto.market_id,
                 "base": crypto.base,
                 "currency": crypto.currency,
                 "owned": crypto.owned,
@@ -103,6 +104,7 @@ class Mongo:
             data = {
                 "_id": crypto.instrument_code,
                 "stop_id": crypto.stop_id,
+                "market_id": crypto.market_id,
                 "base": crypto.base,
                 "currency": crypto.currency,
                 "owned": crypto.owned,

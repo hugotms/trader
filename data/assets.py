@@ -18,6 +18,7 @@ class Crypto:
         self.monthlyDanger = 0
         self.precision = 4
         self.stop_id = ""
+        self.market_id = ""
         self.failed = False
         self.alerted = False
 

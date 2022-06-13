@@ -371,6 +371,7 @@ class BitpandaPro:
                     isFound = True
 
                     trade.stop_id = crypto["stop_id"]
+                    trade.market_id = crypto["market_id"]
                     trade.failed = bool(crypto["failed"])
                     trade.alerted = bool(crypto["alerted"])
 
@@ -385,8 +386,36 @@ class BitpandaPro:
                         trade.monthlyDanger = int(crypto["monthlyDanger"])
                         trade.precision = int(crypto["precision"])
 
-            if isFound == False:
+            if isFound == True:
+                continue
+            
+            order_id = ""
+
+            if crypto['stop_id'] != "":
+                order_id = crypto['stop_id']
+            
+            elif crypto['market_id'] != "":
+                order_id = crypto['market_id']
+            
+            if order_id == "":
                 self.database.putInHistory(crypto)
+                continue
+            
+            client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + order_id, headers=self.headers).send()
+
+            time.sleep(1)
+            
+            if client.getStatusCode() != 200:
+                self.database.putInHistory(crypto)
+                continue
+
+            if client.getData()['order']['status'] != "FILLED_FULLY":
+                self.database.putInHistory(crypto)
+                continue
+            
+            crypto['current'] = float(crypto['owned']) * float(client.getData()['order']['price'])
+
+            self.database.putInHistory(crypto)
 
         for trade in active_trades:
             wait = 1
@@ -567,9 +596,7 @@ class BitpandaPro:
             print("Error while trying to stop trade")
             return False
         
-        crypto.current = self.getPrice(crypto.instrument_code) * crypto.owned
-        crypto.setHigher()
-        self.database.putInActive(crypto)
+        crypto.market_id = client.getData()['order_id']
 
         return True
     
