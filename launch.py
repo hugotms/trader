@@ -27,7 +27,6 @@ while isOk == True:
     
     alerts = logic.monitor(
             parameters.exchange_client, 
-            account, 
             parameters.min_recovered, 
             parameters.min_profit, 
             parameters.max_danger, 

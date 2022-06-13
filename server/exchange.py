@@ -173,7 +173,7 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto, account, max_danger, min_recovered, refresh_time, alreadyOwned=True):
+    def calculateDanger(self, crypto, max_danger, min_recovered, refresh_time, account=None):
         danger = 0
 
         if crypto.current != 0 and crypto.current < crypto.placed:
@@ -182,48 +182,27 @@ class BitpandaPro:
         if self.database.getLastDanger(crypto, min_recovered) > int(max_danger / 2):
             danger += 1
 
-        res = self.getPrices(crypto, time_unit='MINUTES')
+        res = self.getPrices(crypto, time_unit='MINUTES', refresh_time=refresh_time - 1)
         if res is None:
             crypto.danger = -100
             return self
         res = json.loads(res)
 
-        lastMinuteDanger = 0
+        lastRefreshDanger = 0
         if res['open'] > res['close']:
-            lastMinuteDanger += 2
-        
+            lastRefreshDanger += 2
+    
         variation = abs((res['open'] - res['close']) / res['close'])
-        
-        if variation > 0.06:
-            lastMinuteDanger += 2
-        elif variation > 0.02:
-            lastMinuteDanger += 1
-        
-        if alreadyOwned != True:
-            lastMinuteDanger *= -1
-        
-        danger += lastMinuteDanger
+    
+        if variation > 0.015:
+            lastRefreshDanger += 2
+        elif variation > 0.01:
+            lastRefreshDanger += 1
 
-        if alreadyOwned != True and refresh_time > 1:
-            res = self.getPrices(crypto, time_unit='MINUTES', refresh_time=refresh_time)
+        if account is not None:
+            lastRefreshDanger *= -1
         
-            if res is None:
-                crypto.danger = -100
-                return self
-            res = json.loads(res)
-
-            lastRefreshDanger = 0
-            if res['open'] > res['close']:
-                lastRefreshDanger += 2
-        
-            variation = abs((res['open'] - res['close']) / res['close'])
-        
-            if variation > 0.07:
-                lastRefreshDanger += 2
-            elif variation > 0.03:
-                lastRefreshDanger += 1
-        
-            danger -= lastRefreshDanger
+        danger += lastRefreshDanger
         
         res = self.getPrices(crypto, time_unit='HOURS')
         if res is None:
@@ -266,17 +245,18 @@ class BitpandaPro:
             return self
         res = json.loads(res)
 
-        if account.available >= res['volume']:
-            danger += int(max_danger / 2)
-        
-        if account.available * 10 >= res['volume'] / 2:
-            danger += 1
+        if account is not None:
+            if account.available >= res['volume']:
+                danger += int(max_danger / 2)
+            
+            if account.available * 10 >= res['volume'] / 2:
+                danger += 1
 
-        if account.available * 10 >= res['volume']:
-            danger += 1
-        
-        if account.available * 20 < res['volume'] / 2:
-            danger -= 2
+            if account.available * 10 >= res['volume']:
+                danger += 1
+            
+            if account.available * 20 < res['volume'] / 2:
+                danger -= 2
 
         if res['open'] > res['close']:
             crypto.dailyDanger += 2
@@ -330,7 +310,7 @@ class BitpandaPro:
         return self
 
 
-    def getAllActiveTrades(self, account, max_danger, min_recovered, refresh_time):
+    def getAllActiveTrades(self, max_danger, min_recovered, refresh_time):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -366,14 +346,14 @@ class BitpandaPro:
                 ignored_trades.append(item['trade']['instrument_code'])
                 continue
 
-            amount = float(item['trade']['amount']) * self.getPrice(item['trade']['instrument_code']) * account.makerFee * account.takerFee
-            
+            amount = (float(item['trade']['amount']) - float(item['fee']['fee_amount'])) * self.getPrice(item['trade']['instrument_code'])
+
             if item['trade']['instrument_code'] not in trade_names:
                 active_trades.append(assets.Crypto(
                     instrument_code=item['trade']['instrument_code'],
                     base=item['trade']['instrument_code'].split('_')[0],
                     currency=item['trade']['instrument_code'].split('_')[1],
-                    owned=float(item['trade']['amount']),
+                    owned=float(item['trade']['amount']) - float(item['fee']['fee_amount']),
                     placed=float(item['trade']['amount']) * float(item['trade']['price']),
                     current=amount,
                     placed_on=item['trade']['time']
@@ -383,7 +363,7 @@ class BitpandaPro:
                 
             else:
                 active = active_trades[trade_names.index(item['trade']['instrument_code'])]
-                active.owned += float(item['trade']['amount'])
+                active.owned += float(item['trade']['amount']) - float(item['fee']['fee_amount'])
                 active.placed += float(item['trade']['amount']) * float(item['trade']['price'])
                 active.current += amount
                 active.setHigher()
@@ -437,7 +417,7 @@ class BitpandaPro:
 
                 wait += 1
             
-            self.calculateDanger(trade, account, max_danger, min_recovered, refresh_time)
+            self.calculateDanger(trade, max_danger, min_recovered, refresh_time)
             self.database.putInActive(trade)
             time.sleep(wait)
 
@@ -501,7 +481,7 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
-            self.calculateDanger(crypto, account, max_danger, min_recovered, refresh_time, False)
+            self.calculateDanger(crypto, max_danger, min_recovered, refresh_time, account)
             
             if crypto.danger != -100 and crypto.danger < int(max_danger / 2):
                 profitable_trades.append(crypto)
@@ -512,7 +492,7 @@ class BitpandaPro:
 
         return profitable_trades[:amount_to_return]
     
-    def incrementTrade(self, crypto, account, min_recovered):
+    def incrementTrade(self, crypto, min_recovered):
         if crypto.stop_id != "":
             client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
                 
@@ -533,7 +513,7 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "STOP",
-            "amount": self.truncate(crypto.owned * account.makerFee * account.takerFee, crypto.precision),
+            "amount": self.truncate(crypto.owned, crypto.precision),
             "price": self.truncate(crypto.higher * min_recovered / crypto.owned, 2),
             "trigger_price": self.truncate(crypto.higher * min_recovered / crypto.owned, 2)
         }
@@ -556,7 +536,7 @@ class BitpandaPro:
 
         return True
     
-    def stopTrade(self, crypto, account):
+    def stopTrade(self, crypto):
         if crypto.stop_id != "":
             client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
             
@@ -577,7 +557,7 @@ class BitpandaPro:
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
             "type": "MARKET",
-            "amount": self.truncate(crypto.owned * account.makerFee * account.takerFee, crypto.precision)
+            "amount": self.truncate(crypto.owned, crypto.precision)
         }
 
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
@@ -589,10 +569,11 @@ class BitpandaPro:
         time.sleep(1)
 
         if client.getStatusCode() != 201:
+            print(self.truncate(crypto.owned, crypto.precision))
             print("Error while trying to stop trade")
             return False
         
-        crypto.current = self.getPrice(crypto.instrument_code) * crypto.owned * account.makerFee * account.takerFee
+        crypto.current = self.getPrice(crypto.instrument_code) * crypto.owned
         crypto.setHigher()
         self.database.putInActive(crypto)
 
