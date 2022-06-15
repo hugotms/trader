@@ -176,6 +176,21 @@ class BitpandaPro:
 
         if self.database.getLastDanger(crypto, min_recovered) > int(max_danger / 2):
             danger += 1
+        
+        res = self.getPrices(crypto, time_unit='MINUTES')
+        if res is None:
+            crypto.danger = -100
+            return self
+        res = json.loads(res)
+
+        lastMinuteDanger = 0
+        if res['open'] > res['close']:
+            lastMinuteDanger += 2
+
+        if account is not None:
+            lastMinuteDanger *= -1
+        
+        danger += lastMinuteDanger
 
         res = self.getPrices(crypto, time_unit='MINUTES', refresh_time=refresh_time - 1)
         if res is None:
@@ -422,7 +437,7 @@ class BitpandaPro:
             self.database.putInHistory(crypto)
 
         for trade in active_trades:
-            wait = 1
+            wait = 2
             client = None
             status_code = 0
 
