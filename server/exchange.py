@@ -231,6 +231,7 @@ class BitpandaPro:
 
         if date.today().weekday() == 4:
             crypto.dailyDanger += 1
+        
         elif date.today().weekday() >= 5:
             crypto.dailyDanger += 2
         
@@ -240,18 +241,21 @@ class BitpandaPro:
             return self
         res = json.loads(res)
 
+        amount = crypto.current
         if account is not None:
-            if account.available >= res['volume']:
-                danger += int(max_danger / 2)
-            
-            if account.available * 10 >= res['volume'] / 2:
-                danger += 1
+            amount = account.available
 
-            if account.available * 10 >= res['volume']:
-                danger += 1
-            
-            if account.available * 20 < res['volume'] / 2:
-                danger -= 2
+        if amount >= res['volume']:
+            crypto.dailyDanger += int(max_danger / 2)
+        
+        if amount * 10 >= res['volume'] / 2:
+            crypto.dailyDanger += 1
+
+        if amount * 10 >= res['volume']:
+            crypto.dailyDanger += 1
+        
+        if amount * 20 < res['volume'] / 2:
+            crypto.dailyDanger -= 2
 
         if res['open'] > res['close']:
             crypto.dailyDanger += 2

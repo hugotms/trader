@@ -119,6 +119,12 @@ class Params:
             print("DB port must be a number")
             return False
         
+        try:
+            self.refresh_time = int(self.refresh_time)
+        except Exception:
+            print("Refresh time must be a number")
+            return False
+        
         if self.following is None or self.following.lower() != "false":
             self.following = True
         else:
@@ -154,7 +160,6 @@ class Params:
             self.min_recovered = float(self.min_recovered)
             self.min_profit = float(self.min_profit)
             self.max_danger = int(self.max_danger)
-            self.refresh_time = int(self.refresh_time)
             self.taxe_rate = float(self.taxe_rate)
             self.max_concurrent_trades = int(self.max_concurrent_trades)
         except Exception:
