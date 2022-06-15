@@ -47,6 +47,9 @@ class Params:
         self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.05)
         self.max_danger = self.database.findVar("max_danger", self.max_danger, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
+        if self.refresh_time < 1:
+            self.refresh_time = 1
+        
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
         self.following = self.database.findVar("following", self.following, True)
         self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
