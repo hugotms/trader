@@ -149,7 +149,7 @@ def monitor(exchange_client, min_recovered, min_profit, max_danger, following, t
             crypto.loaded = seconds_in_delay
         
         else:
-            crypto.loaded -= refresh_time
+            crypto.loaded -= refresh_time * 60
         
         exchange_client.database.putInActive(crypto)
 
