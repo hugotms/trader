@@ -107,7 +107,7 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, min_recovered, min_profit, max_danger, following, taxe_rate, delay, refresh_time):
+def monitor(exchange_client, min_recovered, min_profit, max_danger, following, taxe_rate, refresh_time, seconds_in_delay):
     trading_message = ""
     trading_alert = ""
 
@@ -145,8 +145,11 @@ def monitor(exchange_client, min_recovered, min_profit, max_danger, following, t
             trading_alert += "No action can be done on " + crypto.instrument_code + " due to an error.\n"
             crypto.alerted = True
 
-        if delay < 0:
-            crypto.loaded = False
+        if crypto.loaded < 0:
+            crypto.loaded = seconds_in_delay
+        
+        else:
+            crypto.loaded -= refresh_time
         
         exchange_client.database.putInActive(crypto)
 

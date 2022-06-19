@@ -11,7 +11,7 @@ class Crypto:
         self.current = current
         self.placed_on = placed_on
         self.danger = 0
-        self.loaded = False
+        self.loaded = -1
         self.dailyDanger = 0
         self.dailyVolume = 0
         self.weeklyDanger = 0

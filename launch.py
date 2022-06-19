@@ -32,8 +32,8 @@ while isOk == True:
             parameters.max_danger, 
             parameters.following,
             parameters.taxe_rate,
-            delay,
-            parameters.refresh_time
+            parameters.refresh_time,
+            seconds_in_delay
         )
     
     if alerts != "":

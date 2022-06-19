@@ -232,7 +232,7 @@ class BitpandaPro:
         
         hourlyVolume = res['volume']
         
-        if crypto.loaded == True:
+        if crypto.loaded > 0:
             if hourlyVolume < crypto.dailyVolume / 24:
                 danger += 2
             
@@ -319,7 +319,6 @@ class BitpandaPro:
             crypto.monthlyDanger += 1
 
         crypto.danger += danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
-        crypto.loaded = True
 
         return self
 
@@ -397,8 +396,8 @@ class BitpandaPro:
                     if float(crypto["higher"]) > trade.current:
                         trade.higher = float(crypto["higher"])
                     
-                    if bool(crypto["loaded"]) == True:
-                        trade.loaded = True
+                    if int(crypto["loaded"]) > 0:
+                        trade.loaded = int(crypto["loaded"])
                         trade.dailyDanger = int(crypto["dailyDanger"])
                         trade.dailyVolume = float(crypto["dailyVolume"])
                         trade.weeklyDanger = int(crypto["weeklyDanger"])
@@ -441,7 +440,7 @@ class BitpandaPro:
             client = None
             status_code = 0
 
-            if trade.loaded == False:
+            if trade.loaded < 0:
                 header = {
                     "Accept": "application/json"
                 }
