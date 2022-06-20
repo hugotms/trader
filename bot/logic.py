@@ -30,8 +30,7 @@ def start(exchange_client, crypto, account):
     
     account.available -= crypto.placed
 
-    return "Placed action on " + crypto.instrument_code + " for " + str(round(crypto.placed, 2)) + \
-        "€ (OWNED: " + str(round(crypto.owned, 4)) + ").\n"
+    return "Placed action on " + crypto.instrument_code + " (OWNED: " + str(round(crypto.owned, 4)) + ").\n"
 
 def report(database, watching_cryptos, ignore_cryptos, watching_currencies, taxe_rate):
     response = database.getPastPerformance(datetime.datetime.now() - timedelta(days=1), watching_cryptos, ignore_cryptos, watching_currencies)
