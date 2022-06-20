@@ -130,10 +130,6 @@ def monitor(exchange_client, min_recovered, min_profit, max_danger, following, t
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(exchange_client, crypto, taxe_rate)
 
-        elif crypto.danger > max_danger:
-            trading_message += crypto.instrument_code + " is too dangerous. "
-            trading_message += stop(exchange_client, crypto, taxe_rate)
-        
         elif (crypto.danger >= int(max_danger / 2) or following == False) and crypto.current >= crypto.placed * min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(exchange_client, crypto, taxe_rate)
