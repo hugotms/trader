@@ -5,6 +5,7 @@ import json
 import time
 import os
 
+from datetime import time as timed
 from datetime import datetime, timedelta, date
 
 from data import account
@@ -514,6 +515,9 @@ class BitpandaPro:
             
             if account.available * 20 < crypto.dailyVolume / 2:
                 crypto.danger -= 2
+            
+            if datetime.utcnow().time() >= timed(12,30):
+                crypto.danger += 2
             
             if crypto.danger < max_danger:
                 profitable_trades.append(crypto)
