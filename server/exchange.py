@@ -13,7 +13,7 @@ from data import assets
 class BitpandaPro:
     baseUrl = "https://api.exchange.bitpanda.com/public/v1"
 
-    def __init__(self, api_key, database, watching_cryptos, ignore_cryptos, watching_currencies):
+    def __init__(self, api_key, database, watching_currencies, ignore_currencies):
         self.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -21,9 +21,8 @@ class BitpandaPro:
             }
         
         self.database = database
-        self.watching_cryptos = watching_cryptos
-        self.ignore_cryptos = ignore_cryptos
         self.watching_currencies = watching_currencies
+        self.ignore_currencies = ignore_currencies
     
     def truncate(self, number, precision):
         res = str(float(int(number * (10**precision))/(10**precision)))
@@ -341,13 +340,10 @@ class BitpandaPro:
         trade_names = []
         ignored_trades = []
         for item in trades:
-            if len(self.ignore_cryptos) != 0 and item['trade']['instrument_code'] in self.ignore_cryptos:
+            if len(self.ignore_currencies) != 0 and item['trade']['instrument_code'] in self.ignore_currencies:
                 continue
 
-            elif len(self.watching_cryptos) != 0 and item['trade']['instrument_code'] not in self.watching_cryptos:
-                continue
-            
-            elif len(self.watching_currencies) != 0 and item['trade']['instrument_code'].split("_")[1] not in self.watching_currencies:
+            elif len(self.watching_currencies) != 0 and item['trade']['instrument_code'] not in self.watching_currencies:
                 continue
             
             elif item['trade']['instrument_code'] in ignored_trades:
@@ -379,7 +375,7 @@ class BitpandaPro:
                 active.current += amount
                 active.setHigher()
         
-        for crypto in self.database.findActives(self.watching_cryptos, self.ignore_cryptos, self.watching_currencies):
+        for crypto in self.database.findActives(self.watching_currencies, self.ignore_currencies):
             isFound = False
 
             for trade in active_trades:
@@ -468,7 +464,7 @@ class BitpandaPro:
             "Accept": "application/json"
         }
 
-        actives = self.database.findActives(self.watching_cryptos, self.ignore_cryptos, self.watching_currencies)
+        actives = self.database.findActives(self.watching_currencies, self.ignore_currencies)
         if len(actives) >= max_concurrent_trades:
             return []
         
@@ -494,13 +490,10 @@ class BitpandaPro:
             if pair in ignored_trades:
                 continue
 
-            elif len(self.ignore_cryptos) != 0 and pair in self.ignore_cryptos:
+            elif len(self.ignore_currencies) != 0 and pair in self.ignore_currencies:
                 continue
 
-            elif len(self.watching_cryptos) != 0 and pair not in self.watching_cryptos:
-                continue
-            
-            elif len(self.watching_currencies) != 0 and item["quote"]["code"] not in self.watching_currencies:
+            elif len(self.watching_currencies) != 0 and pair not in self.watching_currencies:
                 continue
             
             new = assets.Crypto(

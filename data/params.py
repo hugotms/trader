@@ -26,9 +26,8 @@ class Params:
 
         self.latest_bot_release = os.getenv('TRADER_VERSION')
 
-        self.watching_cryptos = os.getenv('WATCHING_CRYPTOS')
-        self.ignore_cryptos = os.getenv('IGNORE_CRYPTOS')
         self.watching_currencies = os.getenv('WATCHING_CURRENCIES')
+        self.ignore_currencies = os.getenv('IGNORE_CURRENCIES')
 
         self.smtp_sending = os.getenv('SEND_ALERT_MAIL')
         self.smtp_host = os.getenv('SMTP_HOST')
@@ -40,9 +39,8 @@ class Params:
         self.smtp = None
     
     def actualize(self):
-        self.watching_cryptos = self.database.findVar("watching_cryptos", self.watching_cryptos, [])
-        self.ignore_cryptos = self.database.findVar("ignore_cryptos", self.ignore_cryptos, [])
         self.watching_currencies = self.database.findVar("watching_currencies", self.watching_currencies, [])
+        self.ignore_currencies = self.database.findVar("ignore_currencies", self.ignore_currencies, [])
         self.min_recovered = self.database.findVar("min_recovered", self.min_recovered, 0.95)
         self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.05)
         self.max_danger = self.database.findVar("max_danger", self.max_danger, 10)
@@ -70,7 +68,7 @@ class Params:
             self.smtp_sending = False
             self.smtp = None
         
-        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key, self.database, self.watching_cryptos, self.ignore_cryptos, self.watching_currencies)
+        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key, self.database, self.watching_currencies, self.ignore_currencies)
 
         if self.smtp_sending == True: 
             self.smtp = mail.SMTP(
@@ -138,14 +136,11 @@ class Params:
         
         self.database = db.Mongo(self.db_hostname, self.db_port, self.db_name, self.db_user, self.db_password)
         
-        if self.watching_cryptos is not None:
-            self.watching_cryptos = self.watching_cryptos.split(',')
-        
-        if self.ignore_cryptos is not None:
-            self.ignore_cryptos = self.ignore_cryptos.split(',')
-        
         if self.watching_currencies is not None:
             self.watching_currencies = self.watching_currencies.split(',')
+        
+        if self.ignore_currencies is not None:
+            self.ignore_currencies = self.ignore_currencies.split(',')
         
         if self.smtp_sending == True:
             try:

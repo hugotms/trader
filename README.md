@@ -39,9 +39,8 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `MIN_PROFIT_RATE`          | The rate from which you may take profit if considered dangerous        | no      | 1.05       |
 | `MAX_DANGER`              | The maximum danger level an action can be running       | no         | 10        |
 | `MINUTES_REFRESH_TIME`       | The number of minutes between two checks            | no      | 10       |
-| `WATCHING_CRYPTOS`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to look for and thus ignore the rest.            | no      | None       |
-| `IGNORE_CRYPTOS`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to ignore. Note that if both this variable and `WATCHING_CRYPTOS` are set, this one will take precedence.            | no      | None       |
 | `WATCHING_CURRENCIES`       | By default, the bot watches all currencies for which you have trades going on. You can, however, specify currencies to look for and thus ignore the rest.            | no      | None       |
+| `IGNORE_CURRENCIES`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to ignore. Note that if both this variable and `WATCHING_CURRENCIES` are set, this one will take precedence.            | no      | None       |
 | `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
 | `FOLLOWING`          | If set to `false`, allow the bot to take profit (defined by `MIN_PROFIT_RATE`) as soon as set level is reached.        | no      | True     |
 | `MAKE_TRADE`          | If set to `true`, allow the bot to start trades on your behalf based on calculation.        | no      | False     |

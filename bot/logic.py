@@ -32,8 +32,8 @@ def start(exchange_client, crypto, account):
 
     return "Placed action on " + crypto.instrument_code + " (OWNED: " + str(round(crypto.owned, 4)) + ").\n"
 
-def report(database, watching_cryptos, ignore_cryptos, watching_currencies, taxe_rate):
-    response = database.getPastPerformance(datetime.datetime.now() - timedelta(days=1), watching_cryptos, ignore_cryptos, watching_currencies)
+def report(database, watching_currencies, ignore_currencies, taxe_rate):
+    response = database.getPastPerformance(datetime.datetime.now() - timedelta(days=1), watching_currencies, ignore_currencies)
     if response is None:
         return ""
     response = json.loads(response)
@@ -54,7 +54,7 @@ def report(database, watching_cryptos, ignore_cryptos, watching_currencies, taxe
     
     today = datetime.datetime.now()
     if today.weekday() == 0:
-        response = database.getPastPerformance(datetime.datetime.now() - timedelta(weeks=1), watching_cryptos, ignore_cryptos, watching_currencies)
+        response = database.getPastPerformance(datetime.datetime.now() - timedelta(weeks=1), watching_currencies, ignore_currencies)
         if response is None:
             return message
         response = json.loads(response)
@@ -74,7 +74,7 @@ def report(database, watching_cryptos, ignore_cryptos, watching_currencies, taxe
                 "€\n"
     
     if today.month != (today + timedelta(days=1)).month:
-        response = database.getPastPerformance(datetime.datetime.now() - relativedelta(months=1), watching_cryptos, ignore_cryptos, watching_currencies)
+        response = database.getPastPerformance(datetime.datetime.now() - relativedelta(months=1), watching_currencies, ignore_currencies)
         if response is None:
             return message
         response = json.loads(response)

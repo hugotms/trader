@@ -54,9 +54,8 @@ while isOk == True:
         message += "############# REPORT #############\n"
         message += logic.report(
             parameters.database, 
-            parameters.watching_cryptos, 
-            parameters.ignore_cryptos, 
             parameters.watching_currencies, 
+            parameters.ignore_currencies,
             parameters.taxe_rate
         )
 

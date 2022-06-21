@@ -161,29 +161,24 @@ class Mongo:
         
         return self
     
-    def findActives(self, watching_cryptos, ignore_cryptos, watching_currencies):
+    def findActives(self, watching_currencies, ignore_currencies):
         if self.client is None:
             return []
 
         query = {}
-        if len(ignore_cryptos) != 0:
+        if len(ignore_currencies) != 0:
             query["_id"] = {
-                "$nin": ignore_cryptos
+                "$nin": ignore_currencies
             }
         
-        elif len(watching_cryptos) != 0:
+        elif len(watching_currencies) != 0:
             query["_id"] = {
-                "$in": watching_cryptos
-            }
-        
-        if len(watching_currencies) != 0:
-            query["currency"] = {
                 "$in": watching_currencies
             }
         
         return self.find("actives", query)
     
-    def getPastPerformance(self, past, watching_cryptos, ignore_cryptos, watching_currencies, instrument_code=None):
+    def getPastPerformance(self, past, watching_currencies, ignore_currencies, instrument_code=None):
         if self.client is None:
             return None
         
@@ -202,27 +197,19 @@ class Mongo:
             }
         }
 
-        if len(ignore_cryptos) != 0:
+        if len(ignore_currencies) != 0:
             query["instrument_code"] = {
-                "$nin": ignore_cryptos
+                "$nin": ignore_currencies
             }
             query2["_id"] = {
-                "$nin": ignore_cryptos
+                "$nin": ignore_currencies
             }
         
-        elif len(watching_cryptos) != 0:
+        elif len(watching_currencies) != 0:
             query["instrument_code"] = {
-                "$in": watching_cryptos
-            }
-            query2["_id"] = {
-                "$in": watching_cryptos
-            }
-        
-        if len(watching_currencies) != 0:
-            query["currency"] = {
                 "$in": watching_currencies
             }
-            query2["currency"] = {
+            query2["_id"] = {
                 "$in": watching_currencies
             }
         
