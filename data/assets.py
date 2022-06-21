@@ -15,7 +15,7 @@ class Crypto:
         self.dailyDanger = 0
         self.dailyVolume = 0
         self.weeklyDanger = 0
-        self.monthlyDanger = 0
+        self.monthlyDanger = -100
         self.precision = 4
         self.stop_id = ""
         self.market_id = ""

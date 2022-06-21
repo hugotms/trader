@@ -240,10 +240,6 @@ class BitpandaPro:
             crypto.danger += danger
             return self
         
-        crypto.dailyDanger = 0
-        crypto.weeklyDanger = 0
-        crypto.monthlyDanger = 0
-
         if date.today().weekday() == 4:
             crypto.dailyDanger += 1
         
@@ -307,6 +303,8 @@ class BitpandaPro:
             crypto.danger = -100
             return self
         res = json.loads(res)
+
+        crypto.monthlyDanger = 0
 
         if res['open'] > res['close']:
             crypto.monthlyDanger += 1

@@ -119,7 +119,6 @@ def monitor(exchange_client, min_recovered, min_profit, max_danger, following, t
             + "%)")
 
         if crypto.danger == -100:
-            print("Danger could not be properly set for " + crypto.instrument_code)
             crypto.danger = int(max_danger / 2) + 1
 
         if crypto.current < 10:
@@ -140,7 +139,7 @@ def monitor(exchange_client, min_recovered, min_profit, max_danger, following, t
             trading_alert += "No action can be done on " + crypto.instrument_code + " due to an error.\n"
             crypto.alerted = True
 
-        if crypto.loaded < 0:
+        if crypto.loaded < 0 and crypto.monthlyDanger != -100:
             crypto.loaded = seconds_in_delay
         
         else:

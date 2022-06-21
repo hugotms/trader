@@ -14,9 +14,7 @@ if isOk == True:
 if account is None:
     isOk = False
 
-# 2 hours delay between full danger calculation
-hours = 2
-seconds_in_delay = hours * 3600
+seconds_in_delay = 3600
 delay = seconds_in_delay
 
 report_send = False
@@ -52,7 +50,7 @@ while isOk == True:
             parameters.refresh_time
         )
 
-    if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):
+    if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):
         message += "############# REPORT #############\n"
         message += logic.report(
             parameters.database, 
