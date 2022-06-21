@@ -20,9 +20,8 @@ class Params:
         self.max_danger = os.getenv('MAX_DANGER')
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
         self.taxe_rate = os.getenv('TAXE_RATE')
-        self.following = os.getenv('FOLLOWING')
         self.make_trade = os.getenv('MAKE_TRADE')
-        self.max_concurrent_trades = os.getenv('MAX_CONCURRENT_TRADES')
+        self.max_concurrent_currencies = os.getenv('MAX_CONCURRENT_CURRENCIES')
 
         self.latest_bot_release = os.getenv('TRADER_VERSION')
 
@@ -43,15 +42,14 @@ class Params:
         self.ignore_currencies = self.database.findVar("ignore_currencies", self.ignore_currencies, [])
         self.min_recovered = self.database.findVar("min_recovered", self.min_recovered, 0.95)
         self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.05)
-        self.max_danger = self.database.findVar("max_danger", self.max_danger, 10)
+        self.max_danger = self.database.findVar("max_danger", self.max_danger, 5)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
         if self.refresh_time < 1:
             self.refresh_time = 1
         
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
-        self.following = self.database.findVar("following", self.following, True)
         self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
-        self.max_concurrent_trades = self.database.findVar("max_concurrent_trades", self.max_concurrent_trades, 0)
+        self.max_concurrent_currencies = self.database.findVar("max_concurrent_currencies", self.max_concurrent_currencies, 0)
 
         if self.smtp_sending == True:
             self.smtp_host = self.database.findVar("smtp_host", self.smtp_host)
@@ -123,11 +121,6 @@ class Params:
             print("Refresh time must be a number")
             return False
         
-        if self.following is None or self.following.lower() != "false":
-            self.following = True
-        else:
-            self.following = False
-        
         if self.make_trade is None or self.make_trade.lower() != "true":
             print("By default, no new trade will be done on your behalf")
             self.make_trade = False
@@ -156,7 +149,7 @@ class Params:
             self.min_profit = float(self.min_profit)
             self.max_danger = int(self.max_danger)
             self.taxe_rate = float(self.taxe_rate)
-            self.max_concurrent_trades = int(self.max_concurrent_trades)
+            self.max_concurrent_currencies = int(self.max_concurrent_currencies)
         except Exception:
             print("Error while converting parameters from string")
             return False

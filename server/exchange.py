@@ -167,13 +167,10 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto, max_danger, min_recovered, refresh_time, account=None):
+    def calculateDanger(self, crypto, refresh_time, account=None):
         danger = 0
 
         if crypto.current != 0 and crypto.current < crypto.placed:
-            danger += 1
-
-        if self.database.getLastDanger(crypto, min_recovered) > int(max_danger / 2):
             danger += 1
         
         res = self.getPrices(crypto, time_unit='MINUTES')
@@ -251,22 +248,6 @@ class BitpandaPro:
             return self
         res = json.loads(res)
 
-        amount = crypto.current
-        if account is not None:
-            amount = account.available
-
-        if amount >= res['volume']:
-            crypto.dailyDanger += int(max_danger / 2)
-        
-        if amount * 10 >= res['volume'] / 2:
-            crypto.dailyDanger += 1
-
-        if amount * 10 >= res['volume']:
-            crypto.dailyDanger += 1
-        
-        if amount * 20 < res['volume'] / 2:
-            crypto.dailyDanger -= 2
-
         if res['open'] > res['close']:
             crypto.dailyDanger += 2
         
@@ -320,7 +301,7 @@ class BitpandaPro:
         return self
 
 
-    def getAllActiveTrades(self, max_danger, min_recovered, refresh_time):
+    def getAllActiveTrades(self, refresh_time):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -453,22 +434,22 @@ class BitpandaPro:
 
                 wait += 1
             
-            self.calculateDanger(trade, max_danger, min_recovered, refresh_time)
+            self.calculateDanger(trade, refresh_time)
             self.database.putInActive(trade)
             time.sleep(wait)
 
         return active_trades
     
-    def findProfitable(self, max_concurrent_trades, max_danger, min_recovered, account, refresh_time):
+    def findProfitable(self, max_concurrent_currencies, max_danger, min_recovered, account, refresh_time):
         header = {
             "Accept": "application/json"
         }
 
         actives = self.database.findActives(self.watching_currencies, self.ignore_currencies)
-        if len(actives) >= max_concurrent_trades:
+        if len(actives) >= max_concurrent_currencies:
             return []
         
-        amount_to_return = max_concurrent_trades - len(actives)
+        amount_to_return = max_concurrent_currencies - len(actives)
 
         ignored_trades = []
         for trade in actives:
@@ -514,9 +495,27 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
-            self.calculateDanger(crypto, max_danger, min_recovered, refresh_time, account)
+            self.calculateDanger(crypto, refresh_time, account)
             
-            if crypto.danger != -100 and crypto.danger < int(max_danger / 2):
+            if crypto.danger != -100:
+                continue
+
+            if self.database.getLastDanger(crypto, min_recovered) > max_danger:
+                crypto.danger += 1
+            
+            if account.available >= crypto.dailyVolume:
+                crypto.danger += max_danger
+            
+            if account.available * 10 >= crypto.dailyVolume / 2:
+                crypto.danger += 1
+
+            if account.available * 10 >= crypto.dailyVolume:
+                crypto.danger += 1
+            
+            if account.available * 20 < crypto.dailyVolume / 2:
+                crypto.danger -= 2
+            
+            if crypto.danger < max_danger:
                 profitable_trades.append(crypto)
             
             time.sleep(2)

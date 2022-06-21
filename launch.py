@@ -24,11 +24,9 @@ while isOk == True:
     message = ""
     
     alerts = logic.monitor(
-            parameters.exchange_client, 
-            parameters.min_recovered, 
-            parameters.min_profit, 
-            parameters.max_danger, 
-            parameters.following,
+            parameters.exchange_client,
+            parameters.min_recovered,
+            parameters.min_profit,
             parameters.taxe_rate,
             parameters.refresh_time,
             seconds_in_delay
@@ -45,7 +43,7 @@ while isOk == True:
             parameters.exchange_client, 
             account, 
             parameters.max_danger, 
-            parameters.max_concurrent_trades,
+            parameters.max_concurrent_currencies,
             parameters.min_recovered,
             parameters.refresh_time
         )
