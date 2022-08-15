@@ -1,7 +1,7 @@
 import pymongo
 import json
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class Mongo:
 
@@ -241,7 +241,7 @@ class Mongo:
             "volume": volume
         })
 
-    def getLastDanger(self, crypto, min_recovered):
+    def getLastDanger(self, crypto, min_recovered, max_danger):
         if self.client is None:
             return 0
         
@@ -253,19 +253,26 @@ class Mongo:
         if len(res) == 0:
             return 0
 
+        now = datetime.utcnow()
         danger = int(res[0]["danger"])
         higher = float(res[0]["higher"])
         current = float(res[0]["current"])
         placed = float(res[0]["placed"])
+        date = datetime.strptime(res[0]["date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
+        if date + timedelta(minutes=20) >= now:
+            crypto.danger += max_danger
+        
+        if date + timedelta(days=1) >= now:
+            return None
+        
         if higher > current:
-            danger += 1
+            crypto.danger += 1
         
         if higher * min_recovered <= current:
-            danger += 1
+            crypto.danger += 1
         
         if placed >= current:
-            danger += 1
+            crypto.danger += 1
         
-        return danger
     

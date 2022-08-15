@@ -501,7 +501,7 @@ class BitpandaPro:
             if crypto.danger != -100:
                 continue
 
-            if self.database.getLastDanger(crypto, min_recovered) > max_danger:
+            if self.database.getLastDanger(crypto, min_recovered, max_danger) == 0:
                 crypto.danger += 1
             
             if account.available >= crypto.dailyVolume:
