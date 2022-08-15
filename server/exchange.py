@@ -441,7 +441,7 @@ class BitpandaPro:
 
         return active_trades
     
-    def findProfitable(self, max_concurrent_currencies, max_danger, min_recovered, account, refresh_time):
+    def findProfitable(self, max_concurrent_currencies, max_danger, min_recovered, account, refresh_time, wait_time):
         header = {
             "Accept": "application/json"
         }
@@ -501,7 +501,7 @@ class BitpandaPro:
             if crypto.danger != -100:
                 continue
 
-            if self.database.getLastDanger(crypto, min_recovered, max_danger) == 0:
+            if self.database.getLastDanger(crypto, min_recovered, max_danger, wait_time) == 0:
                 crypto.danger += 1
             
             if account.available >= crypto.dailyVolume:

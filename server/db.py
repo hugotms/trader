@@ -241,7 +241,7 @@ class Mongo:
             "volume": volume
         })
 
-    def getLastDanger(self, crypto, min_recovered, max_danger):
+    def getLastDanger(self, crypto, min_recovered, max_danger, wait_time):
         if self.client is None:
             return 0
         
@@ -260,7 +260,7 @@ class Mongo:
         placed = float(res[0]["placed"])
         date = datetime.strptime(res[0]["date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
-        if date + timedelta(minutes=20) >= now:
+        if date + timedelta(minutes=wait_time) >= now:
             crypto.danger += max_danger
         
         if date + timedelta(days=1) >= now:

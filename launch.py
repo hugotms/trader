@@ -45,7 +45,8 @@ while isOk == True:
             parameters.max_danger, 
             parameters.max_concurrent_currencies,
             parameters.min_recovered,
-            parameters.refresh_time
+            parameters.refresh_time,
+            parameters.wait_time
         )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):

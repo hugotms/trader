@@ -149,13 +149,13 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, refresh_time,
     
     return trading_alert
 
-def trade(exchange_client, account, max_danger, max_concurrent_currencies, min_recovered, refresh_time):
+def trade(exchange_client, account, max_danger, max_concurrent_currencies, min_recovered, refresh_time, wait_time):
     trading_message = ""
 
     if account.available * account.takerFee * account.makerFee * min_recovered < 10:
         return None
 
-    for crypto in exchange_client.findProfitable(max_concurrent_currencies, max_danger, min_recovered, account, refresh_time):
+    for crypto in exchange_client.findProfitable(max_concurrent_currencies, max_danger, min_recovered, account, refresh_time, wait_time):
 
         if crypto.danger < 1:
             crypto.danger = 1

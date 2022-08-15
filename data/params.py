@@ -19,6 +19,7 @@ class Params:
         self.min_profit = os.getenv('MIN_PROFIT_RATE')
         self.max_danger = os.getenv('MAX_DANGER')
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
+        self.wait_time = os.getenv('MINUTES_WAIT_TIME')
         self.taxe_rate = os.getenv('TAXE_RATE')
         self.make_trade = os.getenv('MAKE_TRADE')
         self.max_concurrent_currencies = os.getenv('MAX_CONCURRENT_CURRENCIES')
@@ -43,10 +44,8 @@ class Params:
         self.min_recovered = self.database.findVar("min_recovered", self.min_recovered, 0.95)
         self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.05)
         self.max_danger = self.database.findVar("max_danger", self.max_danger, 5)
+        self.wait_time = self.database.findVar("wait_time", self.wait_time, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
-        if self.refresh_time < 1:
-            self.refresh_time = 1
-        
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
         self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
         self.max_concurrent_currencies = self.database.findVar("max_concurrent_currencies", self.max_concurrent_currencies, 0)
@@ -115,12 +114,6 @@ class Params:
             print("DB port must be a number")
             return False
         
-        try:
-            self.refresh_time = int(self.refresh_time)
-        except Exception:
-            print("Refresh time must be a number")
-            return False
-        
         if self.make_trade is None or self.make_trade.lower() != "true":
             print("By default, no new trade will be done on your behalf")
             self.make_trade = False
@@ -145,6 +138,8 @@ class Params:
         self.actualize()
         
         try:
+            self.refresh_time = int(self.refresh_time)
+            self.wait_time = int(self.wait_time)
             self.min_recovered = float(self.min_recovered)
             self.min_profit = float(self.min_profit)
             self.max_danger = int(self.max_danger)
@@ -153,6 +148,9 @@ class Params:
         except Exception:
             print("Error while converting parameters from string")
             return False
+        
+        if self.refresh_time < 1:
+            self.refresh_time = 1
 
         return True
     
