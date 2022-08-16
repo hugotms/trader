@@ -104,7 +104,7 @@ Some variables can change this program comportement, response time and liability
 
 However, some variables do have default value. They may, or may not suit your needs. Be sure to initialized them in a way that works for you.
 
-This program is not guaranteed to be free of any bug. If you do find one, please, do not hesitate to submit a correction in a pull request (please be careful with your commit messages and make sure the respect the conventionnal commit rules). Remember, be kind and respectful between contributors. No pull request is guaranteed to be accepted and the author is not required to give any reason about that.
+This program is not guaranteed to be free of any bug. If you do find one, please, do not hesitate to submit a correction in a pull request (please be careful with your commit messages and make sure to respect the conventionnal commit rules). Remember, be kind and respectful between contributors. No pull request is guaranteed to be accepted and the author is not required to give any reason about that.
 
 By using this program, you understand that there is no support tied to it. You are, of course able to raise an issue. Please note that any work on those issues will be done in a "Best effort".
 
