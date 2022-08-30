@@ -516,7 +516,7 @@ class BitpandaPro:
             if account.available * 20 < crypto.dailyVolume / 2:
                 crypto.danger -= 2
             
-            if datetime.utcnow().time() >= timed(12,30):
+            if datetime.utcnow().time() >= timed(11,30):
                 crypto.danger += 2
             
             if crypto.danger < max_danger:
