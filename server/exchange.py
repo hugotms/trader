@@ -122,38 +122,75 @@ class BitpandaPro:
             account.takerFee = fees['takerFee']
             account.makerFee = fees['makerFee']
     
-    def getPrices(self, crypto, time_unit=None, refresh_time=0):
-        if time_unit is None:
-            return None
-        
+    def getStats(self, crypto, fma_unit=5, sma_unit=50):
         header = {
             "Accept": "application/json"
         }
 
-        tz = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        tz2 = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        today = datetime.utcnow()
+        tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + time_unit + "&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
+        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=MINUTES&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
             return None
         
+        time.sleep(1)
+        
         if client.getData() == []:
             return None
         
-        if len(client.getData()) < refresh_time + 1:
-            return None
-        
-        volume = 0.0
-        for i in range(refresh_time + 1):
-            volume += float(client.getData()[i]['volume'])
+        closed_values = []
+        length = len(client.getData())
 
-        return json.dumps({
-                "open": float(client.getData()[0]['open']),
-                "close": float(client.getData()[refresh_time]['close']),
-                "volume": volume
-            })
+        last_time = datetime.strptime(client.getData()[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        i = 0
+        while last_time.strftime("%Y-%m-%dT%H:%M") != today.strftime("%Y-%m-%dT%H:%M"):
+            closed_values.append(float(client.getData()[length - 1]['close']))
+            last_time = last_time + timedelta(minutes=1)
+            i += 1
+
+            if i > sma_unit:
+                break
+
+        for i in range(1, length):
+            if length - i - 1 == 0:
+                break
+            
+            previous_time = datetime.strptime(client.getData()[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            current_time = datetime.strptime(client.getData()[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            
+            while previous_time.strftime("%Y-%m-%dT%H:%M") != current_time.strftime("%Y-%m-%dT%H:%M"):
+                closed_values.append(float(client.getData()[length - i]['close']))
+                current_time = current_time - timedelta(minutes=1)
+
+            crypto.hourlyVolume += float(client.getData()[length - i]['volume'])
+
+        missing = sma_unit - len(closed_values)
+        if missing > 0:
+            last_item = closed_values[len(closed_values) - 1]
+            
+            for i in range(missing):
+                closed_values.append(last_item)
+        
+        fma_mean = 0
+        for i in range(fma_unit):
+            fma_mean += closed_values[i]
+        
+        fma_mean = fma_mean / fma_unit
+        
+        sma_mean = 0
+        for i in range(sma_unit):
+            sma_mean += closed_values[i]
+        
+        sma_mean = sma_mean / sma_unit
+
+        crypto.fma = fma_mean
+        crypto.sma = sma_mean
+
+        return True
     
     def getPrice(self, instrument_code):
         header = {
@@ -168,141 +205,7 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def calculateDanger(self, crypto, refresh_time, account=None):
-        danger = 0
-
-        if crypto.current != 0 and crypto.current < crypto.placed:
-            danger += 1
-        
-        res = self.getPrices(crypto, time_unit='MINUTES')
-        if res is None:
-            crypto.danger = -100
-            return self
-        res = json.loads(res)
-
-        lastMinuteDanger = 0
-        if res['open'] > res['close']:
-            lastMinuteDanger += 2
-
-        if account is not None:
-            lastMinuteDanger *= -1
-        
-        danger += lastMinuteDanger
-
-        res = self.getPrices(crypto, time_unit='MINUTES', refresh_time=refresh_time - 1)
-        if res is None:
-            crypto.danger = -100
-            return self
-        res = json.loads(res)
-
-        lastRefreshDanger = 0
-        if res['open'] > res['close']:
-            lastRefreshDanger += 2
-    
-        variation = abs((res['open'] - res['close']) / res['close'])
-    
-        if variation > 0.015:
-            lastRefreshDanger += 2
-        elif variation > 0.01:
-            lastRefreshDanger += 1
-
-        if account is not None:
-            lastRefreshDanger *= -1
-        
-        danger += lastRefreshDanger
-        
-        res = self.getPrices(crypto, time_unit='HOURS')
-        if res is None:
-            crypto.danger = -100
-            return self
-        res = json.loads(res)
-
-        if res['open'] > res['close']:
-            danger += 2
-        
-        variation = abs((res['open'] - res['close']) / res['close'])
-        
-        if variation > 0.05:
-            danger += 2
-        elif variation > 0.03:
-            danger += 1
-        
-        hourlyVolume = res['volume']
-        
-        if crypto.loaded > 0:
-            if hourlyVolume < crypto.dailyVolume / 24:
-                danger += 2
-            
-            danger += crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
-            crypto.danger += danger
-            return self
-        
-        if date.today().weekday() == 4:
-            crypto.dailyDanger += 1
-        
-        elif date.today().weekday() >= 5:
-            crypto.dailyDanger += 2
-        
-        res = self.getPrices(crypto, time_unit='DAYS')
-        if res is None:
-            crypto.danger = -100
-            return self
-        res = json.loads(res)
-
-        if res['open'] > res['close']:
-            crypto.dailyDanger += 2
-        
-        variation = abs((res['open'] - res['close']) / res['close'])
-        
-        if variation > 0.1:
-            crypto.dailyDanger += 2
-        elif variation > 0.05:
-            crypto.dailyDanger += 1
-        
-        crypto.dailyVolume = res['volume']
-        if hourlyVolume < crypto.dailyVolume / 24:
-            danger += 2
-
-        res = self.getPrices(crypto, time_unit='WEEKS')
-        if res is None:
-            crypto.danger = -100
-            return self
-        res = json.loads(res)
-
-        if res['open'] > res['close']:
-            crypto.weeklyDanger += 1
-        
-        variation = abs((res['open'] - res['close']) / res['close'])
-        
-        if variation > 0.2:
-            crypto.weeklyDanger += 2
-        elif variation > 0.1:
-            crypto.weeklyDanger += 1
-        
-        res = self.getPrices(crypto, time_unit='MONTHS')
-        if res is None:
-            crypto.danger = -100
-            return self
-        res = json.loads(res)
-
-        crypto.monthlyDanger = 0
-
-        if res['open'] > res['close']:
-            crypto.monthlyDanger += 1
-        
-        variation = abs((res['open'] - res['close']) / res['close'])
-        
-        if variation > 0.3:
-            crypto.monthlyDanger += 2
-        elif variation > 0.2:
-            crypto.monthlyDanger += 1
-
-        crypto.danger += danger + crypto.dailyDanger + crypto.weeklyDanger + crypto.monthlyDanger
-
-        return self
-
-
-    def getAllActiveTrades(self, refresh_time):
+    def getAllActiveTrades(self):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -368,17 +271,10 @@ class BitpandaPro:
                     trade.market_id = crypto["market_id"]
                     trade.failed = bool(crypto["failed"])
                     trade.alerted = bool(crypto["alerted"])
+                    trade.precision = int(crypto["precision"])
 
                     if float(crypto["higher"]) > trade.current:
                         trade.higher = float(crypto["higher"])
-                    
-                    if int(crypto["loaded"]) > 0:
-                        trade.loaded = int(crypto["loaded"])
-                        trade.dailyDanger = int(crypto["dailyDanger"])
-                        trade.dailyVolume = float(crypto["dailyVolume"])
-                        trade.weeklyDanger = int(crypto["weeklyDanger"])
-                        trade.monthlyDanger = int(crypto["monthlyDanger"])
-                        trade.precision = int(crypto["precision"])
 
             if isFound == True:
                 continue
@@ -412,36 +308,12 @@ class BitpandaPro:
             self.database.putInHistory(crypto)
 
         for trade in active_trades:
-            wait = 2
-            client = None
-            status_code = 0
-
-            if trade.loaded < 0:
-                header = {
-                    "Accept": "application/json"
-                }
-
-                client = web.Api(BitpandaPro.baseUrl + "/instruments", headers=header).send()
-                status_code = client.getStatusCode()
-                
-            if status_code == 200:
-                for item in client.getData():
-                    pair = item["base"]["code"] + "_" + item["quote"]["code"]
-
-                    if pair != trade.instrument_code:
-                        continue
-
-                    trade.precision = int(item["amount_precision"])
-
-                wait += 1
-            
-            self.calculateDanger(trade, refresh_time)
+            self.getStats(trade)
             self.database.putInActive(trade)
-            time.sleep(wait)
 
         return active_trades
     
-    def findProfitable(self, max_concurrent_currencies, max_danger, min_recovered, account, refresh_time, wait_time):
+    def findProfitable(self, max_concurrent_currencies, max_danger, min_recovered, account, wait_time):
         header = {
             "Accept": "application/json"
         }
@@ -461,6 +333,8 @@ class BitpandaPro:
         if client.getStatusCode() != 200:
             print("Error while trying to get available cryptos")
             return []
+        
+        time.sleep(1)
 
         available_cryptos = []
         for item in client.getData():
@@ -496,33 +370,36 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
-            self.calculateDanger(crypto, refresh_time, account)
-            
-            if crypto.danger != -100:
+            res = self.getStats(crypto)
+            if res is None:
                 continue
 
             if self.database.getLastDanger(crypto, min_recovered, max_danger, wait_time) == 0:
                 crypto.danger += 1
             
-            if account.available >= crypto.dailyVolume:
+            if account.available >= crypto.hourlyVolume:
                 crypto.danger += max_danger
             
-            if account.available * 10 >= crypto.dailyVolume / 2:
-                crypto.danger += 1
+            if account.available * 10 >= crypto.hourlyVolume / 2:
+                crypto.danger += 2
 
-            if account.available * 10 >= crypto.dailyVolume:
-                crypto.danger += 1
+            if account.available * 10 >= crypto.hourlyVolume:
+                crypto.danger += max_danger
             
-            if account.available * 20 < crypto.dailyVolume / 2:
+            if account.available * 20 < crypto.hourlyVolume / 2:
                 crypto.danger -= 2
             
             if datetime.utcnow().time() >= timed(11,30):
                 crypto.danger += 2
             
+            if date.today().weekday() == 4:
+                crypto.danger += 1
+            
+            elif date.today().weekday() >= 5:
+                crypto.danger += 2
+            
             if crypto.danger < max_danger:
                 profitable_trades.append(crypto)
-            
-            time.sleep(2)
 
         profitable_trades.sort(key=lambda x: x.danger)
 

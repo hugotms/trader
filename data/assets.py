@@ -10,12 +10,10 @@ class Crypto:
         self.placed = placed
         self.current = current
         self.placed_on = placed_on
+        self.fma = 0
+        self.sma = 0
         self.danger = 0
-        self.loaded = -1
-        self.dailyDanger = 0
-        self.dailyVolume = 0
-        self.weeklyDanger = 0
-        self.monthlyDanger = -100
+        self.hourlyVolume = 0
         self.precision = 4
         self.stop_id = ""
         self.market_id = ""

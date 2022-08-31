@@ -106,16 +106,15 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, min_recovered, min_profit, taxe_rate, refresh_time, seconds_in_delay):
+def monitor(exchange_client, min_recovered, min_profit, taxe_rate, seconds_in_delay):
     trading_message = ""
     trading_alert = ""
 
-    for crypto in exchange_client.getAllActiveTrades(refresh_time):
+    for crypto in exchange_client.getAllActiveTrades():
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
-            + "€ / DANGER: " + str(crypto.danger) 
-            + " / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
+            + "€ / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
             + "%)")
 
         if crypto.current < 10:
@@ -123,6 +122,10 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, refresh_time,
         
         elif crypto.current < crypto.higher * min_recovered:
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
+            trading_message += stop(exchange_client, crypto, taxe_rate)
+        
+        elif crypto.sma > crypto.fma:
+            trading_message += "Selling " + crypto.instrument_code + " because of down trend."
             trading_message += stop(exchange_client, crypto, taxe_rate)
 
         elif crypto.current >= crypto.placed * min_profit:
@@ -135,12 +138,6 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, refresh_time,
         if crypto.failed == True and crypto.alerted == False:
             trading_alert += "No action can be done on " + crypto.instrument_code + " due to an error.\n"
             crypto.alerted = True
-
-        if crypto.loaded < 0 and crypto.monthlyDanger != -100:
-            crypto.loaded = seconds_in_delay
-        
-        else:
-            crypto.loaded -= refresh_time * 60
         
         exchange_client.database.putInActive(crypto)
 
@@ -149,18 +146,21 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, refresh_time,
     
     return trading_alert
 
-def trade(exchange_client, account, max_danger, max_concurrent_currencies, min_recovered, refresh_time, wait_time):
+def trade(exchange_client, account, max_danger, max_concurrent_currencies, min_recovered, wait_time):
     trading_message = ""
 
     if account.available * account.takerFee * account.makerFee * min_recovered < 10:
         return None
 
-    for crypto in exchange_client.findProfitable(max_concurrent_currencies, max_danger, min_recovered, account, refresh_time, wait_time):
+    for crypto in exchange_client.findProfitable(max_concurrent_currencies, max_danger, min_recovered, account, wait_time):
 
         if crypto.danger < 1:
             crypto.danger = 1
-        
-        if account.available * account.takerFee * account.makerFee * min_recovered / crypto.danger > 10:
+
+        if account.available * account.takerFee * account.makerFee * min_recovered / crypto.danger < 10:
+            continue
+
+        if crypto.fma > crypto.sma:
             trading_message += start(exchange_client, crypto, account)
 
     if trading_message != "":

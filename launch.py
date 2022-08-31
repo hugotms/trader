@@ -28,7 +28,6 @@ while isOk == True:
             parameters.min_recovered,
             parameters.min_profit,
             parameters.taxe_rate,
-            parameters.refresh_time,
             seconds_in_delay
         )
     
@@ -45,7 +44,6 @@ while isOk == True:
             parameters.max_danger, 
             parameters.max_concurrent_currencies,
             parameters.min_recovered,
-            parameters.refresh_time,
             parameters.wait_time
         )
 
