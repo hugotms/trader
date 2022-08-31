@@ -58,7 +58,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 In order to build the image, you need to clone this repository then simply run (replace `docker` by `podman` if needed) :
 
 ```bash
-docker build -t trader:4.0.0 https://raw.githubusercontent.com/hugotms/trader/v4.0.0/Dockerfile
+docker build -t trader:5.0.0 https://raw.githubusercontent.com/hugotms/trader/v5.0.0/Dockerfile
 ```
 
 ## Deploy
@@ -68,7 +68,7 @@ docker build -t trader:4.0.0 https://raw.githubusercontent.com/hugotms/trader/v4
 After the image has been built, you can now run it like so (add any non required extra environment variables you want to modify preceeded by a `-e`) :
 
 ```bash
-docker run -d --name trader --restart unless-stopped -e EXCHANGE_API_KEY=token -e MONGO_DB_HOST=hostname -e MONGO_DB_PASSWORD=secure trader:4.0.0
+docker run -d --name trader --restart unless-stopped -e EXCHANGE_API_KEY=token -e MONGO_DB_HOST=hostname -e MONGO_DB_PASSWORD=secure trader:5.0.0
 ```
 
 ### Docker-compose
@@ -79,7 +79,7 @@ If you prefer the docker-compose solution, here is a simple example of a stack:
 version: '3.1'
 services:
   trader:
-    image: trader:4.0.0
+    image: trader:5.0.0
     restart: unless-stopped
     depends_on: mongo_db
     environment:
