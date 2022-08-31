@@ -19,15 +19,15 @@ class Params:
         self.min_profit = os.getenv('MIN_PROFIT_RATE')
         self.max_danger = os.getenv('MAX_DANGER')
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
+        self.wait_time = os.getenv('MINUTES_WAIT_TIME')
         self.taxe_rate = os.getenv('TAXE_RATE')
         self.make_trade = os.getenv('MAKE_TRADE')
-        self.max_concurrent_trades = os.getenv('MAX_CONCURRENT_TRADES')
+        self.max_concurrent_currencies = os.getenv('MAX_CONCURRENT_CURRENCIES')
 
         self.latest_bot_release = os.getenv('TRADER_VERSION')
 
-        self.watching_cryptos = os.getenv('WATCHING_CRYPTOS')
-        self.ignore_cryptos = os.getenv('IGNORE_CRYPTOS')
         self.watching_currencies = os.getenv('WATCHING_CURRENCIES')
+        self.ignore_currencies = os.getenv('IGNORE_CURRENCIES')
 
         self.smtp_sending = os.getenv('SEND_ALERT_MAIL')
         self.smtp_host = os.getenv('SMTP_HOST')
@@ -39,16 +39,16 @@ class Params:
         self.smtp = None
     
     def actualize(self):
-        self.watching_cryptos = self.database.findVar("watching_cryptos", self.watching_cryptos, [])
-        self.ignore_cryptos = self.database.findVar("ignore_cryptos", self.ignore_cryptos, [])
         self.watching_currencies = self.database.findVar("watching_currencies", self.watching_currencies, [])
+        self.ignore_currencies = self.database.findVar("ignore_currencies", self.ignore_currencies, [])
         self.min_recovered = self.database.findVar("min_recovered", self.min_recovered, 0.95)
         self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.05)
-        self.max_danger = self.database.findVar("max_danger", self.max_danger, 10)
+        self.max_danger = self.database.findVar("max_danger", self.max_danger, 5)
+        self.wait_time = self.database.findVar("wait_time", self.wait_time, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
         self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
-        self.max_concurrent_trades = self.database.findVar("max_concurrent_trades", self.max_concurrent_trades, 0)
+        self.max_concurrent_currencies = self.database.findVar("max_concurrent_currencies", self.max_concurrent_currencies, 0)
 
         if self.smtp_sending == True:
             self.smtp_host = self.database.findVar("smtp_host", self.smtp_host)
@@ -65,7 +65,7 @@ class Params:
             self.smtp_sending = False
             self.smtp = None
         
-        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key, self.database, self.watching_cryptos, self.ignore_cryptos, self.watching_currencies)
+        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key, self.database, self.watching_currencies, self.ignore_currencies)
 
         if self.smtp_sending == True: 
             self.smtp = mail.SMTP(
@@ -122,14 +122,11 @@ class Params:
         
         self.database = db.Mongo(self.db_hostname, self.db_port, self.db_name, self.db_user, self.db_password)
         
-        if self.watching_cryptos is not None:
-            self.watching_cryptos = self.watching_cryptos.split(',')
-        
-        if self.ignore_cryptos is not None:
-            self.ignore_cryptos = self.ignore_cryptos.split(',')
-        
         if self.watching_currencies is not None:
             self.watching_currencies = self.watching_currencies.split(',')
+        
+        if self.ignore_currencies is not None:
+            self.ignore_currencies = self.ignore_currencies.split(',')
         
         if self.smtp_sending == True:
             try:
@@ -141,15 +138,19 @@ class Params:
         self.actualize()
         
         try:
+            self.refresh_time = int(self.refresh_time)
+            self.wait_time = int(self.wait_time)
             self.min_recovered = float(self.min_recovered)
             self.min_profit = float(self.min_profit)
             self.max_danger = int(self.max_danger)
-            self.refresh_time = int(self.refresh_time)
             self.taxe_rate = float(self.taxe_rate)
-            self.max_concurrent_trades = int(self.max_concurrent_trades)
+            self.max_concurrent_currencies = int(self.max_concurrent_currencies)
         except Exception:
             print("Error while converting parameters from string")
             return False
+        
+        if self.refresh_time < 1:
+            self.refresh_time = 1
 
         return True
     

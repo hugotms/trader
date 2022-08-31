@@ -1,7 +1,7 @@
 import pymongo
 import json
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class Mongo:
 
@@ -75,6 +75,7 @@ class Mongo:
         if isFound == True:
             data = {
                 "stop_id": crypto.stop_id,
+                "market_id": crypto.market_id,
                 "base": crypto.base,
                 "currency": crypto.currency,
                 "owned": crypto.owned,
@@ -88,7 +89,9 @@ class Mongo:
                 "dailyVolume": crypto.dailyVolume,
                 "weeklyDanger": crypto.weeklyDanger,
                 "monthlyDanger": crypto.monthlyDanger,
-                "precision": crypto.precision
+                "precision": crypto.precision,
+                "failed": crypto.failed,
+                "alerted": crypto.alerted
             }
 
             query = {
@@ -101,6 +104,7 @@ class Mongo:
             data = {
                 "_id": crypto.instrument_code,
                 "stop_id": crypto.stop_id,
+                "market_id": crypto.market_id,
                 "base": crypto.base,
                 "currency": crypto.currency,
                 "owned": crypto.owned,
@@ -114,7 +118,9 @@ class Mongo:
                 "dailyVolume": crypto.dailyVolume,
                 "weeklyDanger": crypto.weeklyDanger,
                 "monthlyDanger": crypto.monthlyDanger,
-                "precision": crypto.precision
+                "precision": crypto.precision,
+                "failed": crypto.failed,
+                "alerted": crypto.alerted
             }
 
             self.create("actives", data)
@@ -155,29 +161,24 @@ class Mongo:
         
         return self
     
-    def findActives(self, watching_cryptos, ignore_cryptos, watching_currencies):
+    def findActives(self, watching_currencies, ignore_currencies):
         if self.client is None:
             return []
 
         query = {}
-        if len(ignore_cryptos) != 0:
+        if len(ignore_currencies) != 0:
             query["_id"] = {
-                "$nin": ignore_cryptos
+                "$nin": ignore_currencies
             }
         
-        elif len(watching_cryptos) != 0:
+        elif len(watching_currencies) != 0:
             query["_id"] = {
-                "$in": watching_cryptos
-            }
-        
-        if len(watching_currencies) != 0:
-            query["currency"] = {
                 "$in": watching_currencies
             }
         
         return self.find("actives", query)
     
-    def getPastPerformance(self, past, watching_cryptos, ignore_cryptos, watching_currencies, instrument_code=None):
+    def getPastPerformance(self, past, watching_currencies, ignore_currencies, instrument_code=None):
         if self.client is None:
             return None
         
@@ -196,27 +197,19 @@ class Mongo:
             }
         }
 
-        if len(ignore_cryptos) != 0:
+        if len(ignore_currencies) != 0:
             query["instrument_code"] = {
-                "$nin": ignore_cryptos
+                "$nin": ignore_currencies
             }
             query2["_id"] = {
-                "$nin": ignore_cryptos
+                "$nin": ignore_currencies
             }
         
-        elif len(watching_cryptos) != 0:
+        elif len(watching_currencies) != 0:
             query["instrument_code"] = {
-                "$in": watching_cryptos
-            }
-            query2["_id"] = {
-                "$in": watching_cryptos
-            }
-        
-        if len(watching_currencies) != 0:
-            query["currency"] = {
                 "$in": watching_currencies
             }
-            query2["currency"] = {
+            query2["_id"] = {
                 "$in": watching_currencies
             }
         
@@ -248,7 +241,7 @@ class Mongo:
             "volume": volume
         })
 
-    def getLastDanger(self, crypto, min_recovered):
+    def getLastDanger(self, crypto, min_recovered, max_danger, wait_time):
         if self.client is None:
             return 0
         
@@ -260,19 +253,26 @@ class Mongo:
         if len(res) == 0:
             return 0
 
+        now = datetime.utcnow()
         danger = int(res[0]["danger"])
         higher = float(res[0]["higher"])
         current = float(res[0]["current"])
         placed = float(res[0]["placed"])
+        date = datetime.strptime(res[0]["date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
+        if date + timedelta(minutes=wait_time) >= now:
+            crypto.danger += max_danger
+        
+        if date + timedelta(days=1) >= now:
+            return None
+        
         if higher > current:
-            danger += 1
+            crypto.danger += 1
         
         if higher * min_recovered <= current:
-            danger += 1
+            crypto.danger += 1
         
         if placed >= current:
-            danger += 1
+            crypto.danger += 1
         
-        return danger
     

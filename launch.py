@@ -14,9 +14,7 @@ if isOk == True:
 if account is None:
     isOk = False
 
-# 2 hours delay between full danger calculation
-hours = 2
-seconds_in_delay = hours * 3600
+seconds_in_delay = 3600
 delay = seconds_in_delay
 
 report_send = False
@@ -25,16 +23,18 @@ while isOk == True:
     subject = "New trading update - " + time.strftime("%d/%m/%Y")
     message = ""
     
-    logic.monitor(
-            parameters.exchange_client, 
-            account, 
-            parameters.min_recovered, 
-            parameters.min_profit, 
-            parameters.max_danger, 
+    alerts = logic.monitor(
+            parameters.exchange_client,
+            parameters.min_recovered,
+            parameters.min_profit,
             parameters.taxe_rate,
-            delay,
-            parameters.refresh_time
+            parameters.refresh_time,
+            seconds_in_delay
         )
+    
+    if alerts != "":
+        message += "############# ALERTS #############\n\n"
+        message += alerts + "\n"
     
     parameters.exchange_client.actualizeAccount(account)
 
@@ -43,18 +43,18 @@ while isOk == True:
             parameters.exchange_client, 
             account, 
             parameters.max_danger, 
-            parameters.max_concurrent_trades,
+            parameters.max_concurrent_currencies,
             parameters.min_recovered,
-            parameters.refresh_time
+            parameters.refresh_time,
+            parameters.wait_time
         )
 
-    if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(hours - 1,59):
+    if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):
         message += "############# REPORT #############\n"
         message += logic.report(
             parameters.database, 
-            parameters.watching_cryptos, 
-            parameters.ignore_cryptos, 
             parameters.watching_currencies, 
+            parameters.ignore_currencies,
             parameters.taxe_rate
         )
 
