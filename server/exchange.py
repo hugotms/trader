@@ -322,6 +322,24 @@ class BitpandaPro:
 
         for trade in active_trades:
             self.getStats(trade)
+
+            header = {
+                "Accept": "application/json"
+            }
+
+            client = web.Api(BitpandaPro.baseUrl + "/instruments", headers=header).send()
+
+            time.sleep(1)
+                
+            if client.getStatusCode() == 200:
+                for item in client.getData():
+                    pair = item["base"]["code"] + "_" + item["quote"]["code"]
+
+                    if pair != trade.instrument_code:
+                        continue
+                    
+                    trade.precision = int(item["amount_precision"])
+            
             self.database.putInActive(trade)
 
         return active_trades
