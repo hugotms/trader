@@ -193,6 +193,16 @@ class BitpandaPro:
         crypto.fma = fma_mean
         crypto.sma = sma_mean
 
+        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=DAYS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
+
+        if client.getStatusCode() != 200:
+            print("Error while trying to get price tickers")
+            return None
+        
+        time.sleep(1)
+
+        crypto.dailyVolume = float(client.getData()[0]['volume'])
+
         return True
     
     def getPrice(self, instrument_code):
@@ -391,6 +401,9 @@ class BitpandaPro:
             
             if account.available * 20 < crypto.hourlyVolume / 2:
                 crypto.danger -= 2
+            
+            if crypto.hourlyVolume < crypto.dailyVolume / 24:
+                crypto.danger += 2
             
             if datetime.utcnow().time() >= timed(11,30):
                 crypto.danger += 2

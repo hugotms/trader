@@ -85,6 +85,7 @@ class Mongo:
                 "placed_on": crypto.placed_on,
                 "danger": crypto.danger,
                 "hourlyVolume": crypto.hourlyVolume,
+                "dailyVolume": crypto.dailyVolume,
                 "precision": crypto.precision,
                 "failed": crypto.failed,
                 "alerted": crypto.alerted
@@ -110,6 +111,7 @@ class Mongo:
                 "placed_on": crypto.placed_on,
                 "danger": crypto.danger,
                 "hourlyVolume": crypto.hourlyVolume,
+                "dailyVolume": crypto.dailyVolume,
                 "precision": crypto.precision,
                 "failed": crypto.failed,
                 "alerted": crypto.alerted
