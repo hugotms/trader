@@ -122,14 +122,14 @@ class BitpandaPro:
             account.takerFee = fees['takerFee']
             account.makerFee = fees['makerFee']
     
-    def getStats(self, crypto, fma_unit=5, sma_unit=50):
+    def getStats(self, crypto, fma_unit=5, mma_unit=25, sma_unit=100):
         header = {
             "Accept": "application/json"
         }
 
         today = datetime.utcnow()
         tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        tz2 = (today - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=MINUTES&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
@@ -183,6 +183,12 @@ class BitpandaPro:
             fma_mean += closed_values[i]
         
         fma_mean = fma_mean / fma_unit
+
+        mma_mean = 0
+        for i in range(mma_unit):
+            mma_mean += closed_values[i]
+        
+        mma_mean = mma_mean / mma_unit
         
         sma_mean = 0
         for i in range(sma_unit):
@@ -191,6 +197,7 @@ class BitpandaPro:
         sma_mean = sma_mean / sma_unit
 
         crypto.fma = fma_mean
+        crypto.mma = mma_mean
         crypto.sma = sma_mean
 
         client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=DAYS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()

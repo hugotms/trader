@@ -124,7 +124,7 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, seconds_in_de
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(exchange_client, crypto, taxe_rate)
         
-        elif crypto.sma > crypto.fma:
+        elif crypto.mma >= crypto.fma:
             trading_message += "Selling " + crypto.instrument_code + " because of down trend. "
             trading_message += stop(exchange_client, crypto, taxe_rate)
 
@@ -160,7 +160,7 @@ def trade(exchange_client, account, max_danger, max_concurrent_currencies, min_r
         if account.available * account.takerFee * account.makerFee * min_recovered / crypto.danger < 10:
             continue
 
-        if crypto.fma > crypto.sma:
+        if crypto.fma > crypto.mma and crypto.mma > crypto.sma:
             trading_message += start(exchange_client, crypto, account)
 
     if trading_message != "":
