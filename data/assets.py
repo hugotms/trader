@@ -15,7 +15,7 @@ class Crypto:
         self.danger = 0
         self.hourlyVolume = 0
         self.dailyVolume = 0
-        self.precision = 4
+        self.precision = 0
         self.stop_id = ""
         self.market_id = ""
         self.failed = False

@@ -201,6 +201,9 @@ class BitpandaPro:
         
         time.sleep(1)
 
+        if len(client.getData()) == 0:
+            return None
+
         crypto.dailyVolume = float(client.getData()[0]['volume'])
 
         return True
@@ -327,11 +330,13 @@ class BitpandaPro:
                 "Accept": "application/json"
             }
 
-            client = web.Api(BitpandaPro.baseUrl + "/instruments", headers=header).send()
-
-            time.sleep(1)
+            status_code = 0
+            if trade.precision == 0:
+                client = web.Api(BitpandaPro.baseUrl + "/instruments", headers=header).send()
+                status_code = client.getStatusCode()
+                time.sleep(1)
                 
-            if client.getStatusCode() == 200:
+            if status_code == 200:
                 for item in client.getData():
                     pair = item["base"]["code"] + "_" + item["quote"]["code"]
 
