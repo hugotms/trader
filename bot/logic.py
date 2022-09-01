@@ -125,7 +125,7 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, seconds_in_de
             trading_message += stop(exchange_client, crypto, taxe_rate)
         
         elif crypto.sma > crypto.fma:
-            trading_message += "Selling " + crypto.instrument_code + " because of down trend."
+            trading_message += "Selling " + crypto.instrument_code + " because of down trend. "
             trading_message += stop(exchange_client, crypto, taxe_rate)
 
         elif crypto.current >= crypto.placed * min_profit:
