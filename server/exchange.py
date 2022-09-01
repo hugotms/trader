@@ -168,6 +168,9 @@ class BitpandaPro:
 
             crypto.hourlyVolume += float(client.getData()[length - i]['volume'])
 
+        if len(closed_values) == 0:
+            return None
+        
         missing = sma_unit - len(closed_values)
         if missing > 0:
             last_item = closed_values[len(closed_values) - 1]
