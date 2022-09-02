@@ -139,31 +139,32 @@ class BitpandaPro:
         
         time.sleep(1)
         
-        if len(client.getData()) < sma_unit:
+        length = len(client.getData())
+        if length < sma_unit:
             return None
-
+        
         fma_mean = 0
-        for i in range(fma_unit):
-            fma_mean += float(client.getData()[i]['close']) * (sma_unit - i)
+        for i in range(1, fma_unit + 1):
+            fma_mean += float(client.getData()[length - i]['close']) * (sma_unit - i)
         
         fma_mean = fma_mean / fma_unit
 
         mma_mean = 0
-        for i in range(mma_unit):
-            mma_mean += float(client.getData()[i]['close']) * (sma_unit - i)
+        for i in range(1, mma_unit + 1):
+            mma_mean += float(client.getData()[length - i]['close']) * (sma_unit - i)
         
         mma_mean = mma_mean / mma_unit
         
         sma_mean = 0
-        for i in range(sma_unit):
-            sma_mean += float(client.getData()[i]['close']) * (sma_unit - i)
+        for i in range(1, sma_unit + 1):
+            sma_mean += float(client.getData()[length - i]['close']) * (sma_unit - i)
         
         sma_mean = sma_mean / sma_unit
 
         crypto.fma = fma_mean
         crypto.mma = mma_mean
         crypto.sma = sma_mean
-        crypto.dailyVolume = float(client.getData()[0]['volume'])
+        crypto.dailyVolume = float(client.getData()[length - 1]['volume'])
 
         tz2 = (today - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=MINUTES&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
