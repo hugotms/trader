@@ -129,9 +129,9 @@ class BitpandaPro:
 
         today = datetime.utcnow()
         tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        tz2 = (today - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - timedelta(days=sma_unit)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=MINUTES&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
+        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=DAYS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
@@ -139,68 +139,34 @@ class BitpandaPro:
         
         time.sleep(1)
         
-        if client.getData() == []:
+        if len(client.getData()) < sma_unit:
             return None
-        
-        closed_values = []
-        length = len(client.getData())
 
-        last_time = datetime.strptime(client.getData()[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-        i = 0
-        while last_time.strftime("%Y-%m-%dT%H:%M") != today.strftime("%Y-%m-%dT%H:%M"):
-            closed_values.append(float(client.getData()[length - 1]['close']))
-            last_time = last_time + timedelta(minutes=1)
-            i += 1
-
-            if i > sma_unit:
-                break
-
-        for i in range(1, length):
-            if length - i - 1 == 0:
-                break
-            
-            previous_time = datetime.strptime(client.getData()[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-            current_time = datetime.strptime(client.getData()[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-            
-            while previous_time.strftime("%Y-%m-%dT%H:%M") != current_time.strftime("%Y-%m-%dT%H:%M"):
-                closed_values.append(float(client.getData()[length - i]['close']))
-                current_time = current_time - timedelta(minutes=1)
-
-            crypto.hourlyVolume += float(client.getData()[length - i]['volume'])
-
-        if len(closed_values) == 0:
-            return None
-        
-        missing = sma_unit - len(closed_values)
-        if missing > 0:
-            last_item = closed_values[len(closed_values) - 1]
-            
-            for i in range(missing):
-                closed_values.append(last_item)
-        
         fma_mean = 0
         for i in range(fma_unit):
-            fma_mean += closed_values[i]
+            fma_mean += float(client.getData()[i]['close']) * (sma_unit - i)
         
         fma_mean = fma_mean / fma_unit
 
         mma_mean = 0
         for i in range(mma_unit):
-            mma_mean += closed_values[i]
+            mma_mean += float(client.getData()[i]['close']) * (sma_unit - i)
         
         mma_mean = mma_mean / mma_unit
         
         sma_mean = 0
         for i in range(sma_unit):
-            sma_mean += closed_values[i]
+            sma_mean += float(client.getData()[i]['close']) * (sma_unit - i)
         
         sma_mean = sma_mean / sma_unit
 
         crypto.fma = fma_mean
         crypto.mma = mma_mean
         crypto.sma = sma_mean
+        crypto.dailyVolume = float(client.getData()[0]['volume'])
 
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=DAYS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
+        tz2 = (today - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=MINUTES&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
@@ -210,8 +176,9 @@ class BitpandaPro:
 
         if len(client.getData()) == 0:
             return None
-
-        crypto.dailyVolume = float(client.getData()[0]['volume'])
+        
+        for item in client.getData():
+            crypto.hourlyVolume += float(item['close'])
 
         return True
     
