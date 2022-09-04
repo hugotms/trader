@@ -144,30 +144,29 @@ class BitpandaPro:
             return None
         
         fma_mean = 0
-        for i in range(1, fma_unit + 1):
-            fma_mean += float(client.getData()[length - i]['close']) * (sma_unit - i)
+        for i in range(fma_unit):
+            fma_mean += float(client.getData()[length - 1 - i]['close']) * (fma_unit - i)
         
-        fma_mean = fma_mean / fma_unit
+        fma_mean = fma_mean / (fma_unit * (fma_unit + 1) / 2)
 
         mma_mean = 0
-        for i in range(1, mma_unit + 1):
-            mma_mean += float(client.getData()[length - i]['close']) * (sma_unit - i)
+        for i in range(mma_unit):
+            mma_mean += float(client.getData()[length - 1 - i]['close']) * (mma_unit - i)
         
-        mma_mean = mma_mean / mma_unit
+        mma_mean = mma_mean / (mma_unit * (mma_unit + 1) / 2)
         
         sma_mean = 0
-        for i in range(1, sma_unit + 1):
-            sma_mean += float(client.getData()[length - i]['close']) * (sma_unit - i)
+        for i in range(sma_unit):
+            sma_mean += float(client.getData()[length - 1 - i]['close']) * (sma_unit - i)
         
-        sma_mean = sma_mean / sma_unit
+        sma_mean = sma_mean / (sma_unit * (sma_unit + 1) / 2)
 
         crypto.fma = fma_mean
         crypto.mma = mma_mean
         crypto.sma = sma_mean
-        crypto.dailyVolume = float(client.getData()[length - 1]['volume'])
 
-        tz2 = (today - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=MINUTES&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
+        tz2 = (today - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
@@ -175,11 +174,15 @@ class BitpandaPro:
         
         time.sleep(1)
 
-        if len(client.getData()) == 0:
+        length = len(client.getData())
+
+        if length == 0:
             return None
         
+        crypto.hourlyVolume = float(client.getData()[length - 1]['volume'])
+
         for item in client.getData():
-            crypto.hourlyVolume += float(item['close'])
+            crypto.dailyVolume += float(item['volume'])
 
         return True
     
