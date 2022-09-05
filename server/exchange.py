@@ -122,7 +122,7 @@ class BitpandaPro:
             account.takerFee = fees['takerFee']
             account.makerFee = fees['makerFee']
     
-    def getStats(self, crypto, fma_unit=5, mma_unit=25, sma_unit=100):
+    def getStats(self, crypto, fma_unit, mma_unit, sma_unit):
         header = {
             "Accept": "application/json"
         }
@@ -199,7 +199,7 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def getAllActiveTrades(self):
+    def getAllActiveTrades(self, fma_unit, mma_unit, sma_unit):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -302,7 +302,7 @@ class BitpandaPro:
             self.database.putInHistory(crypto)
 
         for trade in active_trades:
-            self.getStats(trade)
+            self.getStats(trade, fma_unit, mma_unit, sma_unit)
 
             header = {
                 "Accept": "application/json"
@@ -327,7 +327,7 @@ class BitpandaPro:
 
         return active_trades
     
-    def findProfitable(self, max_concurrent_currencies, max_danger, min_recovered, account, wait_time):
+    def findProfitable(self, max_concurrent_currencies, fma_unit, mma_unit, sma_unit, max_danger, min_recovered, account, wait_time):
         header = {
             "Accept": "application/json"
         }
@@ -384,7 +384,7 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
-            res = self.getStats(crypto)
+            res = self.getStats(crypto, fma_unit, mma_unit, sma_unit)
             if res is None:
                 continue
 

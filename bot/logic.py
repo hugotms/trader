@@ -106,11 +106,11 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, min_recovered, min_profit, taxe_rate, seconds_in_delay):
+def monitor(exchange_client, min_recovered, min_profit, taxe_rate, fma_unit, mma_unit, sma_unit):
     trading_message = ""
     trading_alert = ""
 
-    for crypto in exchange_client.getAllActiveTrades():
+    for crypto in exchange_client.getAllActiveTrades(fma_unit, mma_unit, sma_unit):
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -146,13 +146,13 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, seconds_in_de
     
     return trading_alert
 
-def trade(exchange_client, account, max_danger, max_concurrent_currencies, min_recovered, wait_time):
+def trade(exchange_client, account, max_danger, max_concurrent_currencies, fma_unit, mma_unit, sma_unit, min_recovered, wait_time):
     trading_message = ""
 
     if account.available * account.takerFee * account.makerFee * min_recovered < 10:
         return None
 
-    for crypto in exchange_client.findProfitable(max_concurrent_currencies, max_danger, min_recovered, account, wait_time):
+    for crypto in exchange_client.findProfitable(max_concurrent_currencies, fma_unit, mma_unit, sma_unit, max_danger, min_recovered, account, wait_time):
 
         if crypto.danger < 1:
             crypto.danger = 1

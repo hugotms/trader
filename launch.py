@@ -28,7 +28,9 @@ while isOk == True:
             parameters.min_recovered,
             parameters.min_profit,
             parameters.taxe_rate,
-            seconds_in_delay
+            parameters.fma_unit,
+            parameters.mma_unit,
+            parameters.sma_unit
         )
     
     if alerts != "":
@@ -43,6 +45,9 @@ while isOk == True:
             account, 
             parameters.max_danger, 
             parameters.max_concurrent_currencies,
+            parameters.fma_unit,
+            parameters.mma_unit,
+            parameters.sma_unit,
             parameters.min_recovered,
             parameters.wait_time
         )
