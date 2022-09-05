@@ -9,7 +9,7 @@
 {% for line in text.replace('\t', '').split('\n') %}
 {% if "STATS" in line %}
   <br>
-  <h2>{{ line }}</h2>
+  <h3>{{ line }}</h2>
   <br>
 {% elif "GAINED" in line %}
   <p>{{ line }} &#128200</p>
