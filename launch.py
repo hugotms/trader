@@ -1,6 +1,8 @@
 import time
 import datetime
 
+from jinja2 import Environment, FileSystemLoader
+
 from data import params
 from bot import logic
 
@@ -19,9 +21,12 @@ delay = seconds_in_delay
 
 report_send = False
 
+environment = Environment(loader=FileSystemLoader("templates/"))
+
 while isOk == True:
     subject = "New trading update - " + time.strftime("%d/%m/%Y")
     message = ""
+    body = ""
     
     alerts = logic.monitor(
             parameters.exchange_client,
@@ -36,6 +41,7 @@ while isOk == True:
     if alerts != "":
         message += "############# ALERTS #############\n\n"
         message += alerts + "\n"
+        body += environment.get_template("alerts.html.j2").render(text=alerts)
     
     parameters.exchange_client.actualizeAccount(account)
 
@@ -53,19 +59,28 @@ while isOk == True:
         )
 
     if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):
-        message += "############# REPORT #############\n"
-        message += logic.report(
+        report_message = logic.report(
             parameters.database, 
             parameters.watching_currencies, 
             parameters.ignore_currencies,
             parameters.taxe_rate
         )
+        message += "############# REPORT #############\n"
+        message += report_message
+        body += environment.get_template("reports.html.j2").render(text=report_message)
 
+    update_message = ""
     if parameters.latest_bot_release is not None and message != "":
-        message += logic.checkUpdate(parameters.latest_bot_release)
+        update_message = logic.checkUpdate(parameters.latest_bot_release)
+    
+    if update_message != "":
+        message += "############# UPDATE #############\n\n"
+        message += update_message
+        body += environment.get_template("version.html.j2").render(text=update_message)
 
     if parameters.smtp is not None and message != "":
-        parameters.smtp.send(subject=subject, plain=message)
+        html = environment.get_template("base.html.j2").render(body)
+        parameters.smtp.send(subject=subject, plain=message, html=html)
 
     if message != "":
         print("\n" + subject)

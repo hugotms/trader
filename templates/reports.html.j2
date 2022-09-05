@@ -1,0 +1,22 @@
+  <div style="
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  ">
+    <h2>&#128176 Daily reports &#128176</h2>
+  </div>
+{% for line in text.replace('\t', '').split('\n') %}
+{% if "STATS" in line %}
+  <br>
+  <h2>{{ line }}</h2>
+  <br>
+{% elif "GAINED" in line %}
+  <p>{{ line }} &#128200</p>
+{% elif "LOST" in line %}
+  <p>{{ line }} &#128201</p>
+{% elif line != ''%}
+  <p>{{ line }}</p>
+{% endif %}
+{% endfor %}
+<br>
