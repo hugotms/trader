@@ -99,9 +99,9 @@ def checkUpdate(current_version):
     message = ""
     version = has_update(repo="hugotms/trader", at="github", current_version=current_version)
     if version != False:
-        message = "A new version of Trader is available ! It is highly recommended to upgrade.\n" + \
+        message = "A new version of Trader is available ! It is highly recommended to upgrade.\n\n" + \
             "Currently, you are on version " + current_version + " and latest is " + \
-            str(version) + ".\nNote that this new version may include security patches, bug fixes and new features."
+            str(version) + ".\n\nNote that this new version may include security patches, bug fixes and new features."
     
     return message
 
