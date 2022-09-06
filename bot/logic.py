@@ -126,6 +126,10 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, fma_unit, mma
         elif crypto.mma > crypto.fma:
             trading_message += "Selling " + crypto.instrument_code + " because of down trend. "
             trading_message += stop(exchange_client, crypto, taxe_rate)
+        
+        elif crypto.rsi > 70:
+            trading_message += "Selling " + crypto.instrument_code + " because of overbought market. "
+            trading_message += stop(exchange_client, crypto, taxe_rate)
 
         elif crypto.current >= crypto.placed * min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
@@ -159,7 +163,8 @@ def trade(exchange_client, account, max_danger, max_concurrent_currencies, fma_u
         if account.available * account.takerFee * account.makerFee * min_recovered / crypto.danger < 10:
             continue
 
-        if crypto.fma > crypto.mma and crypto.mma > crypto.sma:
+        if crypto.rsi < 30 and crypto.fma > crypto.mma and crypto.mma > crypto.sma:
+            print(crypto.instrument_code)
             trading_message += start(exchange_client, crypto, account)
 
     if trading_message != "":

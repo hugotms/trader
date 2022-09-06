@@ -23,9 +23,9 @@ class Params:
         self.taxe_rate = os.getenv('TAXE_RATE')
         self.make_trade = os.getenv('MAKE_TRADE')
         self.max_concurrent_currencies = os.getenv('MAX_CONCURRENT_CURRENCIES')
-        self.fma_unit = os.getenv('DAYS_FMA')
-        self.mma_unit = os.getenv('DAYS_MMA')
-        self.sma_unit = os.getenv('DAYS_SMA')
+        self.fma_unit = os.getenv('WINDOW_SIZE_FMA')
+        self.mma_unit = os.getenv('WINDOW_SIZE_MMA')
+        self.sma_unit = os.getenv('WINDOW_SIZE_SMA')
 
         self.latest_bot_release = os.getenv('TRADER_VERSION')
 

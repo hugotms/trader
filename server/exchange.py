@@ -122,16 +122,16 @@ class BitpandaPro:
             account.takerFee = fees['takerFee']
             account.makerFee = fees['makerFee']
     
-    def getStats(self, crypto, fma_unit, mma_unit, sma_unit):
+    def getStats(self, crypto, fma_unit, mma_unit, sma_unit, period=5):
         header = {
             "Accept": "application/json"
         }
 
         today = datetime.utcnow()
         tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        tz2 = (today - timedelta(days=sma_unit)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - timedelta(minutes=sma_unit * period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=DAYS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
+        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=MINUTES&period=" + str(period) + "&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
@@ -140,30 +140,72 @@ class BitpandaPro:
         time.sleep(1)
         
         length = len(client.getData())
-        if length < sma_unit:
+        if length < 2:
             return None
+        
+        values = []
+
+        for i in range(1, length + 1):
+            if length - i - 1 < 0:
+                break
+            
+            previous_time = datetime.strptime(client.getData()[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            current_time = datetime.strptime(client.getData()[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            
+            while previous_time.strftime("%Y-%m-%dT%H:%M") != current_time.strftime("%Y-%m-%dT%H:%M"):
+                values.append({
+                    'open': float(client.getData()[length - i]['open']),
+                    'close': float(client.getData()[length - i]['close'])
+                })
+                current_time = current_time - timedelta(minutes=5)
+        
+        missing = sma_unit - len(values)
+        if missing > 0:
+            last_item = values[len(values) - 1]
+            
+            for i in range(missing):
+                values.append(last_item)
         
         fma_mean = 0
         for i in range(fma_unit):
-            fma_mean += float(client.getData()[length - 1 - i]['close']) * (fma_unit - i)
+            fma_mean += values[i]['close'] * (fma_unit - i)
         
         fma_mean = fma_mean / (fma_unit * (fma_unit + 1) / 2)
 
         mma_mean = 0
         for i in range(mma_unit):
-            mma_mean += float(client.getData()[length - 1 - i]['close']) * (mma_unit - i)
+            mma_mean += values[i]['close'] * (mma_unit - i)
         
         mma_mean = mma_mean / (mma_unit * (mma_unit + 1) / 2)
         
         sma_mean = 0
+        avg_gain = 0
+        avg_loss = 0
         for i in range(sma_unit):
-            sma_mean += float(client.getData()[length - 1 - i]['close']) * (sma_unit - i)
+            open_price = values[i]['open']
+            close_price = values[i]['close']
+
+            sma_mean += close_price * (sma_unit - i)
+
+            if close_price - open_price > 0:
+                avg_gain += (close_price - open_price) * (sma_unit - i)
+                continue
+
+            avg_loss += abs(close_price - open_price) * (sma_unit - i)
         
         sma_mean = sma_mean / (sma_unit * (sma_unit + 1) / 2)
+        avg_gain = avg_gain / (sma_unit * (sma_unit + 1) / 2)
+        avg_loss = avg_loss / (sma_unit * (sma_unit + 1) / 2)
 
         crypto.fma = fma_mean
         crypto.mma = mma_mean
         crypto.sma = sma_mean
+
+        if avg_loss == 0:
+            crypto.rsi = 100
+        
+        else:
+            crypto.rsi = 100 - (100 / (1 + (avg_gain / avg_loss)))
 
         tz2 = (today - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()

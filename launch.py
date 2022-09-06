@@ -79,7 +79,7 @@ while isOk == True:
         body += environment.get_template("version.html.j2").render(text=update_message)
 
     if parameters.smtp is not None and message != "":
-        html = environment.get_template("base.html.j2").render(body)
+        html = environment.get_template("base.html.j2").render(body=body)
         parameters.smtp.send(subject=subject, plain=message, html=html)
 
     if message != "":
