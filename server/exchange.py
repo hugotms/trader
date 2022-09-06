@@ -145,6 +145,20 @@ class BitpandaPro:
         
         values = []
 
+        last_time = datetime.strptime(client.getData()[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        i = 0
+        while last_time < today.replace(second=59):
+            values.append({
+                    'open': float(client.getData()[length - 1]['open']),
+                    'close': float(client.getData()[length - 1]['close'])
+                })
+
+            last_time = last_time + timedelta(minutes=period)
+            i += 1
+
+            if i >= fma_unit:
+                return None
+
         for i in range(1, length + 1):
             if length - i - 1 < 0:
                 break
