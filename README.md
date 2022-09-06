@@ -50,7 +50,6 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow weighted moving average       | no      | 100     |
 | `CANDLESTICKS_PERIOD`          | Specify the period of minutes at which crypto stats are required (1, 5, 15 or 30)       | no      | 1     |
 | `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)       | no      | 30     |
-| `OVERBOUGHT_THRESHOLD`          | Specify the RSI level to define overbought zone (from value to 100)       | no      | 70     |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
 | `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_PORT`       | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |

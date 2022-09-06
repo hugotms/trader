@@ -105,11 +105,11 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, min_recovered, min_profit, taxe_rate, fma_unit, mma_unit, sma_unit, candlesticks_period, overbought_threshold):
+def monitor(exchange_client, min_recovered, min_profit, taxe_rate):
     trading_message = ""
     trading_alert = ""
 
-    for crypto in exchange_client.getAllActiveTrades(fma_unit, mma_unit, sma_unit, candlesticks_period):
+    for crypto in exchange_client.getAllActiveTrades():
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -121,14 +121,6 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate, fma_unit, mma
         
         elif crypto.current < crypto.higher * min_recovered:
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
-            trading_message += stop(exchange_client, crypto, taxe_rate)
-        
-        elif crypto.mma > crypto.fma:
-            trading_message += "Selling " + crypto.instrument_code + " because of down trend. "
-            trading_message += stop(exchange_client, crypto, taxe_rate)
-        
-        elif crypto.rsi > overbought_threshold:
-            trading_message += "Selling " + crypto.instrument_code + " because of overbought market. "
             trading_message += stop(exchange_client, crypto, taxe_rate)
 
         elif crypto.current >= crypto.placed * min_profit:

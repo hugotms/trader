@@ -32,12 +32,7 @@ while isOk == True:
             parameters.exchange_client,
             parameters.min_recovered,
             parameters.min_profit,
-            parameters.taxe_rate,
-            parameters.fma_unit,
-            parameters.mma_unit,
-            parameters.sma_unit,
-            parameters.candlesticks_period,
-            parameters.overbought_threshold
+            parameters.taxe_rate
         )
     
     if alerts != "":

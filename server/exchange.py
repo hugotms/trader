@@ -241,7 +241,7 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def getAllActiveTrades(self, fma_unit, mma_unit, sma_unit, candlesticks_period):
+    def getAllActiveTrades(self):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -344,8 +344,6 @@ class BitpandaPro:
             self.database.putInHistory(crypto)
 
         for trade in active_trades:
-            self.getStats(trade, fma_unit, mma_unit, sma_unit, candlesticks_period)
-
             header = {
                 "Accept": "application/json"
             }

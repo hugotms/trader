@@ -28,7 +28,6 @@ class Params:
         self.sma_unit = os.getenv('WINDOW_SIZE_SMA')
         self.candlesticks_period = os.getenv('CANDLESTICKS_PERIOD')
         self.oversold_threshold = os.getenv('OVERSOLD_THRESHOLD')
-        self.overbought_threshold = os.getenv('OVERBOUGHT_THRESHOLD')
 
         self.latest_bot_release = os.getenv('TRADER_VERSION')
 
@@ -60,7 +59,6 @@ class Params:
         self.sma_unit = self.database.findVar("sma_unit", self.sma_unit, 100)
         self.candlesticks_period = self.database.findVar("candlesticks_period", self.candlesticks_period, 1)
         self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
-        self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 70)
 
         if self.smtp_sending == True:
             self.smtp_host = self.database.findVar("smtp_host", self.smtp_host)
@@ -162,7 +160,6 @@ class Params:
             self.sma_unit = int(self.sma_unit)
             self.candlesticks_period = int(self.candlesticks_period)
             self.oversold_threshold = int(self.oversold_threshold)
-            self.overbought_threshold = int(self.overbought_threshold)
         except Exception:
             print("Error while converting parameters from string")
             return False
