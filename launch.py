@@ -35,7 +35,9 @@ while isOk == True:
             parameters.taxe_rate,
             parameters.fma_unit,
             parameters.mma_unit,
-            parameters.sma_unit
+            parameters.sma_unit,
+            parameters.candlesticks_period,
+            parameters.overbought_threshold
         )
     
     if alerts != "":
@@ -54,6 +56,8 @@ while isOk == True:
             parameters.fma_unit,
             parameters.mma_unit,
             parameters.sma_unit,
+            parameters.candlesticks_period,
+            parameters.oversold_threshold,
             parameters.min_recovered,
             parameters.wait_time
         )
