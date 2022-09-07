@@ -421,9 +421,6 @@ class BitpandaPro:
             if account.available * 10 >= crypto.hourlyVolume:
                 crypto.danger += max_danger
             
-            if account.available * 20 < crypto.hourlyVolume / 2:
-                crypto.danger -= 2
-            
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
             
@@ -436,7 +433,7 @@ class BitpandaPro:
             elif date.today().weekday() >= 5:
                 crypto.danger += 2
             
-            if crypto.danger < max_danger:
+            if crypto.danger <= max_danger:
                 profitable_trades.append(crypto)
 
         profitable_trades.sort(key=lambda x: x.danger)
