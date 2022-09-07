@@ -122,16 +122,20 @@ class BitpandaPro:
             account.takerFee = fees['takerFee']
             account.makerFee = fees['makerFee']
     
-    def getStats(self, crypto, fma_unit, mma_unit, sma_unit, period):
+    def getStats(self, crypto, fma_unit, sma_unit, full=False):
+        days = 14
+        if days < sma_unit:
+            days = sma_unit
+
         header = {
             "Accept": "application/json"
         }
 
         today = datetime.utcnow()
         tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        tz2 = (today - timedelta(minutes=sma_unit * period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=MINUTES&period=" + str(period) + "&from=" + tz2 + "&to=" + tz, headers=header).send()
+        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=DAYS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
@@ -140,79 +144,37 @@ class BitpandaPro:
         time.sleep(1)
         
         length = len(client.getData())
-        if length < 2:
+        if length < days:
             return None
-        
-        values = []
-
-        last_time = datetime.strptime(client.getData()[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-        i = 0
-        while last_time < today.replace(second=59):
-            values.append({
-                    'open': float(client.getData()[length - 1]['open']),
-                    'close': float(client.getData()[length - 1]['close'])
-                })
-
-            last_time = last_time + timedelta(minutes=period)
-            i += 1
-
-            if i >= fma_unit:
-                return None
-
-        for i in range(1, length + 1):
-            if length - i - 1 < 0:
-                break
-            
-            previous_time = datetime.strptime(client.getData()[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-            current_time = datetime.strptime(client.getData()[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-            
-            while previous_time.strftime("%Y-%m-%dT%H:%M") != current_time.strftime("%Y-%m-%dT%H:%M"):
-                values.append({
-                    'open': float(client.getData()[length - i]['open']),
-                    'close': float(client.getData()[length - i]['close'])
-                })
-                current_time = current_time - timedelta(minutes=5)
-        
-        missing = sma_unit - len(values)
-        if missing > 0:
-            last_item = values[len(values) - 1]
-            
-            for i in range(missing):
-                values.append(last_item)
         
         fma_mean = 0
         for i in range(fma_unit):
-            fma_mean += values[i]['close'] * (fma_unit - i)
+            fma_mean += float(client.getData()[length - 1 - i]['close']) * (fma_unit - i)
         
         fma_mean = fma_mean / (fma_unit * (fma_unit + 1) / 2)
 
-        mma_mean = 0
-        for i in range(mma_unit):
-            mma_mean += values[i]['close'] * (mma_unit - i)
-        
-        mma_mean = mma_mean / (mma_unit * (mma_unit + 1) / 2)
-        
         sma_mean = 0
-        avg_gain = 0
-        avg_loss = 0
         for i in range(sma_unit):
-            open_price = values[i]['open']
-            close_price = values[i]['close']
-
-            sma_mean += close_price * (sma_unit - i)
-
-            if close_price - open_price > 0:
-                avg_gain += (close_price - open_price) * (sma_unit - i)
-                continue
-
-            avg_loss += abs(close_price - open_price) * (sma_unit - i)
+            sma_mean += float(client.getData()[length - 1 - i]['close']) * (sma_unit - i)
         
         sma_mean = sma_mean / (sma_unit * (sma_unit + 1) / 2)
-        avg_gain = avg_gain / (sma_unit * (sma_unit + 1) / 2)
-        avg_loss = avg_loss / (sma_unit * (sma_unit + 1) / 2)
+        
+        avg_gain = 0
+        avg_loss = 0
+        for i in range(14):
+            open_price = float(client.getData()[length - 1 - i]['open'])
+            close_price = float(client.getData()[length - 1 - i]['close'])
+
+            if close_price - open_price > 0:
+                avg_gain += close_price - open_price
+                continue
+
+            avg_loss += abs(close_price - open_price)
+        
+        avg_gain = avg_gain / 14
+        avg_loss = avg_loss / 14
 
         crypto.fma = fma_mean
-        crypto.mma = mma_mean
         crypto.sma = sma_mean
 
         if avg_loss == 0:
@@ -220,7 +182,10 @@ class BitpandaPro:
         
         else:
             crypto.rsi = 100 - (100 / (1 + (avg_gain / avg_loss)))
-
+        
+        if full == False:
+            return True
+        
         tz2 = (today - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
@@ -255,7 +220,7 @@ class BitpandaPro:
 
         return float(client.getData()['last_price'])
     
-    def getAllActiveTrades(self):
+    def getAllActiveTrades(self, fma_unit, sma_unit):
         active_trades = []
 
         client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
@@ -358,6 +323,8 @@ class BitpandaPro:
             self.database.putInHistory(crypto)
 
         for trade in active_trades:
+            self.getStats(trade, fma_unit, sma_unit)
+
             header = {
                 "Accept": "application/json"
             }
@@ -381,7 +348,7 @@ class BitpandaPro:
 
         return active_trades
     
-    def findProfitable(self, max_concurrent_currencies, fma_unit, mma_unit, sma_unit, candlesticks_period, max_danger, min_recovered, account, wait_time):
+    def findProfitable(self, max_concurrent_currencies, fma_unit, sma_unit, max_danger, min_recovered, account, wait_time):
         header = {
             "Accept": "application/json"
         }
@@ -438,7 +405,7 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
-            res = self.getStats(crypto, fma_unit, mma_unit, sma_unit, candlesticks_period)
+            res = self.getStats(crypto, fma_unit, sma_unit, full=True)
             if res is None:
                 continue
 

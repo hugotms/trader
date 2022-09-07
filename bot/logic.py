@@ -105,11 +105,11 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(exchange_client, min_recovered, min_profit, taxe_rate):
+def monitor(exchange_client, min_recovered, min_profit, fma_unit, sma_unit, overbought_threshold, taxe_rate):
     trading_message = ""
     trading_alert = ""
 
-    for crypto in exchange_client.getAllActiveTrades():
+    for crypto in exchange_client.getAllActiveTrades(fma_unit, sma_unit):
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -122,8 +122,16 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate):
         elif crypto.current < crypto.higher * min_recovered:
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(exchange_client, crypto, taxe_rate)
+        
+        elif crypto.rsi > overbought_threshold:
+            trading_message += crypto.instrument_code + " is overbought. "
+            trading_message += stop(exchange_client, crypto, taxe_rate)
 
-        elif crypto.current >= crypto.placed * min_profit:
+        elif crypto.fma < crypto.sma:
+            trading_message += crypto.instrument_code + " trend is going down. "
+            trading_message += stop(exchange_client, crypto, taxe_rate)
+        
+        elif min_profit > 1.0 and crypto.current >= crypto.placed * min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(exchange_client, crypto, taxe_rate)
         
@@ -141,13 +149,13 @@ def monitor(exchange_client, min_recovered, min_profit, taxe_rate):
     
     return trading_alert
 
-def trade(exchange_client, account, max_danger, max_concurrent_currencies, fma_unit, mma_unit, sma_unit, candlesticks_period, oversold_threshold, min_recovered, wait_time):
+def trade(exchange_client, account, max_danger, max_concurrent_currencies, fma_unit, sma_unit, oversold_threshold, min_recovered, wait_time):
     trading_message = ""
 
     if account.available * account.takerFee * account.makerFee * min_recovered < 10:
         return None
 
-    for crypto in exchange_client.findProfitable(max_concurrent_currencies, fma_unit, mma_unit, sma_unit, candlesticks_period, max_danger, min_recovered, account, wait_time):
+    for crypto in exchange_client.findProfitable(max_concurrent_currencies, fma_unit, sma_unit, max_danger, min_recovered, account, wait_time):
 
         if crypto.danger < 1:
             crypto.danger = 1
@@ -155,7 +163,7 @@ def trade(exchange_client, account, max_danger, max_concurrent_currencies, fma_u
         if account.available * account.takerFee * account.makerFee * min_recovered / crypto.danger < 10:
             continue
 
-        if crypto.rsi < oversold_threshold and crypto.fma > crypto.mma and crypto.mma > crypto.sma:
+        if crypto.rsi < oversold_threshold and crypto.fma > crypto.sma:
             trading_message += start(exchange_client, crypto, account)
 
     if trading_message != "":

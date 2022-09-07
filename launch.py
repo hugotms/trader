@@ -32,6 +32,9 @@ while isOk == True:
             parameters.exchange_client,
             parameters.min_recovered,
             parameters.min_profit,
+            parameters.fma_unit,
+            parameters.sma_unit,
+            parameters.overbought_threshold,
             parameters.taxe_rate
         )
     
@@ -49,9 +52,7 @@ while isOk == True:
             parameters.max_danger, 
             parameters.max_concurrent_currencies,
             parameters.fma_unit,
-            parameters.mma_unit,
             parameters.sma_unit,
-            parameters.candlesticks_period,
             parameters.oversold_threshold,
             parameters.min_recovered,
             parameters.wait_time

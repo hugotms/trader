@@ -36,7 +36,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
 | `MIN_RECOVERED_RATE`       | The minimum rate you want to recover if currency goes down.            | no      | 0.95       |
-| `MIN_PROFIT_RATE`          | The rate from which you take profit.   | no      | 1.05       |
+| `MIN_PROFIT_RATE`          | The rate from which you take profit. Must be greater than `1.0` to activate. | no      | 1.0       |
 | `MAX_DANGER`              | The maximum danger level a currency can be bought.       | no         | 5        |
 | `MINUTES_REFRESH_TIME`       | The number of minutes between two checks.            | no      | 10       |
 | `MINUTES_WAIT_TIME`       | The number of minutes between a selling order and a buying order on the same currency.            | no      | 10       |
@@ -46,10 +46,9 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `MAKE_TRADE`          | If set to `true`, allow the bot to place buying trades on your behalf based on calculation.        | no      | False     |
 | `MAX_CONCURRENT_CURRENCIES`          | Specify the number of concurrent currencies the bot is allowed to place (required if `MAKE_TRADE="True"`)        | no      | 0     |
 | `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast weighted moving average (must be lower than `WINDOW_SIZE_MMA`)       | no      | 5     |
-| `WINDOW_SIZE_MMA`          | Specify the number of units looked at to calculate middle weighted moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 25     |
-| `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow weighted moving average       | no      | 100     |
-| `CANDLESTICKS_PERIOD`          | Specify the period of minutes at which crypto stats are required (1, 5, 15 or 30)       | no      | 1     |
+| `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow weighted moving average       | no      | 50     |
 | `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)       | no      | 30     |
+| `OVERBOUGHT_THRESHOLD`          | Specify the RSI level to define overbought zone (from value to 100)       | no      | 70     |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
 | `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_PORT`       | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
