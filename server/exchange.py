@@ -123,7 +123,7 @@ class BitpandaPro:
             account.makerFee = fees['makerFee']
     
     def getStats(self, crypto, fma_unit, sma_unit, full=False):
-        days = 14
+        days = 15
         if days < sma_unit:
             days = sma_unit
 
@@ -161,15 +161,15 @@ class BitpandaPro:
         
         avg_gain = 0
         avg_loss = 0
-        for i in range(14):
-            open_price = float(client.getData()[length - 1 - i]['open'])
-            close_price = float(client.getData()[length - 1 - i]['close'])
+        for i in range(1, 15):
+            current_price = float(client.getData()[length - i]['close'])
+            last_price = float(client.getData()[length - 1 - i]['close'])
 
-            if close_price - open_price > 0:
-                avg_gain += close_price - open_price
+            if current_price - last_price > 0:
+                avg_gain += current_price - last_price
                 continue
 
-            avg_loss += abs(close_price - open_price)
+            avg_loss += abs(current_price - last_price)
         
         avg_gain = avg_gain / 14
         avg_loss = avg_loss / 14
