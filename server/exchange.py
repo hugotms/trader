@@ -166,13 +166,13 @@ class BitpandaPro:
             last_price = float(client.getData()[length - 1 - i]['close'])
 
             if current_price - last_price > 0:
-                avg_gain += current_price - last_price
+                avg_gain += abs(current_price - last_price) * (15 - i)
                 continue
 
-            avg_loss += abs(current_price - last_price)
+            avg_loss += abs(current_price - last_price) * (15 - i)
         
-        avg_gain = avg_gain / 14
-        avg_loss = avg_loss / 14
+        avg_gain = avg_gain / 105 # weighted mean
+        avg_loss = avg_loss / 105
 
         crypto.fma = fma_mean
         crypto.sma = sma_mean
