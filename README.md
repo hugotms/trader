@@ -45,7 +45,9 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
 | `MAKE_TRADE`          | If set to `true`, allow the bot to place buying trades on your behalf based on calculation.        | no      | False     |
 | `MAX_CONCURRENT_CURRENCIES`          | Specify the number of concurrent currencies the bot is allowed to place (required if `MAKE_TRADE="True"`)        | no      | 0     |
-| `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast weighted moving average (must be lower than `WINDOW_SIZE_MMA`)       | no      | 5     |
+| `CANDLESTICKS_TIMEFRAME`          | Specify the timeframe at which crypto stats are required.      | no      | DAYS     |
+| `CANDLESTICKS_PERIOD`          | Specify the period of unit at which crypto stats are required (1, 5, 15 or 30)       | no      | 1     |
+| `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast weighted moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 5     |
 | `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow weighted moving average       | no      | 50     |
 | `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)       | no      | 30     |
 | `OVERBOUGHT_THRESHOLD`          | Specify the RSI level to define overbought zone (from value to 100)       | no      | 70     |

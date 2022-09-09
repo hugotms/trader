@@ -23,6 +23,8 @@ class Params:
         self.taxe_rate = os.getenv('TAXE_RATE')
         self.make_trade = os.getenv('MAKE_TRADE')
         self.max_concurrent_currencies = os.getenv('MAX_CONCURRENT_CURRENCIES')
+        self.candlesticks_timeframe = os.getenv('CANDLESTICKS_TIMEFRAME')
+        self.candlesticks_period = os.getenv('CANDLESTICKS_PERIOD')
         self.fma_unit = os.getenv('WINDOW_SIZE_FMA')
         self.sma_unit = os.getenv('WINDOW_SIZE_SMA')
         self.oversold_threshold = os.getenv('OVERSOLD_THRESHOLD')
@@ -53,6 +55,8 @@ class Params:
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
         self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
         self.max_concurrent_currencies = self.database.findVar("max_concurrent_currencies", self.max_concurrent_currencies, 0)
+        self.candlesticks_timeframe = self.database.findVar("candlesticks_timeframe", self.candlesticks_timeframe, "DAYS")
+        self.candlesticks_period = self.database.findVar("candlesticks_period", self.candlesticks_period, 1)
         self.fma_unit = self.database.findVar("fma_unit", self.fma_unit, 5)
         self.sma_unit = self.database.findVar("sma_unit", self.sma_unit, 50)
         self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
@@ -73,7 +77,7 @@ class Params:
             self.smtp_sending = False
             self.smtp = None
         
-        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key, self.database, self.watching_currencies, self.ignore_currencies)
+        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key)
 
         if self.smtp_sending == True: 
             self.smtp = mail.SMTP(
@@ -153,6 +157,7 @@ class Params:
             self.max_danger = int(self.max_danger)
             self.taxe_rate = float(self.taxe_rate)
             self.max_concurrent_currencies = int(self.max_concurrent_currencies)
+            self.candlesticks_period = int(self.candlesticks_period)
             self.fma_unit = int(self.fma_unit)
             self.sma_unit = int(self.sma_unit)
             self.oversold_threshold = int(self.oversold_threshold)
