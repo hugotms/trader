@@ -5,7 +5,6 @@ import json
 import time
 import os
 
-from datetime import time as timed
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 
@@ -134,23 +133,23 @@ class BitpandaPro:
         delta = None
 
         if parameters.candlesticks_timeframe == 'MONTHS':
-            tz2 = (today - relativedelta(months=frame)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            tz2 = (today - relativedelta(months=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             delta = relativedelta(months=parameters.candlesticks_period)
         
         elif parameters.candlesticks_timeframe == 'WEEKS':
-            tz2 = (today - relativedelta(weeks=frame)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            tz2 = (today - relativedelta(weeks=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             delta = relativedelta(weeks=parameters.candlesticks_period)
         
         elif parameters.candlesticks_timeframe == 'DAYS':
-            tz2 = (today - timedelta(days=frame)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            tz2 = (today - timedelta(days=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             delta = timedelta(days=parameters.candlesticks_period)
         
         elif parameters.candlesticks_timeframe == 'HOURS':
-            tz2 = (today - timedelta(hours=frame)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            tz2 = (today - timedelta(hours=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             delta = timedelta(hours=parameters.candlesticks_period)
         
         elif parameters.candlesticks_timeframe == 'MINUTES':
-            tz2 = (today - timedelta(minutes=frame)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            tz2 = (today - timedelta(minutes=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             delta = timedelta(minutes=parameters.candlesticks_period)
 
         client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + parameters.candlesticks_timeframe + "&period=" + str(parameters.candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=header).send()
@@ -188,6 +187,13 @@ class BitpandaPro:
             while previous_time < current_time:
                 values.append(float(client.getData()[length - i]['close']))
                 current_time = current_time - delta
+        
+        missing = frame - len(values)
+        if missing > 0:
+            last_item = values[len(values) - 1]
+            
+            for i in range(missing):
+                values.append(last_item)
         
         length = len(values)
         if length < frame:
@@ -468,9 +474,6 @@ class BitpandaPro:
                 crypto.danger += parameters.max_danger
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
-                crypto.danger += 2
-            
-            if datetime.utcnow().time() >= timed(11,30):
                 crypto.danger += 2
             
             if date.today().weekday() == 4:
