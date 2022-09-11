@@ -479,9 +479,6 @@ class BitpandaPro:
             if date.today().weekday() == 4:
                 crypto.danger += 1
             
-            elif date.today().weekday() >= 5:
-                crypto.danger += 2
-            
             if crypto.danger <= parameters.max_danger:
                 profitable_trades.append(crypto)
 
