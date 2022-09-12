@@ -46,6 +46,7 @@ def start():
             message += "############# REPORT #############\n"
             message += report_message
             body += environment.get_template("reports.html.j2").render(text=report_message)
+            delay = seconds_in_delay
 
         update_message = ""
         if parameters.latest_bot_release is not None and message != "":
@@ -67,8 +68,8 @@ def start():
         if (delay > 0):
             delay -= parameters.refresh_time * 60
             report_send = False
+
         else:
-            delay = seconds_in_delay
             report_send = True
 
         time.sleep(parameters.refresh_time * 60)
