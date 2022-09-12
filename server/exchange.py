@@ -213,10 +213,20 @@ class BitpandaPro:
         
         avg_gain = 0
         avg_loss = 0
+        same = 0
         for i in range(14):
             current_price = values[i]
             last_price = values[i + 1]
 
+            if current_price == last_price:
+                same += 14 - i
+            
+            else:
+                same = 0
+            
+            if same >= 105 / 2:
+                return None
+            
             if current_price - last_price > 0:
                 avg_gain += abs(current_price - last_price) * (14 - i)
                 continue
