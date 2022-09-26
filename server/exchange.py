@@ -205,6 +205,12 @@ class BitpandaPro:
         
         fma_mean = fma_mean / (parameters.fma_unit * (parameters.fma_unit + 1) / 2)
 
+        mma_mean = 0
+        for i in range(parameters.mma_unit):
+            mma_mean += values[i] * (parameters.mma_unit - i)
+        
+        mma_mean = mma_mean / (parameters.mma_unit * (parameters.mma_unit + 1) / 2)
+
         sma_mean = 0
         for i in range(parameters.sma_unit):
             sma_mean += values[i] * (parameters.sma_unit - i)
@@ -237,6 +243,7 @@ class BitpandaPro:
         avg_loss = avg_loss / 105
 
         crypto.fma = round(fma_mean, crypto.precision)
+        crypto.mma = round(mma_mean, crypto.precision)
         crypto.sma = round(sma_mean, crypto.precision)
 
         if avg_loss == 0:
