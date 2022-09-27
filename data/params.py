@@ -28,6 +28,7 @@ class Params:
         self.fma_unit = os.getenv('WINDOW_SIZE_FMA')
         self.mma_unit = os.getenv('WINDOW_SIZE_MMA')
         self.sma_unit = os.getenv('WINDOW_SIZE_SMA')
+        self.rsi_period = os.getenv('RSI_PERIOD')
         self.oversold_threshold = os.getenv('OVERSOLD_THRESHOLD')
         self.overbought_threshold = os.getenv('OVERBOUGHT_THRESHOLD')
 
@@ -61,6 +62,7 @@ class Params:
         self.fma_unit = self.database.findVar("fma_unit", self.fma_unit, 5)
         self.mma_unit = self.database.findVar("mma_unit", self.mma_unit, 25)
         self.sma_unit = self.database.findVar("sma_unit", self.sma_unit, 50)
+        self.rsi_period = self.database.findVar("ris_period", self.rsi_period, 14)
         self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
         self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 70)
 
@@ -163,6 +165,7 @@ class Params:
             self.fma_unit = int(self.fma_unit)
             self.mma_unit = int(self.mma_unit)
             self.sma_unit = int(self.sma_unit)
+            self.rsi_period = int(self.rsi_period)
             self.oversold_threshold = int(self.oversold_threshold)
             self.overbought_threshold = int(self.overbought_threshold)
         except Exception:

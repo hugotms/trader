@@ -50,6 +50,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast weighted moving average (must be lower than `WINDOW_SIZE_MMA`)       | no      | 5     |
 | `WINDOW_SIZE_MMA`          | Specify the number of units looked at to calculate middle weighted moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 25     |
 | `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow weighted moving average       | no      | 50     |
+| `RSI_PERIOD`          | Specify the number of units looked at to calculate RSI       | no      | 14     |
 | `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)       | no      | 30     |
 | `OVERBOUGHT_THRESHOLD`          | Specify the RSI level to define overbought zone (from value to 100)       | no      | 70     |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |

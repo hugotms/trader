@@ -119,7 +119,7 @@ class BitpandaPro:
             account.makerFee = fees['makerFee']
     
     def getStats(self, crypto, parameters, full=False):
-        frame = 15
+        frame = parameters.rsi_period + 1
         if frame < parameters.sma_unit:
             frame = parameters.sma_unit
 
@@ -220,27 +220,27 @@ class BitpandaPro:
         avg_gain = 0
         avg_loss = 0
         same = 0
-        for i in range(14):
+        for i in range(parameters.rsi_period):
             current_price = values[i]
             last_price = values[i + 1]
 
             if current_price == last_price:
-                same += 14 - i
+                same += parameters.rsi_period - i
             
             else:
                 same = 0
             
-            if same >= 105 / 2:
+            if same >= parameters.rsi_period * (parameters.rsi_period + 1) / 4:
                 return None
             
             if current_price - last_price > 0:
-                avg_gain += abs(current_price - last_price) * (14 - i)
+                avg_gain += abs(current_price - last_price) * (parameters.rsi_period - i)
                 continue
 
-            avg_loss += abs(current_price - last_price) * (14 - i)
+            avg_loss += abs(current_price - last_price) * (parameters.rsi_period - i)
         
-        avg_gain = avg_gain / 105 # weighted mean
-        avg_loss = avg_loss / 105
+        avg_gain = avg_gain / (parameters.rsi_period * (parameters.rsi_period + 1) / 2)
+        avg_loss = avg_loss / (parameters.rsi_period * (parameters.rsi_period + 1) / 2)
 
         crypto.fma = round(fma_mean, crypto.precision)
         crypto.mma = round(mma_mean, crypto.precision)
