@@ -1,0 +1,14 @@
+  <div style="
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  ">
+    <h2>&#127384; Failed action on assets &#127384;</h2>
+  </div>
+{% for line in text.split('\n') %}
+{% if line != ''%}
+  <p>{{ line }}</p>
+{% endif %}
+{% endfor %}
+<br>

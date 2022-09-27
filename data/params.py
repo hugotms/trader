@@ -23,6 +23,14 @@ class Params:
         self.taxe_rate = os.getenv('TAXE_RATE')
         self.make_trade = os.getenv('MAKE_TRADE')
         self.max_concurrent_currencies = os.getenv('MAX_CONCURRENT_CURRENCIES')
+        self.candlesticks_timeframe = os.getenv('CANDLESTICKS_TIMEFRAME')
+        self.candlesticks_period = os.getenv('CANDLESTICKS_PERIOD')
+        self.fma_unit = os.getenv('WINDOW_SIZE_FMA')
+        self.mma_unit = os.getenv('WINDOW_SIZE_MMA')
+        self.sma_unit = os.getenv('WINDOW_SIZE_SMA')
+        self.rsi_period = os.getenv('RSI_PERIOD')
+        self.oversold_threshold = os.getenv('OVERSOLD_THRESHOLD')
+        self.overbought_threshold = os.getenv('OVERBOUGHT_THRESHOLD')
 
         self.latest_bot_release = os.getenv('TRADER_VERSION')
 
@@ -42,13 +50,21 @@ class Params:
         self.watching_currencies = self.database.findVar("watching_currencies", self.watching_currencies, [])
         self.ignore_currencies = self.database.findVar("ignore_currencies", self.ignore_currencies, [])
         self.min_recovered = self.database.findVar("min_recovered", self.min_recovered, 0.95)
-        self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.05)
+        self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.0)
         self.max_danger = self.database.findVar("max_danger", self.max_danger, 5)
         self.wait_time = self.database.findVar("wait_time", self.wait_time, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
         self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
         self.max_concurrent_currencies = self.database.findVar("max_concurrent_currencies", self.max_concurrent_currencies, 0)
+        self.candlesticks_timeframe = self.database.findVar("candlesticks_timeframe", self.candlesticks_timeframe, "DAYS")
+        self.candlesticks_period = self.database.findVar("candlesticks_period", self.candlesticks_period, 1)
+        self.fma_unit = self.database.findVar("fma_unit", self.fma_unit, 5)
+        self.mma_unit = self.database.findVar("mma_unit", self.mma_unit, 25)
+        self.sma_unit = self.database.findVar("sma_unit", self.sma_unit, 50)
+        self.rsi_period = self.database.findVar("rsi_period", self.rsi_period, 14)
+        self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
+        self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 70)
 
         if self.smtp_sending == True:
             self.smtp_host = self.database.findVar("smtp_host", self.smtp_host)
@@ -65,7 +81,7 @@ class Params:
             self.smtp_sending = False
             self.smtp = None
         
-        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key, self.database, self.watching_currencies, self.ignore_currencies)
+        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key)
 
         if self.smtp_sending == True: 
             self.smtp = mail.SMTP(
@@ -145,6 +161,13 @@ class Params:
             self.max_danger = int(self.max_danger)
             self.taxe_rate = float(self.taxe_rate)
             self.max_concurrent_currencies = int(self.max_concurrent_currencies)
+            self.candlesticks_period = int(self.candlesticks_period)
+            self.fma_unit = int(self.fma_unit)
+            self.mma_unit = int(self.mma_unit)
+            self.sma_unit = int(self.sma_unit)
+            self.rsi_period = int(self.rsi_period)
+            self.oversold_threshold = int(self.oversold_threshold)
+            self.overbought_threshold = int(self.overbought_threshold)
         except Exception:
             print("Error while converting parameters from string")
             return False

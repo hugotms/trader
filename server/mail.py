@@ -22,7 +22,7 @@ class SMTP:
 
     def send(self, subject, plain, html=None):
         try:
-            mail = multipart.MIMEMultipart()
+            mail = multipart.MIMEMultipart('alternative')
             mail['From'] = self.alias
             mail['To'] = self.to_addrs
             mail['Subject'] = subject
