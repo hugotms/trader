@@ -62,7 +62,7 @@ class Params:
         self.fma_unit = self.database.findVar("fma_unit", self.fma_unit, 5)
         self.mma_unit = self.database.findVar("mma_unit", self.mma_unit, 25)
         self.sma_unit = self.database.findVar("sma_unit", self.sma_unit, 50)
-        self.rsi_period = self.database.findVar("ris_period", self.rsi_period, 14)
+        self.rsi_period = self.database.findVar("rsi_period", self.rsi_period, 14)
         self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
         self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 70)
 

@@ -234,13 +234,13 @@ class BitpandaPro:
                 return None
             
             if current_price - last_price > 0:
-                avg_gain += abs(current_price - last_price) * (parameters.rsi_period - i)
+                avg_gain += abs(current_price - last_price)
                 continue
 
-            avg_loss += abs(current_price - last_price) * (parameters.rsi_period - i)
+            avg_loss += abs(current_price - last_price)
         
-        avg_gain = avg_gain / (parameters.rsi_period * (parameters.rsi_period + 1) / 2)
-        avg_loss = avg_loss / (parameters.rsi_period * (parameters.rsi_period + 1) / 2)
+        avg_gain = avg_gain / parameters.rsi_period
+        avg_loss = avg_loss / parameters.rsi_period
 
         crypto.fma = round(fma_mean, crypto.precision)
         crypto.mma = round(mma_mean, crypto.precision)
