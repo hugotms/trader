@@ -219,25 +219,18 @@ class BitpandaPro:
         
         avg_gain = 0
         avg_loss = 0
-        same = 0
         for i in range(parameters.rsi_period):
             current_price = values[i]
             last_price = values[i + 1]
-
-            if current_price == last_price:
-                same += parameters.rsi_period - i
-            
-            else:
-                same = 0
-            
-            if same >= parameters.rsi_period * (parameters.rsi_period + 1) / 4:
-                return None
             
             if current_price - last_price > 0:
                 avg_gain += abs(current_price - last_price)
                 continue
 
             avg_loss += abs(current_price - last_price)
+
+        if avg_gain == 0 and avg_loss == 0:
+            return None
         
         avg_gain = avg_gain / parameters.rsi_period
         avg_loss = avg_loss / parameters.rsi_period
