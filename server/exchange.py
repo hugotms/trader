@@ -376,7 +376,7 @@ class BitpandaPro:
                 parameters.database.putInHistory(crypto)
                 continue
 
-            if client.getData()['order']['status'] != "FILLED_FULLY":
+            if client.getData()['order']['status'] not in ["FILLED_FULLY", "CLOSED"]:
                 parameters.database.putInHistory(crypto)
                 continue
             
