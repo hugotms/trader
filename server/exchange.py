@@ -217,9 +217,12 @@ class BitpandaPro:
         for i in range(parameters.rsi_period):
             current_price = values[i]
             last_price = values[i + 1]
+
+            if same_values >= parameters.rsi_period / 2:
+                return None
             
             if current_price == last_price:
-                same_values += i
+                same_values += 1
                 continue
             
             if current_price - last_price > 0:
@@ -227,9 +230,6 @@ class BitpandaPro:
                 continue
 
             avg_loss += abs(current_price - last_price)
-
-        if same_values >= (parameters.rsi_period - 1) * parameters.rsi_period / 2:
-            return None
         
         avg_gain = avg_gain / parameters.rsi_period
         avg_loss = avg_loss / parameters.rsi_period
@@ -465,13 +465,14 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
+            parameters.database.getLastDanger(crypto, parameters.min_recovered, parameters.max_danger, parameters.wait_time)
+            if crypto.danger >= parameters.max_danger:
+                continue
+
             res = self.getStats(crypto, parameters, full=True)
             if res is None:
                 continue
 
-            if parameters.database.getLastDanger(crypto, parameters.min_recovered, parameters.max_danger, parameters.wait_time) == 0:
-                crypto.danger += 1
-            
             if account.available >= crypto.hourlyVolume:
                 crypto.danger += parameters.max_danger
             
@@ -483,9 +484,6 @@ class BitpandaPro:
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
-            
-            if date.today().weekday() == 4:
-                crypto.danger += 1
             
             if crypto.danger <= parameters.max_danger:
                 profitable_trades.append(crypto)

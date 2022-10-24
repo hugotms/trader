@@ -248,25 +248,7 @@ class Mongo:
             return 0
 
         now = datetime.utcnow()
-        danger = int(res[0]["danger"])
-        higher = float(res[0]["higher"])
-        current = float(res[0]["current"])
-        placed = float(res[0]["placed"])
         date = datetime.strptime(res[0]["date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
         if date + timedelta(minutes=wait_time) >= now:
             crypto.danger += max_danger
-        
-        if date + timedelta(days=1) >= now:
-            return None
-        
-        if higher > current:
-            crypto.danger += 1
-        
-        if higher * min_recovered <= current:
-            crypto.danger += 1
-        
-        if placed >= current:
-            crypto.danger += 1
-        
-    
