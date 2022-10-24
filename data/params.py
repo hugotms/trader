@@ -21,7 +21,6 @@ class Params:
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
         self.wait_time = os.getenv('MINUTES_WAIT_TIME')
         self.taxe_rate = os.getenv('TAXE_RATE')
-        self.make_trade = os.getenv('MAKE_TRADE')
         self.max_concurrent_currencies = os.getenv('MAX_CONCURRENT_CURRENCIES')
         self.candlesticks_timeframe = os.getenv('CANDLESTICKS_TIMEFRAME')
         self.candlesticks_period = os.getenv('CANDLESTICKS_PERIOD')
@@ -55,7 +54,6 @@ class Params:
         self.wait_time = self.database.findVar("wait_time", self.wait_time, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
         self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
-        self.make_trade = self.database.findVar("make_trade", self.make_trade, False)
         self.max_concurrent_currencies = self.database.findVar("max_concurrent_currencies", self.max_concurrent_currencies, 0)
         self.candlesticks_timeframe = self.database.findVar("candlesticks_timeframe", self.candlesticks_timeframe, "DAYS")
         self.candlesticks_period = self.database.findVar("candlesticks_period", self.candlesticks_period, 1)
@@ -129,12 +127,6 @@ class Params:
         except Exception:
             print("DB port must be a number")
             return False
-        
-        if self.make_trade is None or self.make_trade.lower() != "true":
-            print("By default, no new trade will be done on your behalf")
-            self.make_trade = False
-        else:
-            self.make_trade = True
         
         self.database = db.Mongo(self.db_hostname, self.db_port, self.db_name, self.db_user, self.db_password)
         

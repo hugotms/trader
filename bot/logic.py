@@ -114,7 +114,8 @@ def monitor(parameters):
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
             + "€ / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
-            + "%)")
+            + "% / RSI: " + str(round(crypto.rsi, 1))
+            + ")")
 
         if crypto.current < 10:
             trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"

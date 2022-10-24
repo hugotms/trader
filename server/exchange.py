@@ -219,9 +219,14 @@ class BitpandaPro:
         
         avg_gain = 0
         avg_loss = 0
+        same_values = 0
         for i in range(parameters.rsi_period):
             current_price = values[i]
             last_price = values[i + 1]
+            
+            if current_price == last_price:
+                same_values += i
+                continue
             
             if current_price - last_price > 0:
                 avg_gain += abs(current_price - last_price)
@@ -229,7 +234,7 @@ class BitpandaPro:
 
             avg_loss += abs(current_price - last_price)
 
-        if avg_gain == 0 and avg_loss == 0:
+        if same_values >= (parameters.rsi_period - 1) * parameters.rsi_period / 2:
             return None
         
         avg_gain = avg_gain / parameters.rsi_period
@@ -380,7 +385,7 @@ class BitpandaPro:
                 parameters.database.putInHistory(crypto)
                 continue
             
-            crypto['current'] = float(crypto['owned']) * float(client.getData()['order']['price'])
+            crypto['current'] = str(float(crypto['owned']) * float(client.getData()['order']['price']))
 
             parameters.database.putInHistory(crypto)
 
