@@ -205,12 +205,6 @@ class BitpandaPro:
         
         fma_mean = fma_mean / (parameters.fma_unit * (parameters.fma_unit + 1) / 2)
 
-        mma_mean = 0
-        for i in range(parameters.mma_unit):
-            mma_mean += values[i] * (parameters.mma_unit - i)
-        
-        mma_mean = mma_mean / (parameters.mma_unit * (parameters.mma_unit + 1) / 2)
-
         sma_mean = 0
         for i in range(parameters.sma_unit):
             sma_mean += values[i] * (parameters.sma_unit - i)
@@ -219,19 +213,17 @@ class BitpandaPro:
         
         avg_gain = 0
         avg_loss = 0
-        same = 0
+        same_values = 0
         for i in range(parameters.rsi_period):
             current_price = values[i]
             last_price = values[i + 1]
 
-            if current_price == last_price:
-                same += parameters.rsi_period - i
-            
-            else:
-                same = 0
-            
-            if same >= parameters.rsi_period * (parameters.rsi_period + 1) / 4:
+            if same_values >= parameters.rsi_period / 2:
                 return None
+            
+            if current_price == last_price:
+                same_values += 1
+                continue
             
             if current_price - last_price > 0:
                 avg_gain += abs(current_price - last_price)
@@ -243,7 +235,6 @@ class BitpandaPro:
         avg_loss = avg_loss / parameters.rsi_period
 
         crypto.fma = round(fma_mean, crypto.precision)
-        crypto.mma = round(mma_mean, crypto.precision)
         crypto.sma = round(sma_mean, crypto.precision)
 
         if avg_loss == 0:
@@ -383,11 +374,11 @@ class BitpandaPro:
                 parameters.database.putInHistory(crypto)
                 continue
 
-            if client.getData()['order']['status'] != "FILLED_FULLY":
+            if client.getData()['order']['status'] not in ["FILLED_FULLY", "CLOSED"]:
                 parameters.database.putInHistory(crypto)
                 continue
             
-            crypto['current'] = float(crypto['owned']) * float(client.getData()['order']['price'])
+            crypto['current'] = str(float(crypto['owned']) * float(client.getData()['order']['price']))
 
             parameters.database.putInHistory(crypto)
 
@@ -474,13 +465,14 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
+            parameters.database.getLastDanger(crypto, parameters.min_recovered, parameters.max_danger, parameters.wait_time)
+            if crypto.danger >= parameters.max_danger:
+                continue
+
             res = self.getStats(crypto, parameters, full=True)
             if res is None:
                 continue
 
-            if parameters.database.getLastDanger(crypto, parameters.min_recovered, parameters.max_danger, parameters.wait_time) == 0:
-                crypto.danger += 1
-            
             if account.available >= crypto.hourlyVolume:
                 crypto.danger += parameters.max_danger
             
@@ -492,9 +484,6 @@ class BitpandaPro:
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
-            
-            if date.today().weekday() == 4:
-                crypto.danger += 1
             
             if crypto.danger <= parameters.max_danger:
                 profitable_trades.append(crypto)

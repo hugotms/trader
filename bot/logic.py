@@ -114,7 +114,8 @@ def monitor(parameters):
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
             + "€ / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
-            + "%)")
+            + "% / RSI: " + str(round(crypto.rsi, 1))
+            + ")")
 
         if crypto.current < 10:
             trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"
@@ -159,7 +160,7 @@ def trade(parameters, account):
         if account.available * account.takerFee * account.makerFee * parameters.min_recovered / crypto.danger < 10:
             continue
 
-        if crypto.rsi < parameters.oversold_threshold and crypto.fma > crypto.mma > crypto.sma:
+        if crypto.rsi < parameters.oversold_threshold and crypto.fma > crypto.sma:
             trading_message += start(parameters, crypto, account)
 
     if trading_message != "":
