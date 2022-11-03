@@ -488,6 +488,7 @@ class BitpandaPro:
             if crypto.danger <= parameters.max_danger:
                 profitable_trades.append(crypto)
 
+        profitable_trades.sort(key=lambda x: x.dailyVolume, reverse=True)
         profitable_trades.sort(key=lambda x: x.danger)
 
         return profitable_trades[:amount_to_return]
