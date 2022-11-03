@@ -36,6 +36,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
 | `MIN_RECOVERED_RATE`       | The minimum rate you want to recover if currency goes down.            | no      | 0.95       |
+| `SECURITY_MIN_RECOVERED_RATE`       | The minimum rate you want to recover if currency goes down and server is down (places a stop loss order).            | no      | 0.9       |
 | `MIN_PROFIT_RATE`          | The rate from which you take profit. Must be greater than `1.0` to activate. | no      | 1.0       |
 | `MAX_DANGER`              | The maximum danger level a currency can be bought.       | no         | 5        |
 | `MINUTES_REFRESH_TIME`       | The number of minutes between two checks.            | no      | 10       |

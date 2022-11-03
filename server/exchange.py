@@ -514,8 +514,8 @@ class BitpandaPro:
             "side": "SELL",
             "type": "STOP",
             "amount": self.truncate(crypto.owned, crypto.precision),
-            "price": self.truncate(crypto.higher * parameters.min_recovered / crypto.owned, 2),
-            "trigger_price": self.truncate(crypto.higher * parameters.min_recovered / crypto.owned, 2)
+            "price": self.truncate(crypto.higher * parameters.security_min_recovered / crypto.owned, 2),
+            "trigger_price": self.truncate(crypto.higher * parameters.security_min_recovered / crypto.owned, 2)
         }
         
         client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()

@@ -16,6 +16,7 @@ class Params:
         self.db_password = os.getenv('MONGO_DB_PASSWORD')
 
         self.min_recovered = os.getenv('MIN_RECOVERED_RATE')
+        self.security_min_recovered = os.getenv('SECURITY_MIN_RECOVERED_RATE')
         self.min_profit = os.getenv('MIN_PROFIT_RATE')
         self.max_danger = os.getenv('MAX_DANGER')
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
@@ -48,6 +49,7 @@ class Params:
         self.watching_currencies = self.database.findVar("watching_currencies", self.watching_currencies, [])
         self.ignore_currencies = self.database.findVar("ignore_currencies", self.ignore_currencies, [])
         self.min_recovered = self.database.findVar("min_recovered", self.min_recovered, 0.95)
+        self.security_min_recovered = self.database.findVar("security_min_recovered", self.security_min_recovered, 0.9)
         self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.0)
         self.max_danger = self.database.findVar("max_danger", self.max_danger, 5)
         self.wait_time = self.database.findVar("wait_time", self.wait_time, 10)
@@ -147,6 +149,7 @@ class Params:
             self.refresh_time = int(self.refresh_time)
             self.wait_time = int(self.wait_time)
             self.min_recovered = float(self.min_recovered)
+            self.security_min_recovered = float(self.security_min_recovered)
             self.min_profit = float(self.min_profit)
             self.max_danger = int(self.max_danger)
             self.taxe_rate = float(self.taxe_rate)
