@@ -6,7 +6,7 @@ ARG VERSION
 
 WORKDIR /trader
 
-RUN git clone --branch master https://github.com/hugotms/trader.git ./
+RUN git clone --branch feat/security_min_recovered https://github.com/hugotms/trader.git ./
 
 FROM python:3.8-slim as run
 
