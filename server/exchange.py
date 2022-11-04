@@ -120,8 +120,8 @@ class BitpandaPro:
     
     def getStats(self, crypto, parameters, full=False):
         frame = parameters.rsi_period + 1
-        if frame < parameters.sma_unit:
-            frame = parameters.sma_unit
+        if frame < parameters.sma_unit + 10:
+            frame = parameters.sma_unit + 10
 
         header = {
             "Accept": "application/json"
@@ -202,18 +202,14 @@ class BitpandaPro:
         if length < frame:
             return None
         
-        fma_mean = 0
-        for i in range(parameters.fma_unit):
-            fma_mean += values[i] * (parameters.fma_unit - i)
-        
-        fma_mean = fma_mean / (parameters.fma_unit * (parameters.fma_unit + 1) / 2)
+        fma_mean = sum(values[parameters.fma_unit:(parameters.fma_unit + 10)]) / 10
+        for i in range(1, parameters.fma_unit + 1):
+            fma_mean = ((2 / (parameters.fma_unit + 1)) * values[parameters.fma_unit - i]) + ((1 - (2 / (parameters.fma_unit + 1))) * fma_mean)
 
-        sma_mean = 0
-        for i in range(parameters.sma_unit):
-            sma_mean += values[i] * (parameters.sma_unit - i)
-        
-        sma_mean = sma_mean / (parameters.sma_unit * (parameters.sma_unit + 1) / 2)
-        
+        sma_mean = sum(values[parameters.sma_unit:(parameters.sma_unit + 10)]) / 10
+        for i in range(1, parameters.sma_unit + 1):
+            sma_mean = ((2 / (parameters.sma_unit + 1)) * values[parameters.sma_unit - i]) + ((1 - (2 / (parameters.sma_unit + 1))) * sma_mean)
+
         avg_gain = 0
         avg_loss = 0
         same_values = 0
