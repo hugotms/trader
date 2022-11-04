@@ -189,6 +189,9 @@ class BitpandaPro:
                 current_time = current_time - delta
         
         missing = frame - len(values)
+        if missing >= frame / 2:
+            return None
+
         if missing > 0:
             last_item = values[len(values) - 1]
             
