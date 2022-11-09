@@ -124,7 +124,7 @@ def monitor(parameters):
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.rsi > parameters.overbought_threshold and crypto.fma <= crypto.sma:
+        elif crypto.rsi > parameters.overbought_threshold and crypto.fma <= crypto.mma:
             trading_message += crypto.instrument_code + " is overbought. "
             trading_message += stop(parameters, crypto)
         
@@ -160,7 +160,7 @@ def trade(parameters, account):
         if account.available * account.takerFee * account.makerFee * parameters.min_recovered / crypto.danger < 10:
             continue
 
-        if crypto.rsi < parameters.oversold_threshold and crypto.fma > crypto.sma:
+        if crypto.rsi < parameters.oversold_threshold and crypto.fma > crypto.mma > crypto.sma:
             trading_message += start(parameters, crypto, account)
 
     if trading_message != "":
