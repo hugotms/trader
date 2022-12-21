@@ -128,6 +128,10 @@ def monitor(parameters):
             trading_message += crypto.instrument_code + " is overbought. "
             trading_message += stop(parameters, crypto)
         
+        elif crypto.fma < crypto.sma:
+            trading_message += "Trend of " + crypto.instrument_code + " is going down. "
+            trading_message += stop(parameters, crypto)
+        
         elif parameters.min_profit > 1.0 and crypto.current >= crypto.placed * parameters.min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(parameters, crypto)
