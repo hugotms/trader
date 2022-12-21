@@ -366,8 +366,20 @@ class BitpandaPro:
             elif crypto['market_id'] != "":
                 order_id = crypto['market_id']
             
+            asset = assets.Crypto(
+                crypto["_id"],
+                crypto["base"],
+                crypto["currency"],
+                float(crypto["owned"]),
+                float(crypto["placed"]),
+                float(crypto['current']),
+                crypto["placed_on"]
+            )
+
+            asset.higher = float(crypto["higher"])
+            
             if order_id == "":
-                parameters.database.putInHistory(crypto)
+                parameters.database.putInHistory(asset)
                 continue
             
             client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + order_id, headers=self.headers).send()
@@ -375,16 +387,18 @@ class BitpandaPro:
             time.sleep(1)
 
             if client.getStatusCode() != 200:
-                parameters.database.putInHistory(crypto)
+                parameters.database.putInHistory(asset)
                 continue
 
             if client.getData()['order']['status'] not in ["FILLED_FULLY", "CLOSED"]:
-                parameters.database.putInHistory(crypto)
+                parameters.database.putInHistory(asset)
                 continue
-            
-            crypto['current'] = str(float(crypto['owned']) * float(client.getData()['order']['price']))
 
-            parameters.database.putInHistory(crypto)
+            asset.current = asset.owned * float(client.getData()['order']['price'])
+            if asset.current > asset.higher:
+                asset.higher = asset.current
+
+            parameters.database.putInHistory(asset)
 
         for trade in active_trades:
             self.getStats(trade, parameters)

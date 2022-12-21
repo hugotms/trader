@@ -127,28 +127,27 @@ class Mongo:
         
         isFound = False
         for active in self.find("actives"):
-            if active["_id"] == crypto["_id"]:
+            if active["_id"] == crypto.instrument_code:
                 isFound = True
                 break
         
         if isFound == True:
             query = {
-                "_id": crypto["_id"]
+                "_id": crypto.instrument_code
             }
 
             self.delete("actives", query)
 
             data = {
                 "date": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-                "instrument_code": crypto["_id"],
-                "base": crypto["base"],
-                "currency": crypto["currency"],
-                "owned": crypto["owned"],
-                "placed": crypto["placed"],
-                "current": crypto["current"],
-                "higher": crypto["higher"],
-                "placed_on": crypto["placed_on"],
-                "danger": crypto["danger"]
+                "instrument_code": crypto.instrument_code,
+                "base": crypto.base,
+                "currency": crypto.currency,
+                "owned": str(crypto.owned),
+                "placed": str(crypto.placed),
+                "current": str(crypto.current),
+                "higher": str(crypto.higher),
+                "placed_on": crypto.placed_on
             }
 
             self.create("history", data)
