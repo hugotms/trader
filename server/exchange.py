@@ -280,7 +280,7 @@ class BitpandaPro:
 
         if client.getStatusCode() != 200:
             print("Error while trying to get market tickers")
-            return None
+            return 0
 
         return float(client.getData()['last_price'])
     
@@ -363,7 +363,7 @@ class BitpandaPro:
             if crypto['stop_id'] != "":
                 order_id = crypto['stop_id']
             
-            elif crypto['market_id'] != "":
+            if crypto['market_id'] != "":
                 order_id = crypto['market_id']
             
             asset = assets.Crypto(
@@ -393,8 +393,13 @@ class BitpandaPro:
             if client.getData()['order']['status'] not in ["FILLED_FULLY", "CLOSED"]:
                 parameters.database.putInHistory(asset)
                 continue
-
-            asset.current = asset.owned * float(client.getData()['order']['price'])
+            
+            current_price = float(client.getData()['order']['price'])
+            if current_price == 0.0:
+                parameters.database.putInHistory(asset)
+                continue
+            
+            asset.current = asset.owned * current_price
             if asset.current > asset.higher:
                 asset.higher = asset.current
 
@@ -489,6 +494,10 @@ class BitpandaPro:
 
             res = self.getStats(crypto, parameters, full=True)
             if res is None:
+                continue
+
+            crypto.last_price = round(self.getPrice(crypto.instrument_code), crypto.precision)
+            if crypto.last_price == 0:
                 continue
 
             if account.available >= crypto.hourlyVolume:
@@ -598,6 +607,9 @@ class BitpandaPro:
     
     def makeTrade(self, crypto, account):
         current_price = self.getPrice(crypto.instrument_code)
+        if current_price == 0:
+            return False
+        
         amount = (account.available * 0.99 / crypto.danger) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
