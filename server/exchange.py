@@ -394,12 +394,12 @@ class BitpandaPro:
                 parameters.database.putInHistory(asset)
                 continue
             
-            current_price = float(client.getData()['order']['price'])
+            current_price = asset.owned * float(client.getData()['order']['price'])
             if current_price == 0.0:
                 parameters.database.putInHistory(asset)
                 continue
             
-            asset.current = asset.owned * current_price
+            asset.current = current_price
             if asset.current > asset.higher:
                 asset.higher = asset.current
 
