@@ -408,6 +408,8 @@ class BitpandaPro:
         for trade in active_trades:
             self.getStats(trade, parameters)
 
+            trade.last_price = self.getPrice(trade.instrument_code)
+
             header = {
                 "Accept": "application/json"
             }
@@ -426,6 +428,8 @@ class BitpandaPro:
                         continue
                     
                     trade.precision = int(item["amount_precision"])
+
+                    break
             
             parameters.database.putInActive(trade)
 
