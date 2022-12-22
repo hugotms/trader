@@ -11,7 +11,6 @@ class Crypto:
         self.current = current
         self.placed_on = placed_on
         self.fma = 0
-        self.mma = 0
         self.sma = 0
         self.rsi = 0
         self.danger = 0
