@@ -189,18 +189,12 @@ class BitpandaPro:
                 current_time = current_time - delta
         
         missing = frame - len(values)
-        if missing >= frame / 2:
-            return None
 
         if missing > 0:
             last_item = values[len(values) - 1]
             
             for i in range(missing):
                 values.append(last_item)
-        
-        length = len(values)
-        if length < frame:
-            return None
         
         fma_mean = sum(values[parameters.fma_unit:(parameters.fma_unit + 10)]) / 10
         for i in range(1, parameters.fma_unit + 1):
@@ -212,19 +206,14 @@ class BitpandaPro:
 
         avg_gain = 0
         avg_loss = 0
-        same_values = 0
         for i in range(parameters.rsi_period):
             current_price = values[i]
             last_price = values[i + 1]
-
-            if same_values >= parameters.rsi_period / 2:
-                return None
             
             if current_price == last_price:
-                same_values += 1
                 continue
             
-            if current_price - last_price > 0:
+            elif current_price - last_price > 0:
                 avg_gain += abs(current_price - last_price)
                 continue
 
@@ -500,24 +489,29 @@ class BitpandaPro:
                 continue
 
             if account.available >= crypto.hourlyVolume:
-                crypto.danger += parameters.max_danger
+                continue
             
-            if account.available * 10 >= crypto.hourlyVolume / 2:
+            if account.available * 100 >= crypto.hourlyVolume * 0.5:
                 crypto.danger += 2
+            
+            if account.available * 100 >= crypto.hourlyVolume * 0.75:
+                crypto.danger += 1
 
-            if account.available * 10 >= crypto.hourlyVolume:
-                crypto.danger += parameters.max_danger
+            if account.available * 100 >= crypto.hourlyVolume:
+                continue
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
             
-            if crypto.danger <= parameters.max_danger:
-                profitable_trades.append(crypto)
+            if crypto.danger > parameters.max_danger:
+                continue
+            
+            profitable_trades.append(crypto)
 
         profitable_trades.sort(key=lambda x: x.dailyVolume, reverse=True)
         profitable_trades.sort(key=lambda x: x.danger)
 
-        return profitable_trades[:amount_to_return]
+        return profitable_trades[:amount_to_return + 1]
     
     def incrementTrade(self, crypto, parameters):
         if crypto.stop_id != "":
