@@ -44,7 +44,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `WATCHING_CURRENCIES`       | By default, the bot watches all currencies for which you have trades going on. You can, however, specify currencies to look for and thus ignore the rest.            | no      | None       |
 | `IGNORE_CURRENCIES`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to ignore. Note that if both this variable and `WATCHING_CURRENCIES` are set, this one will take precedence.            | no      | None       |
 | `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
-| `MAX_CONCURRENT_CURRENCIES`          | Specify the number of concurrent currencies the bot is allowed to place.       | no      | 0     |
+| `MAKE_TRADE`          | Specify if the bot is allowed to place.       | no      | False    |
 | `CANDLESTICKS_TIMEFRAME`          | Specify the timeframe at which crypto stats are required.      | no      | DAYS     |
 | `CANDLESTICKS_PERIOD`          | Specify the period of unit at which crypto stats are required (1, 5, 15 or 30)       | no      | 1     |
 | `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast exponential moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 5     |

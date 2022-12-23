@@ -38,7 +38,7 @@ def start():
         
         parameters.exchange_client.actualizeAccount(account)
 
-        if parameters.max_concurrent_currencies > 0:
+        if parameters.make_trade == True:
             logic.trade(parameters, account)
 
         if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):

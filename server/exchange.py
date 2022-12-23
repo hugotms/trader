@@ -425,11 +425,6 @@ class BitpandaPro:
         }
 
         actives = parameters.database.findActives(parameters.watching_currencies, parameters.ignore_currencies)
-        if len(actives) >= parameters.max_concurrent_currencies:
-            return []
-        
-        amount_to_return = parameters.max_concurrent_currencies - len(actives)
-
         ignored_trades = []
         for trade in actives:
             ignored_trades.append(trade["_id"])
@@ -511,7 +506,7 @@ class BitpandaPro:
         profitable_trades.sort(key=lambda x: x.dailyVolume, reverse=True)
         profitable_trades.sort(key=lambda x: x.danger)
 
-        return profitable_trades[:amount_to_return + 1]
+        return profitable_trades
     
     def incrementTrade(self, crypto, parameters):
         if crypto.stop_id != "":
