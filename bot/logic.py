@@ -158,13 +158,13 @@ def trade(parameters, account):
 
     for crypto in parameters.exchange_client.findProfitable(parameters, account):
 
-        if crypto.danger < 1:
-            crypto.danger = 1
-
-        if account.available * account.takerFee * account.makerFee * parameters.min_recovered / crypto.danger < 10:
+        if crypto.rsi > parameters.oversold_threshold:
             continue
 
-        if crypto.rsi < parameters.oversold_threshold and crypto.last_price > crypto.fma > crypto.sma:
+        if account.available * account.takerFee * account.makerFee * parameters.min_recovered * (1 - (crypto.rsi / 100)) < 10:
+            continue
+
+        if crypto.last_price > crypto.fma > crypto.sma:
             trading_message += start(parameters, crypto, account)
 
     if trading_message != "":
