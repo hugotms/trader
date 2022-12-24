@@ -479,26 +479,23 @@ class BitpandaPro:
             if res is None:
                 continue
 
-            crypto.last_price = round(self.getPrice(crypto.instrument_code), crypto.precision)
-            if crypto.last_price == 0:
-                continue
-
-            if account.available >= crypto.hourlyVolume:
+            if account.available * 0.99 * (1 - (crypto.rsi / 100)) * 10 >= crypto.hourlyVolume:
                 continue
             
-            if account.available * 100 >= crypto.hourlyVolume * 0.5:
+            if account.available * 0.99 * (1 - (crypto.rsi / 100)) * 10 >= crypto.hourlyVolume * 0.5:
                 crypto.danger += 2
             
-            if account.available * 100 >= crypto.hourlyVolume * 0.75:
+            if account.available * 0.99 * (1 - (crypto.rsi / 100)) * 10 >= crypto.hourlyVolume * 0.75:
                 crypto.danger += 1
-
-            if account.available * 100 >= crypto.hourlyVolume:
-                continue
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
             
             if crypto.danger > parameters.max_danger:
+                continue
+
+            crypto.last_price = round(self.getPrice(crypto.instrument_code), crypto.precision)
+            if crypto.last_price == 0:
                 continue
             
             profitable_trades.append(crypto)
@@ -598,7 +595,7 @@ class BitpandaPro:
         if current_price == 0:
             return False
         
-        amount = (account.available * 0.99 * (1 - (crypto.rsi / 100))) / current_price
+        amount = ((account.available / crypto.danger) * 0.99 * (1 - (crypto.rsi / 100))) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
