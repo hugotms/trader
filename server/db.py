@@ -212,7 +212,7 @@ class Mongo:
 
         res = self.find("history", query)
         res2 = self.find("actives", query2)
-        trades = len(res) + len(res2)
+        orders = len(res) + len(res2)
         for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
@@ -230,7 +230,7 @@ class Mongo:
         return json.dumps({
             "profit": profit,
             "loss": loss,
-            "trades": trades,
+            "orders": orders,
             "volume": volume
         })
 
