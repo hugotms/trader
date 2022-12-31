@@ -21,6 +21,7 @@ class Crypto:
         self.market_id = ""
         self.failed = False
         self.alerted = False
+        self.last_price = 0
 
     def setHigher(self):
         self.higher = self.placed

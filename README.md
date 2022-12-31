@@ -36,18 +36,19 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
 | `MIN_RECOVERED_RATE`       | The minimum rate you want to recover if currency goes down.            | no      | 0.95       |
+| `SECURITY_MIN_RECOVERED_RATE`       | The minimum rate you want to recover if currency goes down and server is down (places a stop loss order).            | no      | 0.9       |
 | `MIN_PROFIT_RATE`          | The rate from which you take profit. Must be greater than `1.0` to activate. | no      | 1.0       |
 | `MAX_DANGER`              | The maximum danger level a currency can be bought.       | no         | 5        |
 | `MINUTES_REFRESH_TIME`       | The number of minutes between two checks.            | no      | 10       |
 | `MINUTES_WAIT_TIME`       | The number of minutes between a selling order and a buying order on the same currency.            | no      | 10       |
-| `WATCHING_CURRENCIES`       | By default, the bot watches all currencies for which you have trades going on. You can, however, specify currencies to look for and thus ignore the rest.            | no      | None       |
-| `IGNORE_CURRENCIES`       | By default, the bot watches all crytos for which you have trades going on. You can, however, specify cryptos to ignore. Note that if both this variable and `WATCHING_CURRENCIES` are set, this one will take precedence.            | no      | None       |
+| `WATCHING_CURRENCIES`       | By default, the bot watches all currencies that you bought. You can, however, specify currencies to look for and thus ignore the rest.            | no      | None       |
+| `IGNORE_CURRENCIES`       | By default, the bot watches all currencies that you bought. You can, however, specify cryptos to ignore. Note that if both this variable and `WATCHING_CURRENCIES` are set, this one will take precedence.            | no      | None       |
 | `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
-| `MAX_CONCURRENT_CURRENCIES`          | Specify the number of concurrent currencies the bot is allowed to place.       | no      | 0     |
+| `MAKE_ORDER`          | Specify if the bot is allowed to place order.       | no      | False    |
 | `CANDLESTICKS_TIMEFRAME`          | Specify the timeframe at which crypto stats are required.      | no      | DAYS     |
 | `CANDLESTICKS_PERIOD`          | Specify the period of unit at which crypto stats are required (1, 5, 15 or 30)       | no      | 1     |
-| `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast weighted moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 5     |
-| `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow weighted moving average       | no      | 50     |
+| `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast exponential moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 5     |
+| `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow exponential moving average       | no      | 50     |
 | `RSI_PERIOD`          | Specify the number of units looked at to calculate RSI       | no      | 14     |
 | `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)       | no      | 30     |
 | `OVERBOUGHT_THRESHOLD`          | Specify the RSI level to define overbought zone (from value to 100)       | no      | 70     |

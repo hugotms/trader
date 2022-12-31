@@ -7,30 +7,32 @@ from dateutil.relativedelta import relativedelta
 from lastversion import has_update
 
 def stop(parameters, crypto):
-    if parameters.exchange_client.stopTrade(crypto, parameters) == False:
+    if parameters.exchange_client.sellingMarketOrder(crypto, parameters) == False:
         crypto.failed = True
-        return "Unable to stop trade on " + crypto.instrument_code + ".\n"
+        return "Unable to sell " + crypto.instrument_code + ".\n"
 
-    message = "Removed all current action on " + crypto.instrument_code + " at " + str(round(crypto.current, 2)) + "€"
+    message = "Selling market order for " + crypto.instrument_code + " at " + str(round(crypto.current, 2)) + "€"
 
-    if crypto.current > crypto.placed and parameters.taxe_rate != 0.0:
-        profit = crypto.current - crypto.placed
-        message += " (NET: " + str(round(profit * (1 - parameters.taxe_rate), 2)) + "€ / TAXES: " + \
-            str(round(profit * parameters.taxe_rate, 2)) + "€)"
-    elif crypto.current > crypto.placed:
+    if crypto.current >= crypto.placed:
         message += " (WON: " + str(round(crypto.current - crypto.placed, 2)) + "€)"
-    elif crypto.current < crypto.placed:
+    else:
         message += " (LOST: " + str(round(crypto.placed - crypto.current, 2)) + "€)"
     
     return message + ".\n"
 
 def start(parameters, crypto, account):
-    if parameters.exchange_client.makeTrade(crypto, account) == False:
+    if parameters.exchange_client.buyingMarketOrder(crypto, account) == False:
         return ""
     
     account.available -= crypto.placed
 
-    return "Placed action on " + crypto.instrument_code + " (OWNED: " + str(round(crypto.owned, 4)) + ").\n"
+    return "Buying market order for " + crypto.instrument_code + \
+        " (OWNED: " + str(round(crypto.owned, crypto.precision)) + \
+        " / PRICE: " + str(round(crypto.last_price, crypto.precision)) + \
+        " / FMA: " + str(round(crypto.fma, crypto.precision)) + \
+        " / SMA: " + str(round(crypto.sma, crypto.precision)) + \
+        " / RSI: " + str(round(crypto.rsi)) + \
+        ").\n"
 
 def report(parameters):
     response = parameters.database.getPastPerformance(datetime.datetime.utcnow() - timedelta(days=1), parameters.watching_currencies, parameters.ignore_currencies)
@@ -39,7 +41,7 @@ def report(parameters):
     response = json.loads(response)
 
     message = "\nDAILY STATS:\n\tORDERS:\t" + \
-        str(response["trades"]) + "\n\tGAINED:\t" + \
+        str(response["orders"]) + "\n\tGAINED:\t" + \
         str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
         str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
         str(round(response["volume"], 2)) + "€\n"
@@ -60,7 +62,7 @@ def report(parameters):
         response = json.loads(response)
 
         message += "\nWEEKLY STATS:\n\tORDERS:\t" + \
-            str(response["trades"]) + "\n\tGAINED:\t" + \
+            str(response["orders"]) + "\n\tGAINED:\t" + \
             str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
             str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
             str(round(response["volume"], 2)) + "€\n"
@@ -80,7 +82,7 @@ def report(parameters):
         response = json.loads(response)
 
         message += "\nMONTHLY STATS:\n\tORDERS:\t" + \
-            str(response["trades"]) + "\n\tGAINED:\t" + \
+            str(response["orders"]) + "\n\tGAINED:\t" + \
             str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
             str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
             str(round(response["volume"], 2)) + "€\n"
@@ -109,13 +111,13 @@ def monitor(parameters):
     trading_message = ""
     trading_alert = ""
 
-    for crypto in parameters.exchange_client.getAllActiveTrades(parameters):
+    for crypto in parameters.exchange_client.getAllActiveAssets(parameters):
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
             + "€ / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
             + "% / RSI: " + str(round(crypto.rsi, 1))
-            + ")")
+            + ").")
 
         if crypto.current < 10:
             trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"
@@ -124,8 +126,12 @@ def monitor(parameters):
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.rsi > parameters.overbought_threshold:
+        elif crypto.rsi > parameters.overbought_threshold and crypto.fma > crypto.last_price > 0:
             trading_message += crypto.instrument_code + " is overbought. "
+            trading_message += stop(parameters, crypto)
+        
+        elif crypto.current > crypto.placed and crypto.fma < crypto.sma:
+            trading_message += "Trend of " + crypto.instrument_code + " is going down. "
             trading_message += stop(parameters, crypto)
         
         elif parameters.min_profit > 1.0 and crypto.current >= crypto.placed * parameters.min_profit:
@@ -133,7 +139,7 @@ def monitor(parameters):
             trading_message += stop(parameters, crypto)
         
         elif crypto.higher * parameters.min_recovered > 10 and (crypto.higher == crypto.current or crypto.stop_id == ""):
-            parameters.exchange_client.incrementTrade(crypto, parameters)
+            parameters.exchange_client.stopLossOrder(crypto, parameters)
         
         if crypto.failed == True and crypto.alerted == False:
             trading_alert += "No action can be done on " + crypto.instrument_code + " due to an error.\n"
@@ -146,7 +152,7 @@ def monitor(parameters):
     
     return trading_alert
 
-def trade(parameters, account):
+def buy(parameters, account):
     trading_message = ""
 
     if account.available * account.takerFee * account.makerFee * parameters.min_recovered < 10:
@@ -157,10 +163,13 @@ def trade(parameters, account):
         if crypto.danger < 1:
             crypto.danger = 1
 
-        if account.available * account.takerFee * account.makerFee * parameters.min_recovered / crypto.danger < 10:
+        if crypto.rsi > parameters.oversold_threshold:
             continue
 
-        if crypto.rsi < parameters.oversold_threshold and crypto.fma > crypto.sma:
+        if (account.available / crypto.danger) * account.takerFee * account.makerFee * parameters.min_recovered * (1 - (crypto.rsi / 100)) < 10:
+            continue
+
+        if crypto.last_price > crypto.fma > crypto.sma:
             trading_message += start(parameters, crypto, account)
 
     if trading_message != "":
