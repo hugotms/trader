@@ -28,9 +28,9 @@ def start(parameters, crypto, account):
 
     return "Buying market order for " + crypto.instrument_code + \
         " (OWNED: " + str(round(crypto.owned, crypto.precision)) + \
-        " / PRICE: " + str(round(crypto.last_price, 2)) + \
-        " / FMA: " + str(round(crypto.fma, 2)) + \
-        " / SMA: " + str(round(crypto.sma, 2)) + \
+        " / PRICE: " + str(round(crypto.last_price, crypto.precision)) + \
+        " / FMA: " + str(round(crypto.fma, crypto.precision)) + \
+        " / SMA: " + str(round(crypto.sma, crypto.precision)) + \
         " / RSI: " + str(round(crypto.rsi)) + \
         ").\n"
 
@@ -117,7 +117,7 @@ def monitor(parameters):
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
             + "€ / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
             + "% / RSI: " + str(round(crypto.rsi, 1))
-            + ")")
+            + ").")
 
         if crypto.current < 10:
             trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"
@@ -130,7 +130,7 @@ def monitor(parameters):
             trading_message += crypto.instrument_code + " is overbought. "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.fma < crypto.sma:
+        elif crypto.current > crypto.placed and crypto.fma < crypto.sma:
             trading_message += "Trend of " + crypto.instrument_code + " is going down. "
             trading_message += stop(parameters, crypto)
         

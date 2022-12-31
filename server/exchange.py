@@ -479,14 +479,17 @@ class BitpandaPro:
             if res is None:
                 continue
 
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) * 10 >= crypto.hourlyVolume:
+            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
                 continue
             
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) * 10 >= crypto.hourlyVolume * 0.5:
+            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
+                crypto.danger += 1
+            
+            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.5:
                 crypto.danger += 2
             
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) * 10 >= crypto.hourlyVolume * 0.75:
-                crypto.danger += 1
+            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.75:
+                crypto.danger += 3
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
