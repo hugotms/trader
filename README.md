@@ -89,6 +89,8 @@ services:
     image: trader:5.0.0
     restart: unless-stopped
     depends_on: mongo_db
+    volumes:
+      - trader_output:/app/output
     environment:
       EXCHANGE_API_KEY: token
       MONGO_DB_HOST: mongo_db
@@ -101,6 +103,18 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: trader
       MONGO_INITDB_ROOT_PASSWORD: secure
+  
+  # this part is only useful if you wish to have a graphical output
+  apache:
+    image: httpd:2.4
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - trader_output:/usr/local/apache2/htdocs
+
+volumes:
+  trader_output:
 ````
 
 ## Disclaimer

@@ -5,6 +5,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from data import params
 from bot import logic
+from server import fs
 
 def start():
     account = None
@@ -38,8 +39,18 @@ def start():
         
         parameters.exchange_client.actualizeAccount(account)
 
+        profitables = parameters.exchange_client.findProfitable(parameters, account)
+        profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
+        html_file = fs.File('index.html')
+        
+        if html_file.create() is None:
+            print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
+            break
+
+        html_file.putInFile(profitables_html)
+
         if parameters.make_order == True:
-            logic.buy(parameters, account)
+            logic.buy(parameters, account, profitables)
 
         if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):
             report_message = logic.report(parameters)
