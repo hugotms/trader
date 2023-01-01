@@ -41,7 +41,7 @@ def start():
 
         profitables = parameters.exchange_client.findProfitable(parameters, account)
         profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
-        html_file = fs.File('index.html')
+        html_file = fs.File('output', 'index.html')
         
         if html_file.create() is None:
             print("Unable to create 'output/index.html' file. Please check permissions on filesystem")

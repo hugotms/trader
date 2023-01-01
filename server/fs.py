@@ -2,9 +2,9 @@ import os
 
 class File:
 
-    def __init__(self, filename):
-        self.directory = 'output'
-        self.filename = self.directory + '/' + filename
+    def __init__(self, directory, filename):
+        self.directory = directory
+        self.filename = directory + '/' + filename
 
     def create(self):
         try:
