@@ -5,6 +5,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from data import params
 from bot import logic
+from server import fs
 
 def start():
     account = None
@@ -28,8 +29,19 @@ def start():
         subject = "New asset update - " + time.strftime("%d/%m/%Y")
         message = ""
         body = ""
+
+        actives = parameters.exchange_client.getAllActiveAssets(parameters)
+
+        actives_html = environment.get_template("actives.html.j2").render(list=actives)
+        html_file = fs.File('output', 'index.html')
         
-        alerts = logic.monitor(parameters)
+        if html_file.create() is None:
+            print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
+            isOk = False
+
+        html_file.putInFile(actives_html)
+
+        alerts = logic.monitor(parameters, actives)
         
         if alerts != "":
             message += "############# ALERTS #############\n\n"
@@ -38,8 +50,18 @@ def start():
         
         parameters.exchange_client.actualizeAccount(account)
 
+        profitables = parameters.exchange_client.findProfitable(parameters, account)
+        profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
+        html_file = fs.File('output', 'profitables.html')
+        
+        if html_file.create() is None:
+            print("Unable to create 'output/profitables.html' file. Please check permissions on filesystem")
+            isOk = False
+
+        html_file.putInFile(profitables_html)
+
         if parameters.make_order == True:
-            logic.buy(parameters, account)
+            logic.buy(parameters, account, profitables)
 
         if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):
             report_message = logic.report(parameters)

@@ -107,11 +107,11 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(parameters):
+def monitor(parameters, actives):
     trading_message = ""
     trading_alert = ""
 
-    for crypto in parameters.exchange_client.getAllActiveAssets(parameters):
+    for crypto in actives:
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
@@ -152,13 +152,10 @@ def monitor(parameters):
     
     return trading_alert
 
-def buy(parameters, account):
+def buy(parameters, account, profitables):
     trading_message = ""
 
-    if account.available * account.takerFee * account.makerFee * parameters.min_recovered < 10:
-        return None
-
-    for crypto in parameters.exchange_client.findProfitable(parameters, account):
+    for crypto in profitables:
 
         if crypto.danger < 1:
             crypto.danger = 1
