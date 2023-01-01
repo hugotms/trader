@@ -29,8 +29,19 @@ def start():
         subject = "New asset update - " + time.strftime("%d/%m/%Y")
         message = ""
         body = ""
+
+        actives = parameters.exchange_client.getAllActiveAssets(parameters)
+
+        actives_html = environment.get_template("actives.html.j2").render(list=actives)
+        html_file = fs.File('output', 'index.html')
         
-        alerts = logic.monitor(parameters)
+        if html_file.create() is None:
+            print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
+            isOk = False
+
+        html_file.putInFile(actives_html)
+
+        alerts = logic.monitor(parameters, actives)
         
         if alerts != "":
             message += "############# ALERTS #############\n\n"
@@ -41,11 +52,11 @@ def start():
 
         profitables = parameters.exchange_client.findProfitable(parameters, account)
         profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
-        html_file = fs.File('output', 'index.html')
+        html_file = fs.File('output', 'profitables.html')
         
         if html_file.create() is None:
-            print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
-            break
+            print("Unable to create 'output/profitables.html' file. Please check permissions on filesystem")
+            isOk = False
 
         html_file.putInFile(profitables_html)
 

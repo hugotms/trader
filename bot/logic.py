@@ -107,11 +107,11 @@ def checkUpdate(current_version):
     
     return message
 
-def monitor(parameters):
+def monitor(parameters, actives):
     trading_message = ""
     trading_alert = ""
 
-    for crypto in parameters.exchange_client.getAllActiveAssets(parameters):
+    for crypto in actives:
         print("Found " + crypto.instrument_code 
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 

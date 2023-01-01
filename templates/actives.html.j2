@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Profitable assets</title>
+  <title>Active assets</title>
   <meta name="author" content="GitHub @hugotms">
   <meta http-equiv="refresh" content="60">
 </head>
@@ -27,10 +27,10 @@
     text-align: center;
   ">
     <div>
-      <h2>&#129297; Profitable assets &#129297;</h2>
+      <h2>&#128200; Active assets &#128201;</h2>
     </div>
     <div>
-      <a href="index.html" style="
+      <a href="profitables.html" style="
         display: inline-block;
         padding: 0.5em 1em;
         border: none;
@@ -39,7 +39,7 @@
         color: #ffffff;
         cursor: pointer;
       ">
-        Back to active assets
+        Go to profitable assets
       </a>
     </div>
   </div>
@@ -63,11 +63,18 @@
           padding: 2px 16px;
         ">
           <h3>{{ asset.instrument_code }}</h3>
+          <p>Placed: {{ asset.placed }}</p>
+          <p>Current: {{ asset.current }}</p>
+          <p>Higher: {{ asset.higher }}</p>
           <p>Last price: {{ asset.last_price }}</p>
           <p>FMA: {{ asset.fma }}</p>
           <p>SMA: {{ asset.sma }}</p>
           <p>RSI: {{ asset.rsi | round(1) }}</p>
-          <p>Danger: {{ asset.danger }}</p>
+        </div>
+        <div style="
+          padding: 2px 16px;
+        ">
+          <h3>{{ (1 - asset.current / asset.placed) * -100 }}</h3>
         </div>
       </div>
     </div>
