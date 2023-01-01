@@ -76,7 +76,7 @@
         <div style="
           padding: 2px 16px;
         ">
-          <h3>{{ (1 - asset.current / asset.placed) * -100 }}</h3>
+          <h3>{{ ((1 - asset.current / asset.placed) * -100) | round(2) }}%</h3>
         </div>
       </div>
     </div>
