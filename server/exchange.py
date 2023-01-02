@@ -250,7 +250,7 @@ class BitpandaPro:
         else:
             crypto.rsi = 100 - (100 / (1 + (avg_gain / avg_loss)))
         
-        adl = 0
+        adl = 0.0
         for i in range(1, parameters.period + 1):
             close = float(values[parameters.period - i]['close'])
             high = float(values[parameters.period - i]['high'])
@@ -260,7 +260,7 @@ class BitpandaPro:
             if high == low:
                 continue
 
-            adl = (adl * (i - 1)) + (((close - low) - (high - close)) / (high - low)) * volume
+            adl += ((((close - low) - (high - close)) / (high - low)) * volume) * i
         
         crypto.adl = adl / parameters.period
         
