@@ -116,8 +116,7 @@ def monitor(parameters, actives):
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
             + "€ / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
-            + "% / RSI: " + str(round(crypto.rsi, 1))
-            + ").")
+            + "%).")
 
         if crypto.current < 10:
             trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"
@@ -130,7 +129,7 @@ def monitor(parameters, actives):
             trading_message += crypto.instrument_code + " is overbought. "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.current > crypto.placed and crypto.fma < crypto.sma:
+        elif crypto.current > crypto.placed and crypto.last_price < crypto.sma and crypto.adl <= -1:
             trading_message += "Trend of " + crypto.instrument_code + " is going down. "
             trading_message += stop(parameters, crypto)
         
@@ -157,17 +156,19 @@ def buy(parameters, account, profitables):
 
     for crypto in profitables:
 
-        if crypto.danger < 1:
-            crypto.danger = 1
-
         if crypto.rsi > parameters.oversold_threshold:
+            continue
+
+        if crypto.adl < 1:
+            continue
+
+        if crypto.sma >= crypto.last_price:
             continue
 
         if (account.available / crypto.danger) * account.takerFee * account.makerFee * parameters.min_recovered * (1 - (crypto.rsi / 100)) < 10:
             continue
-
-        if crypto.last_price > crypto.fma > crypto.sma:
-            trading_message += start(parameters, crypto, account)
+        
+        trading_message += start(parameters, crypto, account)
 
     if trading_message != "":
         print(trading_message)

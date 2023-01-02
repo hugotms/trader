@@ -49,7 +49,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `CANDLESTICKS_PERIOD`          | Specify the period of unit at which crypto stats are required (1, 5, 15 or 30)       | no      | 1     |
 | `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast exponential moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 5     |
 | `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow exponential moving average       | no      | 50     |
-| `RSI_PERIOD`          | Specify the number of units looked at to calculate RSI       | no      | 14     |
+| `INDICATORS_PERIOD`          | Specify the number of units looked at to calculate RSI and Accumulation/Distribution indicators      | no      | 14     |
 | `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)       | no      | 30     |
 | `OVERBOUGHT_THRESHOLD`          | Specify the RSI level to define overbought zone (from value to 100)       | no      | 70     |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
