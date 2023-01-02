@@ -65,10 +65,11 @@
           padding: 2px 16px;
         ">
           <h3>{{ asset.instrument_code }}</h3>
-          <p>Last price: {{ asset.last_price }}</p>
-          <p>FMA: {{ asset.fma }}</p>
-          <p>SMA: {{ asset.sma }}</p>
+          <p>Last price: {{ asset.last_price | round(asset.precision) }}€</p>
+          <p>FMA: {{ asset.fma | round(asset.precision) }}€</p>
+          <p>SMA: {{ asset.sma | round(asset.precision) }}€</p>
           <p>RSI: {{ asset.rsi | round(1) }}</p>
+          <p>AD: {{ asset.ad | round(1) }}</p>
           <p>Danger: {{ asset.danger }}</p>
         </div>
       </div>

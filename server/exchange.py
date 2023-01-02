@@ -119,7 +119,7 @@ class BitpandaPro:
             account.makerFee = fees['makerFee']
     
     def getStats(self, crypto, parameters, full=False):
-        frame = parameters.rsi_period + 1
+        frame = parameters.period + 1
         if frame < parameters.sma_unit + 10:
             frame = parameters.sma_unit + 10
 
@@ -169,7 +169,8 @@ class BitpandaPro:
         last_time = datetime.strptime(client.getData()[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
         i = 0
         while last_time < today.replace(second=59):
-            values.append(float(client.getData()[length - 1]['close']))
+            values.append(client.getData()[length - 1])
+            values[i]['volume'] = 0.0
 
             last_time = last_time + delta
             i += 1
@@ -183,32 +184,50 @@ class BitpandaPro:
             
             previous_time = datetime.strptime(client.getData()[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
             current_time = datetime.strptime(client.getData()[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+
+            added = False
             
             while previous_time < current_time:
-                values.append(float(client.getData()[length - i]['close']))
+                values.append(client.getData()[length - i])
                 current_time = current_time - delta
+
+                if added:
+                    values[len(values) - 1]['volume'] = 0.0
+                
+                added = True
         
         missing = frame - len(values)
 
         if missing > 0:
             last_item = values[len(values) - 1]
+            last_item['volume'] = 0.0
             
             for i in range(missing):
                 values.append(last_item)
         
-        fma_mean = sum(values[parameters.fma_unit:(parameters.fma_unit + 10)]) / 10
-        for i in range(1, parameters.fma_unit + 1):
-            fma_mean = ((2 / (parameters.fma_unit + 1)) * values[parameters.fma_unit - i]) + ((1 - (2 / (parameters.fma_unit + 1))) * fma_mean)
+        fma_mean = 0
+        for i in range(parameters.fma_unit, parameters.fma_unit + 10):
+            fma_mean += float(values[i]['close'])
+        
+        fma_mean = fma_mean / 10
 
-        sma_mean = sum(values[parameters.sma_unit:(parameters.sma_unit + 10)]) / 10
+        for i in range(1, parameters.fma_unit + 1):
+            fma_mean = ((2 / (parameters.fma_unit + 1)) * float(values[parameters.fma_unit - i]['close'])) + ((1 - (2 / (parameters.fma_unit + 1))) * fma_mean)
+
+        sma_mean = 0
+        for i in range(parameters.sma_unit, parameters.sma_unit + 10):
+            sma_mean += float(values[i]['close'])
+        
+        sma_mean = sma_mean / 10
+
         for i in range(1, parameters.sma_unit + 1):
-            sma_mean = ((2 / (parameters.sma_unit + 1)) * values[parameters.sma_unit - i]) + ((1 - (2 / (parameters.sma_unit + 1))) * sma_mean)
+            sma_mean = ((2 / (parameters.sma_unit + 1)) * float(values[parameters.sma_unit - i]['close'])) + ((1 - (2 / (parameters.sma_unit + 1))) * sma_mean)
 
         avg_gain = 0
         avg_loss = 0
-        for i in range(parameters.rsi_period):
-            current_price = values[i]
-            last_price = values[i + 1]
+        for i in range(parameters.period):
+            current_price = float(values[i]['close'])
+            last_price = float(values[i + 1]['close'])
             
             if current_price == last_price:
                 continue
@@ -219,8 +238,8 @@ class BitpandaPro:
 
             avg_loss += abs(current_price - last_price)
         
-        avg_gain = avg_gain / parameters.rsi_period
-        avg_loss = avg_loss / parameters.rsi_period
+        avg_gain = avg_gain / parameters.period
+        avg_loss = avg_loss / parameters.period
 
         crypto.fma = round(fma_mean, crypto.precision)
         crypto.sma = round(sma_mean, crypto.precision)
@@ -230,6 +249,20 @@ class BitpandaPro:
         
         else:
             crypto.rsi = 100 - (100 / (1 + (avg_gain / avg_loss)))
+        
+        ad = 0
+        for i in range(1, parameters.period + 1):
+            close = float(values[parameters.period - i]['close'])
+            high = float(values[parameters.period - i]['high'])
+            low = float(values[parameters.period - i]['low'])
+            volume = float(values[parameters.period - i]['volume'])
+
+            if high == low:
+                continue
+
+            ad += (((close - low) - (high - close)) / (high - low)) * volume
+        
+        crypto.ad = ad
         
         if full == False:
             return True
@@ -478,6 +511,9 @@ class BitpandaPro:
             res = self.getStats(crypto, parameters, full=True)
             if res is None:
                 continue
+
+            if crypto.sma >= crypto.fma:
+                crypto.danger += 1
 
             if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
                 continue
