@@ -24,7 +24,9 @@ If you want to receive mail alert on action took by the bot, please make sure th
 
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
-| `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API            | yes      | None       |
+| `EXCHANGE_TYPE`       | The exchange you want to use. Options are `BITPANDA_PRO` and `TEST`.            | yes      | None       |
+| `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API (required if `EXCHANGE_TYPE` is `BITPANDA_PRO`)            | no      | None       |
+| `EXCHANGE_INPUT_FILENAME`       | The filename of the CSV file placed in `./input/` directory (required if `EXCHANGE_TYPE` is `TEST`)           | no      | None       |
 | `MONGO_DB_HOST`       | The MongoDB hostname (FQDN or IP)            | yes      | None       |
 | `MONGO_DB_PASSWORD`       | The MongoDB password            | yes      | None       |
 | `MONGO_DB_NAME`       | The MongoDB database            | no      | trader       |
@@ -46,12 +48,13 @@ If you want to receive mail alert on action took by the bot, please make sure th
 | `TAXE_RATE`          | The rate from which your country/state taxes profit (useful if you want a report of how much you really own)        | no      | 0.0      |
 | `MAKE_ORDER`          | Specify if the bot is allowed to place order.       | no      | False    |
 | `CANDLESTICKS_TIMEFRAME`          | Specify the timeframe at which crypto stats are required.      | no      | DAYS     |
-| `CANDLESTICKS_PERIOD`          | Specify the period of unit at which crypto stats are required (1, 5, 15 or 30)       | no      | 1     |
+| `CANDLESTICKS_PERIOD`          | Specify the period of unit at which crypto stats are required (1, 4, 5, 15 or 30)       | no      | 1     |
 | `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast exponential moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 5     |
 | `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow exponential moving average       | no      | 50     |
 | `INDICATORS_PERIOD`          | Specify the number of units looked at to calculate RSI and Accumulation/Distribution indicators      | no      | 14     |
 | `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)       | no      | 30     |
 | `OVERBOUGHT_THRESHOLD`          | Specify the RSI level to define overbought zone (from value to 100)       | no      | 70     |
+| `TEST_INIT_CAPITAL`       | In testing mode, the amount of capital the bot has to invest.            | no      | 1000       |
 | `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
 | `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
 | `SMTP_PORT`       | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
@@ -90,6 +93,7 @@ services:
     restart: unless-stopped
     depends_on: mongo_db
     volumes:
+      - trader_input:/app/input
       - trader_output:/app/output
     environment:
       EXCHANGE_API_KEY: token
@@ -114,8 +118,23 @@ services:
       - trader_output:/usr/local/apache2/htdocs
 
 volumes:
+  trader_input:
   trader_output:
 ````
+
+## Testing
+
+As with every strategy, you should always test it before going live. Luckily this bot provides this fonctionnality by implementing a fake exchange. It will get its data from a CSV file.
+
+The CSV file should contain at least these columns (order of said columns does not matter) : `Instrument_code`, `Date`, `High`, `Low`, `Close` and `Volume`.
+
+You can have the data of one or several cryptocurrencies in the same file. However, you must keep in mind that the values of `WATCHING_CURRENCIES` and `IGNORE_CURRENCIES` are still taken into account.
+
+The timeframe will be defined by the CSV, thus ignoring the value set in `CANDLESTICKS_TIMEFRAME` and `CANDLESTICKS_PERIOD`. If you create the CSV file yourself from different source, be sure to use the same timeframe for all currencies. Also, datetime should be a string with following format : `%Y-%m-%dT%H:%M:%S.%fZ`.
+
+Note that in this mode, no real order is placed. The exchange code will make fake orders in its database.
+
+It is recommended to use another database when testing than the one used in real life. Reason is that the bot will enter its trade in the database in the same way it would normally, which would mess reporting and could disturb the other bot. 
 
 ## Disclaimer
 
