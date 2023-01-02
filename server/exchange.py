@@ -504,8 +504,7 @@ class BitpandaPro:
             if crypto.precision == 0:
                 continue
 
-            parameters.database.getLastDanger(crypto, parameters.min_recovered, parameters.max_danger, parameters.wait_time)
-            if crypto.danger >= parameters.max_danger:
+            if parameters.database.getLastPlaced(crypto, parameters.min_recovered, parameters.max_danger, parameters.wait_time):
                 continue
 
             res = self.getStats(crypto, parameters, full=True)

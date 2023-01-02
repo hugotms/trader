@@ -234,9 +234,9 @@ class Mongo:
             "volume": volume
         })
 
-    def getLastDanger(self, crypto, min_recovered, max_danger, wait_time):
+    def getLastPlaced(self, crypto, min_recovered, max_danger, wait_time):
         if self.client is None:
-            return 0
+            return True
         
         query = {
             "instrument_code": crypto.instrument_code
@@ -244,10 +244,10 @@ class Mongo:
 
         res = self.find("history", query)
         if len(res) == 0:
-            return 0
+            return False
 
         now = datetime.utcnow()
         date = datetime.strptime(res[0]["date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
         if date + timedelta(minutes=wait_time) >= now:
-            crypto.danger += max_danger
+            return True
