@@ -129,7 +129,7 @@ def monitor(parameters, actives):
             trading_message += crypto.instrument_code + " is overbought. "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.current > crypto.placed and crypto.last_price < crypto.sma and crypto.ad <= -1:
+        elif crypto.current > crypto.placed and crypto.last_price < crypto.sma and crypto.adl <= -1:
             trading_message += "Trend of " + crypto.instrument_code + " is going down. "
             trading_message += stop(parameters, crypto)
         
@@ -159,7 +159,7 @@ def buy(parameters, account, profitables):
         if crypto.rsi > parameters.oversold_threshold:
             continue
 
-        if crypto.ad < 1:
+        if crypto.adl < 1:
             continue
 
         if crypto.sma >= crypto.last_price:

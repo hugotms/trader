@@ -13,7 +13,7 @@ class Crypto:
         self.fma = 0
         self.sma = 0
         self.rsi = 0
-        self.ad = 0
+        self.adl = 0
         self.danger = 1
         self.hourlyVolume = 0
         self.dailyVolume = 0
