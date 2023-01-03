@@ -3,7 +3,6 @@ from server import db
 
 import json
 import time
-import os
 
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta

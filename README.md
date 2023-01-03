@@ -126,7 +126,7 @@ volumes:
 
 As with every strategy, you should always test it before going live. Luckily this bot provides this fonctionnality by implementing a fake exchange. It will get its data from a CSV file.
 
-The CSV file should contain at least these columns (order of said columns does not matter) : `Instrument_code`, `Date`, `High`, `Low`, `Close` and `Volume`.
+The CSV file should contain at least these columns (order of said columns does not matter) : `Instrument_code`, `Date`, `High`, `Low`, `Close` and `Volume`. Separators must be `,`.
 
 You can have the data of one or several cryptocurrencies in the same file. However, you must keep in mind that the values of `WATCHING_CURRENCIES` and `IGNORE_CURRENCIES` are still taken into account.
 
