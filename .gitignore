@@ -2,6 +2,8 @@ test.py
 
 */__pycache__/
 
+*/*/__pycache__/
+
 output/
 
 input/

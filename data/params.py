@@ -1,7 +1,7 @@
 import os
 
 from server import db
-from server import exchange
+from server.exchanges import bitpanda_pro
 from server import mail
 
 class Params:
@@ -79,7 +79,7 @@ class Params:
             self.smtp_sending = False
             self.smtp = None
         
-        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key)
+        self.exchange_client = bitpanda_pro.Exchange(self.exchange_api_key)
 
         if self.smtp_sending == True: 
             self.smtp = mail.SMTP(
