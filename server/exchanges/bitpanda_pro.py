@@ -451,7 +451,7 @@ class Exchange:
 
         return active_assets
     
-    def findProfitable(self, parameters, account):
+    def findProfitable(self, parameters):
         header = {
             "Accept": "application/json"
         }
@@ -513,16 +513,16 @@ class Exchange:
             if crypto.sma >= crypto.fma:
                 crypto.danger += 1
 
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
+            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
                 continue
             
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
+            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1
             
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.5:
+            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.5:
                 crypto.danger += 2
             
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.75:
+            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.75:
                 crypto.danger += 3
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
@@ -633,12 +633,12 @@ class Exchange:
 
         return True
     
-    def buyingMarketOrder(self, crypto, account):
+    def buyingMarketOrder(self, crypto, parameters):
         current_price = self.getPrice(crypto.instrument_code)
         if current_price == 0:
             return False
         
-        amount = ((account.available / crypto.danger) * 0.99 * (1 - (crypto.rsi / 100))) / current_price
+        amount = ((parameters.account.available / crypto.danger) * 0.99 * (1 - (crypto.rsi / 100))) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",

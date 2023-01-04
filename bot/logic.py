@@ -11,20 +11,20 @@ def stop(parameters, crypto):
         crypto.failed = True
         return "Unable to sell " + crypto.instrument_code + ".\n"
 
-    message = "Selling market order for " + crypto.instrument_code + " at " + str(round(crypto.current, 2)) + "€"
+    message = "Selling market order for " + crypto.instrument_code + " at " + str(round(crypto.current * parameters.account.takerFee, 2)) + "€"
 
     if crypto.current >= crypto.placed:
-        message += " (WON: " + str(round(crypto.current - crypto.placed, 2)) + "€)"
+        message += " (WON: " + str(round((crypto.current - crypto.placed) * parameters.account.takerFee, 2)) + "€)"
     else:
-        message += " (LOST: " + str(round(crypto.placed - crypto.current, 2)) + "€)"
+        message += " (LOST: " + str(round((crypto.placed - crypto.current) + (crypto.current * (1 - parameters.account.takerFee)), 2)) + "€)"
     
     return message + ".\n"
 
-def start(parameters, crypto, account):
-    if parameters.exchange_client.buyingMarketOrder(crypto, account) == False:
+def start(parameters, crypto):
+    if parameters.exchange_client.buyingMarketOrder(crypto, parameters) == False:
         return ""
     
-    account.available -= crypto.placed
+    parameters.account.available -= crypto.placed
 
     return "Buying market order for " + crypto.instrument_code + \
         " (OWNED: " + str(round(crypto.owned, crypto.precision)) + \
@@ -151,7 +151,7 @@ def monitor(parameters, actives):
     
     return trading_alert
 
-def buy(parameters, account, profitables):
+def buy(parameters, profitables):
     trading_message = ""
 
     for crypto in profitables:
@@ -165,10 +165,10 @@ def buy(parameters, account, profitables):
         if crypto.sma >= crypto.last_price:
             continue
 
-        if (account.available / crypto.danger) * account.takerFee * account.makerFee * parameters.security_min_recovered * (1 - (crypto.rsi / 100)) < 10:
+        if (parameters.account.available / crypto.danger) * parameters.account.takerFee * parameters.account.makerFee * parameters.security_min_recovered * (1 - (crypto.rsi / 100)) < 10:
             continue
         
-        trading_message += start(parameters, crypto, account)
+        trading_message += start(parameters, crypto)
 
     if trading_message != "":
         print(trading_message)

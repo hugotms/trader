@@ -8,14 +8,13 @@ from bot import logic
 from server import fs
 
 def start():
-    account = None
     parameters = params.Params()
     isOk = parameters.new()
 
     if isOk == True:
-        account = parameters.exchange_client.getAccount()
+        parameters.account = parameters.exchange_client.getAccount()
 
-    if account is None:
+    if parameters.account is None:
         isOk = False
 
     seconds_in_delay = 3600
@@ -48,9 +47,9 @@ def start():
             message += alerts + "\n"
             body += environment.get_template("alerts.html.j2").render(text=alerts)
         
-        parameters.exchange_client.actualizeAccount(account)
+        parameters.exchange_client.actualizeAccount(parameters.account)
 
-        profitables = parameters.exchange_client.findProfitable(parameters, account)
+        profitables = parameters.exchange_client.findProfitable(parameters)
         profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
         html_file = fs.File('output', 'profitables.html')
         
@@ -61,7 +60,7 @@ def start():
         html_file.putInFile(profitables_html)
 
         if parameters.make_order == True:
-            logic.buy(parameters, account, profitables)
+            logic.buy(parameters, profitables)
 
         if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):
             report_message = logic.report(parameters)

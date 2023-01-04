@@ -130,7 +130,7 @@ The CSV file should contain at least these columns (order of said columns does n
 
 You can have the data of one or several cryptocurrencies in the same file. However, you must keep in mind that the values of `WATCHING_CURRENCIES` and `IGNORE_CURRENCIES` are still taken into account.
 
-The timeframe will be defined by the CSV, thus ignoring the value set in `CANDLESTICKS_TIMEFRAME` and `CANDLESTICKS_PERIOD`. If you create the CSV file yourself from different source, be sure to use the same timeframe for all currencies. Also, datetime should be a string with following format : `%Y-%m-%dT%H:%M:%S.%fZ`.
+The timeframe will be defined by the CSV, thus ignoring the value set in `CANDLESTICKS_TIMEFRAME` and `CANDLESTICKS_PERIOD`. If you create the CSV file yourself from different source, be sure to use the same timeframe for all currencies.
 
 Note that in this mode, no real order is placed. The exchange code will make fake orders in its database.
 

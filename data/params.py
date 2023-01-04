@@ -7,7 +7,10 @@ from server import mail
 class Params:
 
     def __init__(self):
+        self.exchange_type = os.getenv('EXCHANGE_TYPE')
         self.exchange_api_key = os.getenv('EXCHANGE_API_KEY')
+        self.exchange_input_filename = os.getenv('EXCHANGE_INPUT_FILENAME')
+        self.init_capital = os.getenv('TEST_INIT_CAPITAL')
 
         self.db_hostname = os.getenv('MONGO_DB_HOST')
         self.db_port = os.getenv('MONGO_DB_PORT')
@@ -44,6 +47,7 @@ class Params:
         self.smtp_key = os.getenv('SMTP_KEY')
         self.smtp_to = os.getenv('SMTP_TO')
         self.smtp = None
+        self.account = None
     
     def actualize(self):
         self.watching_currencies = self.database.findVar("watching_currencies", self.watching_currencies, [])
@@ -92,10 +96,6 @@ class Params:
             )
 
     def new(self):
-        if self.exchange_api_key is None:
-            print("Required API key was not set")
-            return False
-        
         if self.db_hostname is None:
             print("Required DB hostname was not set")
             return False
@@ -129,6 +129,10 @@ class Params:
             return False
         
         self.database = db.Mongo(self.db_hostname, self.db_port, self.db_name, self.db_user, self.db_password)
+
+        if self.exchange_api_key is None:
+            print("Required API key was not set")
+            return False
         
         if self.watching_currencies is not None:
             self.watching_currencies = self.watching_currencies.split(',')
