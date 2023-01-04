@@ -133,7 +133,7 @@ def monitor(parameters, actives):
             trading_message += "Trend of " + crypto.instrument_code + " is going down. "
             trading_message += stop(parameters, crypto)
         
-        elif parameters.min_profit > 1.0 and crypto.current >= crypto.placed * parameters.min_profit:
+        elif parameters.min_profit > 1.0 and crypto.current * parameters.account.takerFee >= crypto.placed * parameters.min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(parameters, crypto)
         
