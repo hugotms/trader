@@ -13,10 +13,10 @@ def stop(parameters, crypto):
 
     message = "Selling market order for " + crypto.instrument_code + " at " + str(round(crypto.current * parameters.account.takerFee, 2)) + "€"
 
-    if crypto.current >= crypto.placed:
-        message += " (WON: " + str(round((crypto.current - crypto.placed) * parameters.account.takerFee, 2)) + "€)"
+    if crypto.current * parameters.account.takerFee >= crypto.placed:
+        message += " (WON: " + str(round((crypto.current * parameters.account.takerFee) - crypto.placed, 2)) + "€)"
     else:
-        message += " (LOST: " + str(round((crypto.placed - crypto.current) + (crypto.current * (1 - parameters.account.takerFee)), 2)) + "€)"
+        message += " (LOST: " + str(round(crypto.placed - (crypto.current * parameters.account.takerFee), 2)) + "€)"
     
     return message + ".\n"
 

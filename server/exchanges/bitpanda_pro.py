@@ -656,9 +656,9 @@ class Exchange:
             print("Error while trying to buy crypto")
             return False
         
-        crypto.owned = amount
+        crypto.owned = amount * parameters.account.makerFee
         crypto.placed = amount * current_price
-        crypto.current = amount * current_price
+        crypto.current = crypto.owned * current_price
         crypto.setHigher()
 
         return True
