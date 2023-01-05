@@ -9,6 +9,7 @@ from lastversion import has_update
 def stop(parameters, crypto):
     if parameters.exchange_client.sellingMarketOrder(crypto, parameters) == False:
         crypto.failed = True
+        parameters.database.putInActive(crypto)
         return "Unable to sell " + crypto.instrument_code + ".\n"
 
     message = "Selling market order for " + crypto.instrument_code + " at " + str(round(crypto.current * parameters.account.takerFee, 2)) + "€"
@@ -143,8 +144,7 @@ def monitor(parameters, actives):
         if crypto.failed == True and crypto.alerted == False:
             trading_alert += "No action can be done on " + crypto.instrument_code + " due to an error.\n"
             crypto.alerted = True
-        
-        parameters.database.putInActive(crypto)
+            parameters.database.putInActive(crypto)
 
     if trading_message != "":
         print(trading_message)

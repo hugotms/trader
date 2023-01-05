@@ -630,6 +630,7 @@ class Exchange:
             return False
         
         crypto.market_id = client.getData()['order_id']
+        parameters.database.putInActive(crypto)
 
         return True
     

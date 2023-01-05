@@ -92,8 +92,12 @@ def start():
 
         else:
             report_send = True
+        
+        sleep = 0
+        if parameters.exchange_type == "BITPANDA_PRO":
+            sleep = parameters.refresh_time * 60
 
-        time.sleep(parameters.refresh_time * 60)
+        time.sleep(sleep)
 
         parameters.actualize()
 

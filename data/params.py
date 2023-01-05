@@ -1,7 +1,7 @@
 import os
 
 from server import db
-from server.exchanges import bitpanda_pro
+from server.exchanges import bitpanda_pro, testing
 from server import mail
 
 class Params:
@@ -67,6 +67,7 @@ class Params:
         self.period = self.database.findVar("period", self.period, 14)
         self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
         self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 70)
+        self.init_capital = self.database.findVar("test_init_capital", self.init_capital, 1000)
 
         if self.smtp_sending == True:
             self.smtp_host = self.database.findVar("smtp_host", self.smtp_host)
@@ -82,8 +83,6 @@ class Params:
             print("Required SMTP values not set. No email alert will be send")
             self.smtp_sending = False
             self.smtp = None
-        
-        self.exchange_client = bitpanda_pro.Exchange(self.exchange_api_key)
 
         if self.smtp_sending == True: 
             self.smtp = mail.SMTP(
@@ -129,10 +128,6 @@ class Params:
             return False
         
         self.database = db.Mongo(self.db_hostname, self.db_port, self.db_name, self.db_user, self.db_password)
-
-        if self.exchange_api_key is None:
-            print("Required API key was not set")
-            return False
         
         if self.watching_currencies is not None:
             self.watching_currencies = self.watching_currencies.split(',')
@@ -148,6 +143,27 @@ class Params:
                 return False
         
         self.actualize()
+
+        if self.exchange_type == "BITPANDA_PRO":
+        
+            if self.exchange_api_key is None:
+                print("Required API key was not set")
+                return False
+            
+            self.exchange_client = bitpanda_pro.Exchange(self.exchange_api_key)
+        
+        else:
+            if self.exchange_input_filename is None:
+                print("Required CSV file not set")
+                return False
+            
+            try:
+                self.init_capital = int(self.init_capital)
+            except Exception:
+                print("Init capital must be a number")
+                return False
+            
+            self.exchange_client = testing.Exchange(self.init_capital, self.exchange_input_filename)
         
         try:
             self.refresh_time = int(self.refresh_time)
