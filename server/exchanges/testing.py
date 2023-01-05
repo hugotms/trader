@@ -225,7 +225,7 @@ class Exchange:
                 crypto.danger += 1
 
             if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
-                continue
+                crypto.danger += parameters.max_danger
             
             if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1
@@ -242,12 +242,12 @@ class Exchange:
             if crypto.fma >= crypto.last_price:
                 crypto.danger += 1
             
+            self.data = self.data[(self.data["Date"] != last_datetime) | (self.data["Instrument_code"] != crypto.instrument_code)]
+            
             if crypto.danger > parameters.max_danger:
                 continue
             
             profitable_assets.append(crypto)
-
-            self.data = self.data[(self.data["Date"] != last_datetime) | (self.data["Instrument_code"] != crypto.instrument_code)]
 
         profitable_assets.sort(key=lambda x: x.dailyVolume, reverse=True)
         profitable_assets.sort(key=lambda x: x.danger)
