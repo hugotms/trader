@@ -134,7 +134,7 @@ The timeframe will be defined by the CSV, thus ignoring the value set in `CANDLE
 
 Note that in this mode, no real order is placed. The exchange code will make fake orders in its database.
 
-It is recommended to use another database when testing than the one used in real life. Reason is that the bot will enter its trade in the database in the same way it would normally, which would mess reporting and could disturb the other bot. 
+It is recommended to use another database when testing than the one used in real life. Reason is that the bot will enter its trade in the database in the same way it would normally, which would mess reporting and could disturb the other bot. Also, the bot reset the database at the end of the test.
 
 ## Disclaimer
 

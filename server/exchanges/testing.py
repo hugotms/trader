@@ -7,11 +7,21 @@ from data import assets
 
 class Exchange:
 
-    def __init__(self, init_capital, filename):
+    def __init__(self, init_capital, filename, frame, watching_currencies, ignore_currencies):
         self.init_capital = init_capital
         self.data = pandas.read_csv("input/" + filename)
+        
+        for item in ignore_currencies:
+            self.data = self.data[self.data["Instrument_code"] != item]
+        
+        for item in self.data["Instrument_code"].drop_duplicates():
+            if item not in watching_currencies:
+                self.data = self.data[self.data["Instrument_code"] != item]
+
         self.data["Date"] = pandas.to_datetime(self.data["Date"])
         self.data.sort_values("Date", inplace=True, ascending=True)
+        self.isOk = True
+        self.frame = frame
     
     def getAccount(self):
         new = account.Account(available=self.init_capital)
@@ -24,19 +34,13 @@ class Exchange:
         return True
     
     def getStats(self, crypto, parameters, full=False):
-        frame = parameters.period + 1
-        if frame < parameters.sma_unit + 10:
-            frame = parameters.sma_unit + 10
-        
         dataframe = self.data[self.data["Instrument_code"] == crypto.instrument_code]
 
-        if dataframe.shape[0] == 0:
+        if dataframe.shape[0] == 0 or dataframe.shape[0] < self.frame:
+            self.data = self.data[self.data["Instrument_code"] != crypto.instrument_code]
             return None
 
-        elif dataframe.shape[0] < frame:
-            return None
-
-        dataframe = dataframe.head(frame)
+        dataframe = dataframe.head(self.frame)
         dataframe = dataframe.sort_values("Date", ascending=False)
         
         fma_mean = 0
@@ -175,7 +179,8 @@ class Exchange:
         return active_assets
     
     def findProfitable(self, parameters):
-        if self.data.shape[0] == 0:
+        if self.data.shape[0] < self.frame:
+            self.isOk = False
             return []
         
         last_datetime = self.data.iloc[0]["Date"]
@@ -184,7 +189,6 @@ class Exchange:
         ignored_assets = []
         for asset in actives:
             ignored_assets.append(asset["_id"])
-            self.data = self.data[(self.data["Date"] != last_datetime) | (self.data["Instrument_code"] != asset["_id"])]
         
         dataframe = self.data[self.data["Date"] == last_datetime]
         dataframe = dataframe.drop_duplicates(subset=["Date", "Instrument_code"])
@@ -194,12 +198,6 @@ class Exchange:
             pair = row["Instrument_code"]
 
             if pair in ignored_assets:
-                continue
-
-            elif len(parameters.ignore_currencies) != 0 and pair in parameters.ignore_currencies:
-                continue
-
-            elif len(parameters.watching_currencies) != 0 and pair not in parameters.watching_currencies:
                 continue
             
             new = assets.Crypto(
@@ -225,7 +223,7 @@ class Exchange:
                 crypto.danger += 1
 
             if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
-                crypto.danger += parameters.max_danger
+                continue
             
             if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1
@@ -242,8 +240,6 @@ class Exchange:
             if crypto.fma >= crypto.last_price:
                 crypto.danger += 1
             
-            self.data = self.data[(self.data["Date"] != last_datetime) | (self.data["Instrument_code"] != crypto.instrument_code)]
-            
             if crypto.danger > parameters.max_danger:
                 continue
             
@@ -251,6 +247,8 @@ class Exchange:
 
         profitable_assets.sort(key=lambda x: x.dailyVolume, reverse=True)
         profitable_assets.sort(key=lambda x: x.danger)
+
+        self.data = self.data[(self.data["Date"] != last_datetime)]
 
         return profitable_assets
     

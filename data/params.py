@@ -143,27 +143,6 @@ class Params:
                 return False
         
         self.actualize()
-
-        if self.exchange_type == "BITPANDA_PRO":
-        
-            if self.exchange_api_key is None:
-                print("Required API key was not set")
-                return False
-            
-            self.exchange_client = bitpanda_pro.Exchange(self.exchange_api_key)
-        
-        else:
-            if self.exchange_input_filename is None:
-                print("Required CSV file not set")
-                return False
-            
-            try:
-                self.init_capital = int(self.init_capital)
-            except Exception:
-                print("Init capital must be a number")
-                return False
-            
-            self.exchange_client = testing.Exchange(self.init_capital, self.exchange_input_filename)
         
         try:
             self.refresh_time = int(self.refresh_time)
@@ -182,6 +161,34 @@ class Params:
             self.overbought_threshold = int(self.overbought_threshold)
         except Exception:
             print("Error while converting parameters from string")
+            return False
+        
+        if self.exchange_type == "BITPANDA_PRO":
+        
+            if self.exchange_api_key is None:
+                print("Required API key was not set")
+                return False
+            
+            self.exchange_client = bitpanda_pro.Exchange(self.exchange_api_key)
+        
+        elif self.exchange_type == "TEST":
+            if self.exchange_input_filename is None:
+                print("Required CSV file not set")
+                return False
+            
+            try:
+                self.init_capital = int(self.init_capital)
+            except Exception:
+                print("Init capital must be a number")
+                return False
+            
+            frame = self.period + 1
+            if frame < self.sma_unit + 10:
+                frame = self.sma_unit + 10
+            
+            self.exchange_client = testing.Exchange(self.init_capital, self.exchange_input_filename, frame, self.watching_currencies, self.ignore_currencies)
+        
+        else:
             return False
         
         if self.refresh_time < 1:
