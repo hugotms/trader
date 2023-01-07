@@ -6,7 +6,7 @@ ARG VERSION
 
 WORKDIR /trader
 
-RUN git clone --branch feat/backtesting_exchange https://github.com/hugotms/trader.git ./
+RUN git clone --branch master https://github.com/hugotms/trader.git ./
 
 FROM python:3.8-slim as run
 
