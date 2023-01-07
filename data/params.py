@@ -163,6 +163,9 @@ class Params:
             print("Error while converting parameters from string")
             return False
         
+        if self.refresh_time < 1:
+            self.refresh_time = 1
+        
         if self.exchange_type == "BITPANDA_PRO":
         
             if self.exchange_api_key is None:
@@ -170,16 +173,18 @@ class Params:
                 return False
             
             self.exchange_client = bitpanda_pro.Exchange(self.exchange_api_key)
+
+            return True
         
-        elif self.exchange_type == "TEST":
+        try:
+            self.init_capital = int(self.init_capital)
+        except Exception:
+            print("Init capital must be a number")
+            return False
+        
+        if self.exchange_type == "TEST":
             if self.exchange_input_filename is None:
                 print("Required CSV file not set")
-                return False
-            
-            try:
-                self.init_capital = int(self.init_capital)
-            except Exception:
-                print("Init capital must be a number")
                 return False
             
             frame = self.period + 1
@@ -187,12 +192,8 @@ class Params:
                 frame = self.sma_unit + 10
             
             self.exchange_client = testing.Exchange(self.init_capital, self.exchange_input_filename, frame, self.watching_currencies, self.ignore_currencies)
-        
-        else:
-            return False
-        
-        if self.refresh_time < 1:
-            self.refresh_time = 1
 
-        return True
+            return True
+
+        return False
     
