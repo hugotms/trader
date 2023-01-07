@@ -3,7 +3,6 @@ from server import db
 
 import json
 import time
-import os
 
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
@@ -11,7 +10,7 @@ from dateutil.relativedelta import relativedelta
 from data import account
 from data import assets
 
-class BitpandaPro:
+class Exchange:
     baseUrl = "https://api.exchange.bitpanda.com/public/v1"
 
     def __init__(self, api_key):
@@ -41,7 +40,7 @@ class BitpandaPro:
     def getCurrencyBalance(self, currency_code):
         amount = 0
 
-        client = web.Api(BitpandaPro.baseUrl + '/account/balances', headers=self.headers).send()
+        client = web.Api(Exchange.baseUrl + '/account/balances', headers=self.headers).send()
 
         if client.getStatusCode() == 429:
             print("Too many requests at once")
@@ -63,7 +62,7 @@ class BitpandaPro:
         makerFee = 1
         takerFee = 1
 
-        client = web.Api(BitpandaPro.baseUrl + '/account/fees', headers=self.headers).send()
+        client = web.Api(Exchange.baseUrl + '/account/fees', headers=self.headers).send()
 
         if client.getStatusCode() == 429:
             print("Too many requests at once")
@@ -152,7 +151,7 @@ class BitpandaPro:
             tz2 = (today - timedelta(minutes=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             delta = timedelta(minutes=parameters.candlesticks_period)
 
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + parameters.candlesticks_timeframe + "&period=" + str(parameters.candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=header).send()
+        client = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + parameters.candlesticks_timeframe + "&period=" + str(parameters.candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
@@ -268,7 +267,7 @@ class BitpandaPro:
             return True
         
         tz2 = (today - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        client = web.Api(BitpandaPro.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
+        client = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get price tickers")
@@ -293,7 +292,7 @@ class BitpandaPro:
             "Accept": "application/json"
         }
 
-        client = web.Api(BitpandaPro.baseUrl + "/market-ticker/" + instrument_code, headers=header).send()
+        client = web.Api(Exchange.baseUrl + "/market-ticker/" + instrument_code, headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get market tickers")
@@ -304,7 +303,7 @@ class BitpandaPro:
     def getAllActiveAssets(self, parameters):
         active_assets = []
 
-        client = web.Api(BitpandaPro.baseUrl + "/account/trades", headers=self.headers).send()
+        client = web.Api(Exchange.baseUrl + "/account/trades", headers=self.headers).send()
 
         if client.getStatusCode() == 429:
             print("Too many requests at once")
@@ -399,7 +398,7 @@ class BitpandaPro:
                 parameters.database.putInHistory(asset)
                 continue
             
-            client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + order_id, headers=self.headers).send()
+            client = web.Api(Exchange.baseUrl + "/account/orders/" + order_id, headers=self.headers).send()
 
             time.sleep(1)
 
@@ -433,7 +432,7 @@ class BitpandaPro:
 
             status_code = 0
             if asset.precision == 0:
-                client = web.Api(BitpandaPro.baseUrl + "/instruments", headers=header).send()
+                client = web.Api(Exchange.baseUrl + "/instruments", headers=header).send()
                 status_code = client.getStatusCode()
                 time.sleep(1)
                 
@@ -452,7 +451,7 @@ class BitpandaPro:
 
         return active_assets
     
-    def findProfitable(self, parameters, account):
+    def findProfitable(self, parameters):
         header = {
             "Accept": "application/json"
         }
@@ -462,7 +461,7 @@ class BitpandaPro:
         for asset in actives:
             ignored_assets.append(asset["_id"])
         
-        client = web.Api(BitpandaPro.baseUrl + "/instruments", headers=header).send()
+        client = web.Api(Exchange.baseUrl + "/instruments", headers=header).send()
 
         if client.getStatusCode() != 200:
             print("Error while trying to get available cryptos")
@@ -514,16 +513,16 @@ class BitpandaPro:
             if crypto.sma >= crypto.fma:
                 crypto.danger += 1
 
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
+            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
                 continue
             
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
+            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1
             
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.5:
+            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.5:
                 crypto.danger += 2
             
-            if account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.75:
+            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.75:
                 crypto.danger += 3
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
@@ -535,6 +534,12 @@ class BitpandaPro:
             crypto.last_price = round(self.getPrice(crypto.instrument_code), crypto.precision)
             if crypto.last_price == 0:
                 continue
+
+            if crypto.fma >= crypto.last_price:
+                crypto.danger += 1
+            
+            if crypto.danger > parameters.max_danger:
+                continue
             
             profitable_assets.append(crypto)
 
@@ -545,7 +550,7 @@ class BitpandaPro:
     
     def stopLossOrder(self, crypto, parameters):
         if crypto.stop_id != "":
-            client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
+            client = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
                 
             if client.getStatusCode() == 429:
                 print("Too many requests at once")
@@ -569,7 +574,7 @@ class BitpandaPro:
             "trigger_price": self.truncate(crypto.higher * parameters.security_min_recovered / crypto.owned, 2)
         }
         
-        client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
+        client = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
         
         if client.getStatusCode() == 429:
             print("Too many requests at once")
@@ -590,7 +595,7 @@ class BitpandaPro:
     
     def sellingMarketOrder(self, crypto, parameters):
         if crypto.stop_id != "":
-            client = web.Api(BitpandaPro.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
+            client = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
             
             if client.getStatusCode() == 429:
                 print("Too many requests at once")
@@ -612,7 +617,7 @@ class BitpandaPro:
             "amount": self.truncate(crypto.owned, crypto.precision)
         }
 
-        client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
+        client = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
 
         if client.getStatusCode() == 429:
             print("Too many requests at once")
@@ -625,15 +630,16 @@ class BitpandaPro:
             return False
         
         crypto.market_id = client.getData()['order_id']
+        parameters.database.putInActive(crypto)
 
         return True
     
-    def buyingMarketOrder(self, crypto, account):
+    def buyingMarketOrder(self, crypto, parameters):
         current_price = self.getPrice(crypto.instrument_code)
         if current_price == 0:
             return False
         
-        amount = ((account.available / crypto.danger) * 0.99 * (1 - (crypto.rsi / 100))) / current_price
+        amount = ((parameters.account.available / crypto.danger) * 0.99 * (1 - (crypto.rsi / 100))) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
@@ -641,7 +647,7 @@ class BitpandaPro:
             "amount": self.truncate(amount, crypto.precision)
         }
 
-        client = web.Api(BitpandaPro.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
+        client = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
         
         if client.getStatusCode() == 429:
             print("Too many requests at once")
@@ -651,9 +657,9 @@ class BitpandaPro:
             print("Error while trying to buy crypto")
             return False
         
-        crypto.owned = amount
+        crypto.owned = amount * parameters.account.makerFee
         crypto.placed = amount * current_price
-        crypto.current = amount * current_price
+        crypto.current = crypto.owned * current_price
         crypto.setHigher()
 
         return True

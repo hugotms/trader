@@ -1,13 +1,16 @@
 import os
 
 from server import db
-from server import exchange
+from server.exchanges import bitpanda_pro, testing
 from server import mail
 
 class Params:
 
     def __init__(self):
+        self.exchange_type = os.getenv('EXCHANGE_TYPE')
         self.exchange_api_key = os.getenv('EXCHANGE_API_KEY')
+        self.exchange_input_filename = os.getenv('EXCHANGE_INPUT_FILENAME')
+        self.init_capital = os.getenv('TEST_INIT_CAPITAL')
 
         self.db_hostname = os.getenv('MONGO_DB_HOST')
         self.db_port = os.getenv('MONGO_DB_PORT')
@@ -44,6 +47,7 @@ class Params:
         self.smtp_key = os.getenv('SMTP_KEY')
         self.smtp_to = os.getenv('SMTP_TO')
         self.smtp = None
+        self.account = None
     
     def actualize(self):
         self.watching_currencies = self.database.findVar("watching_currencies", self.watching_currencies, [])
@@ -63,6 +67,7 @@ class Params:
         self.period = self.database.findVar("period", self.period, 14)
         self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
         self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 70)
+        self.init_capital = self.database.findVar("test_init_capital", self.init_capital, 1000)
 
         if self.smtp_sending == True:
             self.smtp_host = self.database.findVar("smtp_host", self.smtp_host)
@@ -78,8 +83,6 @@ class Params:
             print("Required SMTP values not set. No email alert will be send")
             self.smtp_sending = False
             self.smtp = None
-        
-        self.exchange_client = exchange.BitpandaPro(self.exchange_api_key)
 
         if self.smtp_sending == True: 
             self.smtp = mail.SMTP(
@@ -92,10 +95,6 @@ class Params:
             )
 
     def new(self):
-        if self.exchange_api_key is None:
-            print("Required API key was not set")
-            return False
-        
         if self.db_hostname is None:
             print("Required DB hostname was not set")
             return False
@@ -166,6 +165,35 @@ class Params:
         
         if self.refresh_time < 1:
             self.refresh_time = 1
+        
+        if self.exchange_type == "BITPANDA_PRO":
+        
+            if self.exchange_api_key is None:
+                print("Required API key was not set")
+                return False
+            
+            self.exchange_client = bitpanda_pro.Exchange(self.exchange_api_key)
 
-        return True
+            return True
+        
+        try:
+            self.init_capital = int(self.init_capital)
+        except Exception:
+            print("Init capital must be a number")
+            return False
+        
+        if self.exchange_type == "TEST":
+            if self.exchange_input_filename is None:
+                print("Required CSV file not set")
+                return False
+            
+            frame = self.period + 1
+            if frame < self.sma_unit + 10:
+                frame = self.sma_unit + 10
+            
+            self.exchange_client = testing.Exchange(self.init_capital, self.exchange_input_filename, frame, self.watching_currencies, self.ignore_currencies)
+
+            return True
+
+        return False
     

@@ -9,22 +9,23 @@ from lastversion import has_update
 def stop(parameters, crypto):
     if parameters.exchange_client.sellingMarketOrder(crypto, parameters) == False:
         crypto.failed = True
+        parameters.database.putInActive(crypto)
         return "Unable to sell " + crypto.instrument_code + ".\n"
 
-    message = "Selling market order for " + crypto.instrument_code + " at " + str(round(crypto.current, 2)) + "€"
+    message = "Selling market order for " + crypto.instrument_code + " at " + str(round(crypto.current * parameters.account.takerFee, 2)) + "€"
 
-    if crypto.current >= crypto.placed:
-        message += " (WON: " + str(round(crypto.current - crypto.placed, 2)) + "€)"
+    if crypto.current * parameters.account.takerFee >= crypto.placed:
+        message += " (WON: " + str(round((crypto.current * parameters.account.takerFee) - crypto.placed, 2)) + "€)"
     else:
-        message += " (LOST: " + str(round(crypto.placed - crypto.current, 2)) + "€)"
+        message += " (LOST: " + str(round(crypto.placed - (crypto.current * parameters.account.takerFee), 2)) + "€)"
     
     return message + ".\n"
 
-def start(parameters, crypto, account):
-    if parameters.exchange_client.buyingMarketOrder(crypto, account) == False:
+def start(parameters, crypto):
+    if parameters.exchange_client.buyingMarketOrder(crypto, parameters) == False:
         return ""
     
-    account.available -= crypto.placed
+    parameters.account.available -= crypto.placed
 
     return "Buying market order for " + crypto.instrument_code + \
         " (OWNED: " + str(round(crypto.owned, crypto.precision)) + \
@@ -129,11 +130,11 @@ def monitor(parameters, actives):
             trading_message += crypto.instrument_code + " is overbought. "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.current > crypto.placed and crypto.last_price < crypto.sma and crypto.adl <= -1:
+        elif crypto.sma > crypto.last_price and crypto.adl <= -1:
             trading_message += "Trend of " + crypto.instrument_code + " is going down. "
             trading_message += stop(parameters, crypto)
         
-        elif parameters.min_profit > 1.0 and crypto.current >= crypto.placed * parameters.min_profit:
+        elif parameters.min_profit > 1.0 and crypto.current * parameters.account.takerFee >= crypto.placed * parameters.min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(parameters, crypto)
         
@@ -143,15 +144,14 @@ def monitor(parameters, actives):
         if crypto.failed == True and crypto.alerted == False:
             trading_alert += "No action can be done on " + crypto.instrument_code + " due to an error.\n"
             crypto.alerted = True
-        
-        parameters.database.putInActive(crypto)
+            parameters.database.putInActive(crypto)
 
     if trading_message != "":
         print(trading_message)
     
     return trading_alert
 
-def buy(parameters, account, profitables):
+def buy(parameters, profitables):
     trading_message = ""
 
     for crypto in profitables:
@@ -165,10 +165,10 @@ def buy(parameters, account, profitables):
         if crypto.sma >= crypto.last_price:
             continue
 
-        if (account.available / crypto.danger) * account.takerFee * account.makerFee * parameters.min_recovered * (1 - (crypto.rsi / 100)) < 10:
+        if (parameters.account.available / crypto.danger) * parameters.account.takerFee * parameters.account.makerFee * parameters.security_min_recovered * (1 - (crypto.rsi / 100)) < 10:
             continue
         
-        trading_message += start(parameters, crypto, account)
+        trading_message += start(parameters, crypto)
 
     if trading_message != "":
         print(trading_message)

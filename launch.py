@@ -8,14 +8,13 @@ from bot import logic
 from server import fs
 
 def start():
-    account = None
     parameters = params.Params()
     isOk = parameters.new()
 
     if isOk == True:
-        account = parameters.exchange_client.getAccount()
+        parameters.account = parameters.exchange_client.getAccount()
 
-    if account is None:
+    if parameters.account is None:
         isOk = False
 
     seconds_in_delay = 3600
@@ -32,14 +31,16 @@ def start():
 
         actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
-        actives_html = environment.get_template("actives.html.j2").render(list=actives)
-        html_file = fs.File('output', 'index.html')
-        
-        if html_file.create() is None:
-            print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
-            isOk = False
+        if parameters.exchange_type == "BITPANDA_PRO":
 
-        html_file.putInFile(actives_html)
+            actives_html = environment.get_template("actives.html.j2").render(list=actives)
+            html_file = fs.File('output', 'index.html')
+            
+            if html_file.create() is None:
+                print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
+                isOk = False
+
+            html_file.putInFile(actives_html)
 
         alerts = logic.monitor(parameters, actives)
         
@@ -48,22 +49,28 @@ def start():
             message += alerts + "\n"
             body += environment.get_template("alerts.html.j2").render(text=alerts)
         
-        parameters.exchange_client.actualizeAccount(account)
+        parameters.exchange_client.actualizeAccount(parameters.account)
 
-        profitables = parameters.exchange_client.findProfitable(parameters, account)
-        profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
-        html_file = fs.File('output', 'profitables.html')
+        profitables = parameters.exchange_client.findProfitable(parameters)
+
+        if parameters.exchange_type == "BITPANDA_PRO":
+
+            profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
+            html_file = fs.File('output', 'profitables.html')
+            
+            if html_file.create() is None:
+                print("Unable to create 'output/profitables.html' file. Please check permissions on filesystem")
+                isOk = False
+
+            html_file.putInFile(profitables_html)
         
-        if html_file.create() is None:
-            print("Unable to create 'output/profitables.html' file. Please check permissions on filesystem")
-            isOk = False
-
-        html_file.putInFile(profitables_html)
+        else:
+            isOk = parameters.exchange_client.isOk
 
         if parameters.make_order == True:
-            logic.buy(parameters, account, profitables)
+            logic.buy(parameters, profitables)
 
-        if report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59):
+        if report_send == True and (datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59) or isOk == False):
             report_message = logic.report(parameters)
             message += "############# REPORT #############\n"
             message += report_message
@@ -93,10 +100,18 @@ def start():
 
         else:
             report_send = True
+        
+        sleep = 0
+        if parameters.exchange_type == "BITPANDA_PRO":
+            sleep = parameters.refresh_time * 60
 
-        time.sleep(parameters.refresh_time * 60)
+        time.sleep(sleep)
 
         parameters.actualize()
+
+        if parameters.exchange_type == "TEST" and isOk == False:
+            parameters.database.client.drop_collection("actives")
+            parameters.database.client.drop_collection("history")
 
 if __name__ == '__main__':
     start()
