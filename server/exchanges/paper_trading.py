@@ -342,7 +342,7 @@ class Exchange:
 
         crypto.placed = amount * crypto.last_price
         
-        amount -= (1 - parameters.account.makerFee) * amount
+        amount *= parameters.account.makerFee
 
         crypto.owned = amount
         crypto.current = amount * crypto.last_price
