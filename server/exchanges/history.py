@@ -139,13 +139,6 @@ class Exchange:
         return True
     
     def getAllActiveAssets(self, parameters):
-        if self.data.shape[0] == 0:
-            return []
-        
-        last_datetime = self.data.iloc[0]["Date"]
-        dataframe = self.data[self.data["Date"] == last_datetime]
-        dataframe = dataframe.drop_duplicates(subset=["Date", "Instrument_code"])
-
         active_assets = []
 
         for asset in parameters.database.findActives(parameters.watching_currencies, parameters.ignore_currencies):
@@ -160,10 +153,6 @@ class Exchange:
 
             crypto.precision = 4
             crypto.higher = float(asset["higher"])
-
-            values = dataframe[dataframe["Instrument_code"] == crypto.instrument_code]
-            if values.shape[0] == 0:
-                continue
 
             self.getStats(crypto, parameters)
 

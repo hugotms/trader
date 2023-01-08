@@ -31,7 +31,7 @@ def start():
 
         actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
-        if parameters.exchange_type == "BITPANDA_PRO":
+        if parameters.exchange_type != "HISTORY":
 
             actives_html = environment.get_template("actives.html.j2").render(list=actives)
             html_file = fs.File('output', 'index.html')
@@ -53,7 +53,7 @@ def start():
 
         profitables = parameters.exchange_client.findProfitable(parameters)
 
-        if parameters.exchange_type == "BITPANDA_PRO":
+        if parameters.exchange_type != "HISTORY":
 
             profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
             html_file = fs.File('output', 'profitables.html')
@@ -102,14 +102,14 @@ def start():
             report_send = True
         
         sleep = 0
-        if parameters.exchange_type == "BITPANDA_PRO":
+        if parameters.exchange_type != "HISTORY":
             sleep = parameters.refresh_time * 60
 
         time.sleep(sleep)
 
         parameters.actualize()
 
-        if parameters.exchange_type == "TEST" and isOk == False:
+        if parameters.exchange_type == "HISTORY" and isOk == False:
             parameters.database.client.drop_collection("actives")
             parameters.database.client.drop_collection("history")
 

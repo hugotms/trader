@@ -1,7 +1,7 @@
 import os
 
 from server import db
-from server.exchanges import bitpanda_pro, testing
+from server.exchanges import bitpanda_pro, history, paper_trading
 from server import mail
 
 class Params:
@@ -163,6 +163,9 @@ class Params:
             print("Error while converting parameters from string")
             return False
         
+        if self.security_min_recovered >= self.min_recovered:
+            return False
+        
         if self.refresh_time < 1:
             self.refresh_time = 1
         
@@ -182,7 +185,7 @@ class Params:
             print("Init capital must be a number")
             return False
         
-        if self.exchange_type == "TEST":
+        if self.exchange_type == "HISTORY":
             if self.exchange_input_filename is None:
                 print("Required CSV file not set")
                 return False
@@ -191,9 +194,16 @@ class Params:
             if frame < self.sma_unit + 10:
                 frame = self.sma_unit + 10
             
-            self.exchange_client = testing.Exchange(self.init_capital, self.exchange_input_filename, frame, self.watching_currencies, self.ignore_currencies)
+            self.exchange_client = history.Exchange(self.init_capital, self.exchange_input_filename, frame, self.watching_currencies, self.ignore_currencies)
 
             return True
+        
+        if self.exchange_type == "PAPER_TRADING":
+            self.exchange_client = paper_trading.Exchange(self.init_capital)
+
+            return True
+
+        print("No available exchanges selected")
 
         return False
     
