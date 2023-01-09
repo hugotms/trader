@@ -44,6 +44,11 @@ def start():
 
         sleep = 0
         if parameters.exchange_type != "HISTORY":
+
+            total_account = parameters.account.available
+            for asset in actives:
+                total_account += asset.current
+
             actives_html = environment.get_template("actives.html.j2").render(list=actives)
             html_file = fs.File('output', 'index.html')
             
@@ -100,7 +105,7 @@ def start():
 
         else:
             report_send = True
-        
+
         time.sleep(sleep)
 
         parameters.actualize()
