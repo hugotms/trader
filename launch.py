@@ -31,17 +31,6 @@ def start():
 
         actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
-        if parameters.exchange_type != "HISTORY":
-
-            actives_html = environment.get_template("actives.html.j2").render(list=actives)
-            html_file = fs.File('output', 'index.html')
-            
-            if html_file.create() is None:
-                print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
-                isOk = False
-
-            html_file.putInFile(actives_html)
-
         alerts = logic.monitor(parameters, actives)
         
         if alerts != "":
@@ -53,7 +42,16 @@ def start():
 
         profitables = parameters.exchange_client.findProfitable(parameters)
 
+        sleep = 0
         if parameters.exchange_type != "HISTORY":
+            actives_html = environment.get_template("actives.html.j2").render(list=actives)
+            html_file = fs.File('output', 'index.html')
+            
+            if html_file.create() is None:
+                print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
+                isOk = False
+
+            html_file.putInFile(actives_html)
 
             profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
             html_file = fs.File('output', 'profitables.html')
@@ -63,6 +61,8 @@ def start():
                 isOk = False
 
             html_file.putInFile(profitables_html)
+
+            sleep = parameters.refresh_time * 60
         
         else:
             isOk = parameters.exchange_client.isOk
@@ -101,15 +101,11 @@ def start():
         else:
             report_send = True
         
-        sleep = 0
-        if parameters.exchange_type != "HISTORY":
-            sleep = parameters.refresh_time * 60
-
         time.sleep(sleep)
 
         parameters.actualize()
 
-        if parameters.exchange_type == "HISTORY" and isOk == False:
+        if parameters.exchange_type == "HISTORY" and not isOk:
             parameters.database.client.drop_collection("actives")
             parameters.database.client.drop_collection("history")
 
