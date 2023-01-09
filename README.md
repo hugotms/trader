@@ -24,7 +24,7 @@ If you want to receive mail alert on action took by the bot, please make sure th
 
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
-| `EXCHANGE_TYPE`       | The exchange you want to use. Options are `BITPANDA_PRO` and `HISTORY` and `PAPER_TRADING`.            | yes      | None       |
+| `EXCHANGE_TYPE`       | The exchange you want to use. Options are `BITPANDA_PRO`, `HISTORY` and `PAPER_TRADING`.            | yes      | None       |
 | `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API (required if `EXCHANGE_TYPE` is `BITPANDA_PRO`)            | no      | None       |
 | `EXCHANGE_INPUT_FILENAME`       | The filename of the CSV file placed in `./input/` directory (required if `EXCHANGE_TYPE` is `HISTORY`)           | no      | None       |
 | `MONGO_DB_HOST`       | The MongoDB hostname (FQDN or IP)            | yes      | None       |
