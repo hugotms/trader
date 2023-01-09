@@ -31,6 +31,11 @@ def start():
 
         actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
+        total_account = parameters.account.available
+        if parameters.exchange_type != "HISTORY":
+            for asset in actives:
+                total_account += asset.current
+
         alerts = logic.monitor(parameters, actives)
         
         if alerts != "":
@@ -44,10 +49,6 @@ def start():
 
         sleep = 0
         if parameters.exchange_type != "HISTORY":
-
-            total_account = parameters.account.available
-            for asset in actives:
-                total_account += asset.current
 
             actives_html = environment.get_template("actives.html.j2").render(list=actives)
             html_file = fs.File('output', 'index.html')
@@ -66,6 +67,15 @@ def start():
                 isOk = False
 
             html_file.putInFile(profitables_html)
+
+            account_html = environment.get_template("account.html.j2").render(account=total_account)
+            html_file = fs.File('output', 'account.html')
+            
+            if html_file.create() is None:
+                print("Unable to create 'output/account.html' file. Please check permissions on filesystem")
+                isOk = False
+
+            html_file.putInFile(account_html)
 
             sleep = parameters.refresh_time * 60
         

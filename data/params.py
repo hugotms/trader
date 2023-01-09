@@ -180,7 +180,7 @@ class Params:
             return True
         
         try:
-            self.init_capital = int(self.init_capital)
+            self.init_capital = float(self.init_capital)
         except Exception:
             print("Init capital must be a number")
             return False

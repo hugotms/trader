@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Account details</title>
+  <meta name="author" content="GitHub @hugotms">
+  <meta http-equiv="refresh" content="60">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+<body>
+  <div style="height: 100%;">
+    <div style="
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+      background-color: black;
+      margin: 0 auto;
+      border: 0;
+      width: 100%;
+    ">
+      <nav class="navbar">
+          <div class="nav-wrapper black">
+              <a href="index.html" class="brand-logo center">Trader</a>
+              <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+              <ul class="hide-on-med-and-down">
+                  <li><a href="index.html">Actives</a></li>
+                  <li><a href="profitables.html">Proftables</a></li>
+                  <li><a href="account.html">Account</a></li>
+              </ul>
+          </div>
+      </nav>
+
+      <ul class="sidenav" id="mobile-demo">
+          <li><a href="index.html">Actives</a></li>
+          <li><a href="profitables.html">Proftables</a></li>
+          <li><a href="account.html">Account</a></li>
+      </ul>
+    </div>
+    <br>
+    <div style="
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      text-align: center;
+    ">
+      <div>
+        <h3>&#128182; Account details &#128182;</h3>
+      </div>
+    </div>
+    <div style="
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    ">
+      <p>Account balance : {{ account | round(2) }}€</p>
+    </div>
+    <div style="
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      background-color: black;
+      margin: 0 auto;
+      border: 0;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    ">
+      <p style="color: white;">
+        Author: <a href="https://github.com/hugotms" target="_blank" style="text-decoration: none;">@hugotms</a>
+      </p>
+    </div>
+    <script type="text/javascript">
+        M.AutoInit();
+    </script>
+  </div>
+</body>
+</html>
