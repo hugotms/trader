@@ -24,9 +24,9 @@ If you want to receive mail alert on action took by the bot, please make sure th
 
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
-| `EXCHANGE_TYPE`       | The exchange you want to use. Options are `BITPANDA_PRO` and `TEST`.            | yes      | None       |
+| `EXCHANGE_TYPE`       | The exchange you want to use. Options are `BITPANDA_PRO` and `HISTORY` and `PAPER_TRADING`.            | yes      | None       |
 | `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API (required if `EXCHANGE_TYPE` is `BITPANDA_PRO`)            | no      | None       |
-| `EXCHANGE_INPUT_FILENAME`       | The filename of the CSV file placed in `./input/` directory (required if `EXCHANGE_TYPE` is `TEST`)           | no      | None       |
+| `EXCHANGE_INPUT_FILENAME`       | The filename of the CSV file placed in `./input/` directory (required if `EXCHANGE_TYPE` is `HISTORY`)           | no      | None       |
 | `MONGO_DB_HOST`       | The MongoDB hostname (FQDN or IP)            | yes      | None       |
 | `MONGO_DB_PASSWORD`       | The MongoDB password            | yes      | None       |
 | `MONGO_DB_NAME`       | The MongoDB database            | no      | trader       |
@@ -124,17 +124,23 @@ volumes:
 
 ## Testing
 
-As with every strategy, you should always test it before going live. Luckily this bot provides this fonctionnality by implementing a fake exchange. It will get its data from a CSV file.
+As with every strategy, you should always test it before going live. Luckily this bot provides this fonctionnality by implementing two fake exchanges.
 
-The CSV file should contain at least these columns (order of said columns does not matter) : `Instrument_code`, `Date`, `High`, `Low`, `Close` and `Volume`. Separators must be `,`.
+**Note that in testing mode, no real order is placed. The exchange code will make fake orders in its database. On going orders on Bitpanda Pro are not monitored.**
+
+It is recommended to use another database when testing than the one used in real life. Reason is that the bot will enter its trade in the database in the same way it would normally, which would mess reporting and could disturb the other bot. Also, when in `HISTORY` mode, the bot reset the database at the end of the test.
+
+### HISTORY testing
+
+In this mode, the bot gets its data from a CSV file defined by `EXCHANGE_INPUT_FILENAME`. The CSV file should contain at least these columns (order of said columns does not matter) : `Instrument_code`, `Date`, `High`, `Low`, `Close` and `Volume`. Separators must be `,`.
 
 You can have the data of one or several cryptocurrencies in the same file. However, you must keep in mind that the values of `WATCHING_CURRENCIES` and `IGNORE_CURRENCIES` are still taken into account.
 
 The timeframe will be defined by the CSV, thus ignoring the value set in `CANDLESTICKS_TIMEFRAME` and `CANDLESTICKS_PERIOD`. If you create the CSV file yourself from different source, be sure to use the same timeframe for all currencies.
 
-Note that in this mode, no real order is placed. The exchange code will make fake orders in its database.
+### PAPER_TRADING
 
-It is recommended to use another database when testing than the one used in real life. Reason is that the bot will enter its trade in the database in the same way it would normally, which would mess reporting and could disturb the other bot. Also, the bot reset the database at the end of the test.
+In this mode, the bot gets real-time data from Bitpanda Pro in the same way it would in non-testing mode. Only difference is that you get a fake account and that no real order is made.
 
 ## Disclaimer
 

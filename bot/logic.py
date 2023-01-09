@@ -33,6 +33,7 @@ def start(parameters, crypto):
         " / FMA: " + str(round(crypto.fma, crypto.precision)) + \
         " / SMA: " + str(round(crypto.sma, crypto.precision)) + \
         " / RSI: " + str(round(crypto.rsi)) + \
+        " / ADL: " + str(round(crypto.adl)) + \
         ").\n"
 
 def report(parameters):
@@ -122,7 +123,7 @@ def monitor(parameters, actives):
         if crypto.current < 10:
             trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"
         
-        elif crypto.current < crypto.higher * parameters.min_recovered:
+        elif crypto.current * parameters.account.takerFee < crypto.higher * parameters.min_recovered:
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(parameters, crypto)
         
