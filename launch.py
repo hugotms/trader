@@ -31,6 +31,10 @@ def start():
 
         parameters.account.total = parameters.account.available
 
+        reports = []
+        if parameters.exchange_type != "HISTORY":
+            reports = logic.getHistory(parameters)
+
         actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
         alerts = logic.monitor(parameters, actives)
@@ -70,7 +74,7 @@ def start():
 
             account_html = environment.get_template("account.html.j2").render(
                 account=parameters.account,
-                history=[],
+                history=reports[0].list,
             )
             html_file = fs.File('output', 'account.html')
             
@@ -85,11 +89,9 @@ def start():
         else:
             isOk = parameters.exchange_client.isOk
 
-        if parameters.make_order == True:
-            logic.buy(parameters, profitables)
-
         if report_send == True and (datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59) or isOk == False):
-            report_message = logic.report(parameters)
+            reports = logic.getHistory(parameters)
+            report_message = logic.report(parameters, reports)
             message += "############# REPORT #############\n"
             message += report_message
             body += environment.get_template("reports.html.j2").render(text=report_message)
@@ -118,6 +120,9 @@ def start():
 
         else:
             report_send = True
+        
+        if parameters.make_order == True and isOk:
+            logic.buy(parameters, profitables)
 
         time.sleep(sleep)
 

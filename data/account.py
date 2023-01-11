@@ -1,5 +1,3 @@
-import json
-
 class Account:
 
     def __init__(self, available, makerFee=1, takerFee=1):
