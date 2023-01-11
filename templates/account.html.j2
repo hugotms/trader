@@ -54,9 +54,46 @@
     <div style="
       display: flex;
       flex-wrap: wrap;
-      justify-content: space-around;
+      flex-direction: column;
+      justify-content: center;
+      align-content: center;
     ">
-      <p>Account balance : {{ account | round(2) }}€</p>
+      <div>
+        <p>Account balance: {{ account.total | round(2) }}€</p>
+      </div>
+      <br>
+      <div>
+        <h4>Today's history</h4>
+      </div>
+      <div>
+        <table style="border: 1px solid black;">
+          <thead style="
+            background-color: black;
+            color: white;
+          ">
+            <tr>
+              <th>Asset</th>
+              <th>Placed</th>
+              <th>Current</th>
+              <th>Higher</th>
+              <th>Win/Loss</th>
+              <th>Total fees</th>
+            </tr>
+          </thead>
+          <tbody>
+{% for asset in history %}
+            <tr>
+              <td>{{ asset.instrument_code }}</td>
+              <td>{{ asset.placed | round(4) }}€</td>
+              <td>{{ asset.current | round(4) }}€</td>
+              <td>{{ asset.higher | round(4) }}€</td>
+              <td>{{ ((asset.current * account.takerFee) - asset.placed) | round(2) }}€</td>
+              <td>{{ ((asset.placed * account.makerFee) + (asset.current * account.takerFee)) | round(2) }}€</td>
+            </tr>
+{% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
     <div style="
       display: flex;

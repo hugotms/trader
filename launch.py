@@ -29,12 +29,9 @@ def start():
         message = ""
         body = ""
 
-        actives = parameters.exchange_client.getAllActiveAssets(parameters)
+        parameters.account.total = parameters.account.available
 
-        total_account = parameters.account.available
-        if parameters.exchange_type != "HISTORY":
-            for asset in actives:
-                total_account += asset.current
+        actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
         alerts = logic.monitor(parameters, actives)
         
@@ -68,7 +65,13 @@ def start():
 
             html_file.putInFile(profitables_html)
 
-            account_html = environment.get_template("account.html.j2").render(account=total_account)
+            for asset in actives:
+                parameters.account.total += asset.current
+
+            account_html = environment.get_template("account.html.j2").render(
+                account=parameters.account,
+                history=[],
+            )
             html_file = fs.File('output', 'account.html')
             
             if html_file.create() is None:

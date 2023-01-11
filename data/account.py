@@ -6,3 +6,4 @@ class Account:
         self.available = available
         self.makerFee = makerFee
         self.takerFee = takerFee
+        self.total = 0
