@@ -86,7 +86,7 @@
           </tr>
         </thead>
         <tbody>
-{% for asset in history %}
+{% for asset in history | reverse %}
           <tr>
             <td>{{ asset.instrument_code }}</td>
             <td>{{ asset.placed | round(4) }}€</td>
