@@ -54,7 +54,7 @@ def getHistory(parameters):
         if report is None:
             continue
 
-        response = response = parameters.database.getPastPerformance(report, parameters.watching_currencies, parameters.ignore_currencies)
+        response = response = parameters.database.getPastPerformance(report, parameters)
         if response is None:
             continue
 

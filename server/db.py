@@ -171,7 +171,7 @@ class Mongo:
         
         return self.find("actives", query)
     
-    def getPastPerformance(self, report, watching_currencies, ignore_currencies, instrument_code=None):
+    def getPastPerformance(self, report, parameters, instrument_code=None):
         if self.client is None:
             return None
 
@@ -186,20 +186,20 @@ class Mongo:
             }
         }
 
-        if len(ignore_currencies) != 0:
+        if len(parameters.ignore_currencies) != 0:
             query["instrument_code"] = {
-                "$nin": ignore_currencies
+                "$nin": parameters.ignore_currencies
             }
             query2["_id"] = {
-                "$nin": ignore_currencies
+                "$nin": parameters.ignore_currencies
             }
         
-        elif len(watching_currencies) != 0:
+        elif len(parameters.watching_currencies) != 0:
             query["instrument_code"] = {
-                "$in": watching_currencies
+                "$in": parameters.watching_currencies
             }
             query2["_id"] = {
-                "$in": watching_currencies
+                "$in": parameters.watching_currencies
             }
         
         if instrument_code is not None:
@@ -211,7 +211,7 @@ class Mongo:
         report.orders = len(res) + len(res2)
         for item in res:
             placed = float(item["placed"])
-            current = float(item["current"])
+            current = float(item["current"]) * parameters.account.takerFee
 
             if current > placed:
                 report.gain += current - placed
