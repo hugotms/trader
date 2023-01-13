@@ -211,14 +211,17 @@ class Mongo:
         report.orders = len(res) + len(res2)
         for item in res:
             placed = float(item["placed"])
-            current = float(item["current"]) * parameters.account.takerFee
+            current = float(item["current"])
+
+            report.volume += current
+
+            current *= parameters.account.takerFee
 
             if current > placed:
                 report.gain += current - placed
-            else:
-                report.loss += placed - current
+                continue
 
-            report.volume += current
+            report.loss += placed - current
         
         for item in res2:
             report.volume += float(item["placed"])
