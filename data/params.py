@@ -24,7 +24,6 @@ class Params:
         self.max_danger = os.getenv('MAX_DANGER')
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
         self.wait_time = os.getenv('MINUTES_WAIT_TIME')
-        self.taxe_rate = os.getenv('TAXE_RATE')
         self.make_order = os.getenv('MAKE_ORDER')
         self.candlesticks_timeframe = os.getenv('CANDLESTICKS_TIMEFRAME')
         self.candlesticks_period = os.getenv('CANDLESTICKS_PERIOD')
@@ -58,7 +57,6 @@ class Params:
         self.max_danger = self.database.findVar("max_danger", self.max_danger, 5)
         self.wait_time = self.database.findVar("wait_time", self.wait_time, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
-        self.taxe_rate = self.database.findVar("taxe_rate", self.taxe_rate, 0.0)
         self.make_order = self.database.findVar("make_order", self.make_order, False)
         self.candlesticks_timeframe = self.database.findVar("candlesticks_timeframe", self.candlesticks_timeframe, "DAYS")
         self.candlesticks_period = self.database.findVar("candlesticks_period", self.candlesticks_period, 1)
@@ -151,7 +149,6 @@ class Params:
             self.security_min_recovered = float(self.security_min_recovered)
             self.min_profit = float(self.min_profit)
             self.max_danger = int(self.max_danger)
-            self.taxe_rate = float(self.taxe_rate)
             self.make_order = bool(self.make_order)
             self.candlesticks_period = int(self.candlesticks_period)
             self.fma_unit = int(self.fma_unit)
@@ -180,7 +177,7 @@ class Params:
             return True
         
         try:
-            self.init_capital = int(self.init_capital)
+            self.init_capital = float(self.init_capital)
         except Exception:
             print("Init capital must be a number")
             return False

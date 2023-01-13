@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Profitable assets</title>
+  <title>Account details</title>
   <meta name="author" content="GitHub @hugotms">
   <meta http-equiv="refresh" content="60">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
@@ -48,7 +48,7 @@
       text-align: center;
     ">
       <div>
-        <h3>&#129297; Worth looking &#129297;</h3>
+        <h3>&#128182; Account details &#128182;</h3>
       </div>
     </div>
     <div style="
@@ -56,31 +56,47 @@
       flex-wrap: wrap;
       justify-content: space-around;
     ">
-{% for asset in list %}
-      <div style="
-        width: calc(50% - 10px);
-        margin-bottom: 10px;
-      ">
-        <div style="
-          box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-          transition: 0.3s;
-          border-radius: 5px;
-          width: 100%;
+      <p>Account balance: {{ account.total | round(2) }}€</p>
+    </div>
+    <br>
+    <div style="
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    ">
+      <h4>24 hours history</h4>
+    </div>
+    <div style="
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-left: 5%;
+      margin-right: 5%;
+    ">
+      <table>
+        <thead style="
+          background-color: grey;
         ">
-          <div style="
-            padding: 2px 16px;
-          ">
-            <h4>{{ asset.instrument_code }}</h4>
-            <p>Last price: {{ asset.last_price | round(asset.precision) }}€</p>
-            <p>FMA: {{ asset.fma | round(asset.precision) }}€</p>
-            <p>SMA: {{ asset.sma | round(asset.precision) }}€</p>
-            <p>RSI: {{ asset.rsi | round(1) }}</p>
-            <p>AD: {{ asset.adl | round(1) }}</p>
-            <p>Danger: {{ asset.danger }}</p>
-          </div>
-        </div>
-      </div>
+          <tr>
+            <th>Asset</th>
+            <th>Placed</th>
+            <th>Current</th>
+            <th>Win/Loss</th>
+            <th>Fees</th>
+          </tr>
+        </thead>
+        <tbody>
+{% for asset in history | reverse %}
+          <tr>
+            <td>{{ asset.instrument_code }}</td>
+            <td>{{ asset.placed | round(4) }}€</td>
+            <td>{{ asset.current | round(4) }}€</td>
+            <td>{{ ((asset.current * account.takerFee) - asset.placed) | round(2) }}€</td>
+            <td>{{ ((asset.placed * (1 - account.makerFee)) + (asset.current * (1 - account.takerFee))) | round(2) }}€</td>
+          </tr>
 {% endfor %}
+        </tbody>
+      </table>
     </div>
     <div style="
       display: flex;

@@ -29,18 +29,13 @@ def start():
         message = ""
         body = ""
 
-        actives = parameters.exchange_client.getAllActiveAssets(parameters)
+        parameters.account.total = parameters.account.available
 
+        reports = []
         if parameters.exchange_type != "HISTORY":
+            reports = logic.getHistory(parameters)
 
-            actives_html = environment.get_template("actives.html.j2").render(list=actives)
-            html_file = fs.File('output', 'index.html')
-            
-            if html_file.create() is None:
-                print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
-                isOk = False
-
-            html_file.putInFile(actives_html)
+        actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
         alerts = logic.monitor(parameters, actives)
         
@@ -53,7 +48,17 @@ def start():
 
         profitables = parameters.exchange_client.findProfitable(parameters)
 
+        sleep = 0
         if parameters.exchange_type != "HISTORY":
+
+            actives_html = environment.get_template("actives.html.j2").render(list=actives)
+            html_file = fs.File('output', 'index.html')
+            
+            if html_file.create() is None:
+                print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
+                isOk = False
+
+            html_file.putInFile(actives_html)
 
             profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
             html_file = fs.File('output', 'profitables.html')
@@ -63,15 +68,30 @@ def start():
                 isOk = False
 
             html_file.putInFile(profitables_html)
+
+            for asset in actives:
+                parameters.account.total += asset.current
+
+            account_html = environment.get_template("account.html.j2").render(
+                account=parameters.account,
+                history=reports[0].list,
+            )
+            html_file = fs.File('output', 'account.html')
+            
+            if html_file.create() is None:
+                print("Unable to create 'output/account.html' file. Please check permissions on filesystem")
+                isOk = False
+
+            html_file.putInFile(account_html)
+
+            sleep = parameters.refresh_time * 60
         
         else:
             isOk = parameters.exchange_client.isOk
 
-        if parameters.make_order == True:
-            logic.buy(parameters, profitables)
-
         if report_send == True and (datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59) or isOk == False):
-            report_message = logic.report(parameters)
+            reports = logic.getHistory(parameters)
+            report_message = logic.report(parameters, reports)
             message += "############# REPORT #############\n"
             message += report_message
             body += environment.get_template("reports.html.j2").render(text=report_message)
@@ -101,15 +121,14 @@ def start():
         else:
             report_send = True
         
-        sleep = 0
-        if parameters.exchange_type != "HISTORY":
-            sleep = parameters.refresh_time * 60
+        if parameters.make_order == True and isOk:
+            logic.buy(parameters, profitables)
 
         time.sleep(sleep)
 
         parameters.actualize()
 
-        if parameters.exchange_type == "HISTORY" and isOk == False:
+        if parameters.exchange_type == "HISTORY" and not isOk:
             parameters.database.client.drop_collection("actives")
             parameters.database.client.drop_collection("history")
 

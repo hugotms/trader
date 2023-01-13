@@ -6,6 +6,9 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from lastversion import has_update
 
+from data import assets
+from data import reports
+
 def stop(parameters, crypto):
     if parameters.exchange_client.sellingMarketOrder(crypto, parameters) == False:
         crypto.failed = True
@@ -36,65 +39,71 @@ def start(parameters, crypto):
         " / ADL: " + str(round(crypto.adl)) + \
         ").\n"
 
-def report(parameters):
-    response = parameters.database.getPastPerformance(datetime.datetime.utcnow() - timedelta(days=1), parameters.watching_currencies, parameters.ignore_currencies)
-    if response is None:
-        return ""
-    response = json.loads(response)
+def getHistory(parameters):
+    report_data = [None, None, None]
+    report_data[0] = reports.Report(datetime.datetime.utcnow() - timedelta(days=1))
 
-    message = "\nDAILY STATS:\n\tORDERS:\t" + \
-        str(response["orders"]) + "\n\tGAINED:\t" + \
-        str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
-        str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
-        str(round(response["volume"], 2)) + "€\n"
-
-    if parameters.taxe_rate != 0.0:
-        message += "\tTAXES:\t" + str(round(response["profit"] * parameters.taxe_rate, 2)) + \
-            "€\n"
-
-    if response["profit"] * (1 - parameters.taxe_rate) > response["loss"]:
-        message += "\tPROFIT:\t" + str(round(response["profit"] * (1 - parameters.taxe_rate) - response["loss"], 2)) + \
-            "€\n"
-    
     today = datetime.datetime.now()
     if today.weekday() == 0:
-        response = parameters.database.getPastPerformance(datetime.datetime.utcnow() - timedelta(weeks=1), parameters.watching_currencies, parameters.ignore_currencies)
-        if response is None:
-            return message
-        response = json.loads(response)
-
-        message += "\nWEEKLY STATS:\n\tORDERS:\t" + \
-            str(response["orders"]) + "\n\tGAINED:\t" + \
-            str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
-            str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
-            str(round(response["volume"], 2)) + "€\n"
-
-        if parameters.taxe_rate != 0.0:
-            message += "\tTAXES:\t" + str(round(response["profit"] * parameters.taxe_rate, 2)) + \
-                "€\n"
-
-        if response["profit"] * (1 - parameters.taxe_rate) > response["loss"]:
-            message += "\tPROFIT:\t" + str(round(response["profit"] * (1 - parameters.taxe_rate) - response["loss"], 2)) + \
-                "€\n"
+        report_data[1] = reports.Report(datetime.datetime.utcnow() - timedelta(weeks=1))
     
     if today.month != (today + timedelta(days=1)).month:
-        response = parameters.database.getPastPerformance(datetime.datetime.utcnow() - relativedelta(months=1), parameters.watching_currencies, parameters.ignore_currencies)
+        report_data[2] = reports.Report(datetime.datetime.utcnow() - relativedelta(months=1))
+
+    for report in report_data:
+        if report is None:
+            continue
+
+        response = response = parameters.database.getPastPerformance(report, parameters.watching_currencies, parameters.ignore_currencies)
         if response is None:
-            return message
-        response = json.loads(response)
+            continue
 
-        message += "\nMONTHLY STATS:\n\tORDERS:\t" + \
-            str(response["orders"]) + "\n\tGAINED:\t" + \
-            str(round(response["profit"], 2)) + "€\n\tLOST:\t" + \
-            str(round(response["loss"], 2)) + "€\n\tVOLUME:\t" + \
-            str(round(response["volume"], 2)) + "€\n"
+        for item in response:
+            report.list.append(assets.Crypto(
+                item["instrument_code"],
+                item["base"],
+                item["currency"],
+                float(item["owned"]),
+                float(item["placed"]),
+                float(item["current"]),
+                item["placed_on"]
+                )
+            )
 
-        if parameters.taxe_rate != 0.0:
-            message += "\tTAXES:\t" + str(round(response["profit"] * parameters.taxe_rate, 2)) + \
+    return report_data
+
+def report(parameters, report_data):
+    message = "\nDAILY STATS:\n\tORDERS:\t" + \
+        str(report_data[0].orders) + "\n\tGAINED:\t" + \
+        str(round(report_data[0].gain, 2)) + "€\n\tLOST:\t" + \
+        str(round(report_data[0].loss, 2)) + "€\n\tVOLUME:\t" + \
+        str(round(report_data[0].volume, 2)) + "€\n"
+
+    if report_data[0].gain > report_data[0].loss:
+        message += "\tPROFIT:\t" + str(round(report_data[0].gain - report_data[0].loss, 2)) + \
+            "€\n"
+    
+    if report_data[1] != None:
+
+        message += "\nWEEKLY STATS:\n\tORDERS:\t" + \
+            str(report_data[1].orders) + "\n\tGAINED:\t" + \
+            str(round(report_data[1].gain, 2)) + "€\n\tLOST:\t" + \
+            str(round(report_data[1].loss, 2)) + "€\n\tVOLUME:\t" + \
+            str(round(report_data[1].volume, 2)) + "€\n"
+
+        if report_data[1].gain > report_data[1].loss:
+            message += "\tPROFIT:\t" + str(round(report_data[1].gain - report_data[1].loss, 2)) + \
                 "€\n"
+    
+    if report_data[2] != None:
+        message += "\nMONTHLY STATS:\n\tORDERS:\t" + \
+            str(report_data[2].orders) + "\n\tGAINED:\t" + \
+            str(round(report_data[2].gain, 2)) + "€\n\tLOST:\t" + \
+            str(round(report_data[2].loss, 2)) + "€\n\tVOLUME:\t" + \
+            str(round(report_data[2].volume, 2)) + "€\n"
 
-        if response["profit"] * (1 - parameters.taxe_rate) > response["loss"]:
-            message += "\tPROFIT:\t" + str(round(response["profit"] * (1 - parameters.taxe_rate) - response["loss"], 2)) + \
+        if report_data[2].gain > report_data[2].loss:
+            message += "\tPROFIT:\t" + str(round(report_data[2].gain - report_data[2].loss, 2)) + \
                 "€\n"
 
     return message + "\n"
@@ -127,7 +136,7 @@ def monitor(parameters, actives):
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.rsi > parameters.overbought_threshold and crypto.fma > crypto.last_price > 0:
+        elif crypto.rsi > parameters.overbought_threshold and crypto.adl <= -1:
             trading_message += crypto.instrument_code + " is overbought. "
             trading_message += stop(parameters, crypto)
         

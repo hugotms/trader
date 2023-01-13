@@ -171,22 +171,18 @@ class Mongo:
         
         return self.find("actives", query)
     
-    def getPastPerformance(self, past, watching_currencies, ignore_currencies, instrument_code=None):
+    def getPastPerformance(self, report, watching_currencies, ignore_currencies, instrument_code=None):
         if self.client is None:
             return None
-        
-        profit = 0
-        loss = 0
-        volume = 0
 
         query = {
             "date": {
-                "$gt": past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                "$gt": report.past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
         }
         query2 = {
             "placed_on": {
-                "$gt": past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                "$gt": report.past.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
         }
 
@@ -212,27 +208,22 @@ class Mongo:
 
         res = self.find("history", query)
         res2 = self.find("actives", query2)
-        orders = len(res) + len(res2)
+        report.orders = len(res) + len(res2)
         for item in res:
             placed = float(item["placed"])
             current = float(item["current"])
 
             if current > placed:
-                profit += current - placed
+                report.gain += current - placed
             else:
-                loss += placed - current
+                report.loss += placed - current
 
-            volume += current
+            report.volume += current
         
         for item in res2:
-            volume += float(item["placed"])
+            report.volume += float(item["placed"])
         
-        return json.dumps({
-            "profit": profit,
-            "loss": loss,
-            "orders": orders,
-            "volume": volume
-        })
+        return res
 
     def getLastPlaced(self, crypto, min_recovered, max_danger, wait_time):
         if self.client is None:
