@@ -89,7 +89,7 @@ def start():
         else:
             isOk = parameters.exchange_client.isOk
 
-        if report_send == True and (datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59) or isOk == False):
+        if (report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59)) or isOk == False:
             reports = logic.getHistory(parameters)
             report_message = logic.report(parameters, reports)
             message += "############# REPORT #############\n"
@@ -113,13 +113,6 @@ def start():
         if message != "":
             print("\n" + subject)
             print("\n" + message)
-
-        if (delay > 0):
-            delay -= parameters.refresh_time * 60
-            report_send = False
-
-        else:
-            report_send = True
         
         if parameters.make_order == True and isOk:
             logic.buy(parameters, profitables)
@@ -131,6 +124,16 @@ def start():
         if parameters.exchange_type == "HISTORY" and not isOk:
             parameters.database.client.drop_collection("actives")
             parameters.database.client.drop_collection("history")
+        
+        if parameters.exchange_type == "HISTORY":
+            continue
+        
+        if (delay > 0):
+            delay -= parameters.refresh_time * 60
+            report_send = False
+
+        else:
+            report_send = True
 
 if __name__ == '__main__':
     start()
