@@ -12,27 +12,25 @@ class Api:
         self.res = None
 
     def send(self):
-        if self.method == 'GET':
-            self.res = requests.get(self.url, headers=self.headers)
-        elif self.method == 'POST':
-            self.res = requests.post(self.url, headers=self.headers, json=self.data)
-        elif self.method == 'PUT':
-            self.res = requests.put(self.url, headers=self.headers, json=self.data)
-        elif self.method == 'DELETE':
-            self.res = requests.delete(self.url, headers=self.headers, json=self.data)
-        else:
-            print('Unsupported method')
+        response = None
         
-        return self
-    
-    def getStatusCode(self):
-        if self.res is not None:
-            return self.res.status_code
+        try:
+            if self.method == 'GET':
+                response = requests.get(self.url, headers=self.headers)
+            elif self.method == 'POST':
+                response = requests.post(self.url, headers=self.headers, json=self.data)
+            elif self.method == 'PUT':
+                response = requests.put(self.url, headers=self.headers, json=self.data)
+            elif self.method == 'DELETE':
+                response = requests.delete(self.url, headers=self.headers, json=self.data)
+            else:
+                print('Unsupported method')
+        except:
+            response = None
+            print('Unable to access URL')
         
-        return 500
-    
-    def getData(self):
-        if self.res is not None:
-            return self.res.json()
+        if response is not None:
+            self.statusCode = response.status_code
+            self.res = response.json()
         
-        return None
+        return self.statusCode, self.res

@@ -1,7 +1,6 @@
 from server import web
 from server import db
 
-import json
 import time
 
 from datetime import datetime, timedelta, date
@@ -59,24 +58,23 @@ class Exchange:
             tz2 = (today - timedelta(minutes=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             delta = timedelta(minutes=parameters.candlesticks_period)
 
-        client = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + parameters.candlesticks_timeframe + "&period=" + str(parameters.candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=self.header).send()
+        status_code, data = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + parameters.candlesticks_timeframe + "&period=" + str(parameters.candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=self.header).send()
+        time.sleep(1)
 
-        if client.getStatusCode() != 200:
+        if status_code != 200:
             print("Error while trying to get price tickers")
             return None
         
-        time.sleep(1)
-        
-        length = len(client.getData())
+        length = len(data)
         if length < 3:
             return None
         
         values = []
 
-        last_time = datetime.strptime(client.getData()[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        last_time = datetime.strptime(data[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
         i = 0
         while last_time < today.replace(second=59):
-            values.append(client.getData()[length - 1])
+            values.append(data[length - 1])
             values[i]['volume'] = 0.0
 
             last_time = last_time + delta
@@ -89,13 +87,13 @@ class Exchange:
             if length - i - 1 < 0:
                 break
             
-            previous_time = datetime.strptime(client.getData()[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-            current_time = datetime.strptime(client.getData()[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            previous_time = datetime.strptime(data[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            current_time = datetime.strptime(data[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
 
             added = False
             
             while previous_time < current_time:
-                values.append(client.getData()[length - i])
+                values.append(data[length - i])
                 current_time = current_time - delta
 
                 if added:
@@ -175,34 +173,33 @@ class Exchange:
             return True
         
         tz2 = (today - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        client = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=self.header).send()
-
-        if client.getStatusCode() != 200:
-            print("Error while trying to get price tickers")
-            return None
-        
+        status_code, data = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=self.header).send()
         time.sleep(1)
 
-        length = len(client.getData())
+        if status_code != 200:
+            print("Error while trying to get price tickers")
+            return None
+
+        length = len(data)
 
         if length == 0:
             return None
         
-        crypto.hourlyVolume = float(client.getData()[length - 1]['volume'])
+        crypto.hourlyVolume = float(data[length - 1]['volume'])
 
-        for item in client.getData():
+        for item in data:
             crypto.dailyVolume += float(item['volume'])
 
         return True
     
     def getPrice(self, instrument_code):
-        client = web.Api(Exchange.baseUrl + "/market-ticker/" + instrument_code, headers=self.header).send()
+        status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + instrument_code, headers=self.header).send()
 
-        if client.getStatusCode() != 200:
+        if status_code != 200:
             print("Error while trying to get market tickers")
             return 0
 
-        return float(client.getData()['last_price'])
+        return float(data['last_price'])
     
     def getAllActiveAssets(self, parameters):
         active_assets = []
@@ -241,16 +238,15 @@ class Exchange:
         for asset in actives:
             ignored_assets.append(asset["_id"])
         
-        client = web.Api(Exchange.baseUrl + "/instruments", headers=self.header).send()
-
-        if client.getStatusCode() != 200:
-            print("Error while trying to get available cryptos")
-            return []
-        
+        status_code, data = web.Api(Exchange.baseUrl + "/instruments", headers=self.header).send()
         time.sleep(1)
 
+        if status_code != 200:
+            print("Error while trying to get available cryptos")
+            return []
+
         available_cryptos = []
-        for item in client.getData():
+        for item in data:
             if item["state"] != "ACTIVE":
                 continue
 

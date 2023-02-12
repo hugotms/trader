@@ -1,7 +1,6 @@
 from server import web
 from server import db
 
-import json
 import time
 
 from datetime import datetime, timedelta, date
@@ -40,19 +39,18 @@ class Exchange:
     def getCurrencyBalance(self, currency_code):
         amount = 0
 
-        client = web.Api(Exchange.baseUrl + '/account/balances', headers=self.headers).send()
+        status_code, data = web.Api(Exchange.baseUrl + '/account/balances', headers=self.headers).send()
+        time.sleep(1)
 
-        if client.getStatusCode() == 429:
+        if status_code == 429:
             print("Too many requests at once")
             return None
-
-        time.sleep(1)
         
-        if client.getStatusCode() != 200:
+        if status_code != 200:
             print("Error while trying to access balance data")
             return None
         
-        for item in client.getData()['balances']:
+        for item in data['balances']:
             if item['currency_code'] == currency_code:
                 amount += float(item['available'])
 
@@ -62,29 +60,25 @@ class Exchange:
         makerFee = 1
         takerFee = 1
 
-        client = web.Api(Exchange.baseUrl + '/account/fees', headers=self.headers).send()
-
-        if client.getStatusCode() == 429:
-            print("Too many requests at once")
-            return None
-
+        status_code, data = web.Api(Exchange.baseUrl + '/account/fees', headers=self.headers).send()
         time.sleep(1)
-        
-        if client.getStatusCode() != 200:
-            print("Error while trying to access account fees data")
-            return None
-        
-        running_trading_volume = client.getData()['running_trading_volume']
 
-        for tier in client.getData()['fee_tiers']:
+        if status_code == 429:
+            print("Too many requests at once")
+            return makerFee, takerFee
+        
+        if status_code != 200:
+            print("Error while trying to access account fees data")
+            return makerFee, takerFee
+        
+        running_trading_volume = data['running_trading_volume']
+
+        for tier in data['fee_tiers']:
             if tier['volume'] >= running_trading_volume:
                 makerFee = 1 - float(tier['maker_fee']) / 100
                 takerFee = 1 - float(tier['taker_fee']) / 100
 
-        return json.dumps({
-                "makerFee": makerFee,
-                "takerFee": takerFee
-            })
+        return makerFee, takerFee
     
     def getAccount(self):
         response = self.getCurrencyBalance('EUR')
@@ -93,12 +87,7 @@ class Exchange:
             return None
 
         new = account.Account(available=response)
-
-        response = self.getAccountFees()
-        if response is not None:
-            res = json.loads(response)
-            new.makerFee = res['makerFee']
-            new.takerFee = res['takerFee']
+        new.makerFee, new.takerFee = self.getAccountFees()
 
         return new
     
@@ -106,16 +95,11 @@ class Exchange:
         fees = None
         
         response = self.getCurrencyBalance('EUR')
-        if response is not None:
-            account.available = response
-        
-        response = self.getAccountFees()
-        if response is not None:
-            fees = json.loads(response)
-        
-        if fees is not None:
-            account.takerFee = fees['takerFee']
-            account.makerFee = fees['makerFee']
+        if response is None:
+            return None
+
+        account.available = response
+        account.makerFee, account.takerFee = self.getAccountFees()
     
     def getStats(self, crypto, parameters, full=False):
         frame = parameters.period + 1
@@ -151,24 +135,23 @@ class Exchange:
             tz2 = (today - timedelta(minutes=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             delta = timedelta(minutes=parameters.candlesticks_period)
 
-        client = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + parameters.candlesticks_timeframe + "&period=" + str(parameters.candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=header).send()
+        status_code, data = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + parameters.candlesticks_timeframe + "&period=" + str(parameters.candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=header).send()
+        time.sleep(1)
 
-        if client.getStatusCode() != 200:
+        if status_code != 200:
             print("Error while trying to get price tickers")
             return None
         
-        time.sleep(1)
-        
-        length = len(client.getData())
+        length = len(data)
         if length < 3:
             return None
         
         values = []
 
-        last_time = datetime.strptime(client.getData()[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        last_time = datetime.strptime(data[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
         i = 0
         while last_time < today.replace(second=59):
-            values.append(client.getData()[length - 1])
+            values.append(data[length - 1])
             values[i]['volume'] = 0.0
 
             last_time = last_time + delta
@@ -181,13 +164,13 @@ class Exchange:
             if length - i - 1 < 0:
                 break
             
-            previous_time = datetime.strptime(client.getData()[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-            current_time = datetime.strptime(client.getData()[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            previous_time = datetime.strptime(data[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            current_time = datetime.strptime(data[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
 
             added = False
             
             while previous_time < current_time:
-                values.append(client.getData()[length - i])
+                values.append(data[length - i])
                 current_time = current_time - delta
 
                 if added:
@@ -267,22 +250,21 @@ class Exchange:
             return True
         
         tz2 = (today - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        client = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
-
-        if client.getStatusCode() != 200:
-            print("Error while trying to get price tickers")
-            return None
-        
+        status_code, data = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=header).send()
         time.sleep(1)
 
-        length = len(client.getData())
+        if status_code != 200:
+            print("Error while trying to get price tickers")
+            return None
+
+        length = len(data)
 
         if length == 0:
             return None
         
-        crypto.hourlyVolume = float(client.getData()[length - 1]['volume'])
+        crypto.hourlyVolume = float(data[length - 1]['volume'])
 
-        for item in client.getData():
+        for item in data:
             crypto.dailyVolume += float(item['volume'])
 
         return True
@@ -292,30 +274,29 @@ class Exchange:
             "Accept": "application/json"
         }
 
-        client = web.Api(Exchange.baseUrl + "/market-ticker/" + instrument_code, headers=header).send()
+        status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + instrument_code, headers=header).send()
 
-        if client.getStatusCode() != 200:
+        if status_code != 200:
             print("Error while trying to get market tickers")
             return 0
 
-        return float(client.getData()['last_price'])
+        return float(data['last_price'])
     
     def getAllActiveAssets(self, parameters):
         active_assets = []
 
-        client = web.Api(Exchange.baseUrl + "/account/trades", headers=self.headers).send()
-
-        if client.getStatusCode() == 429:
-            print("Too many requests at once")
-            return []
-        
+        status_code, data = web.Api(Exchange.baseUrl + "/account/trades", headers=self.headers).send()
         time.sleep(1)
 
-        if client.getStatusCode() != 200:
+        if status_code == 429:
+            print("Too many requests at once")
+            return []
+
+        if status_code != 200:
             print("Error while trying to access account active trades")
             return []
 
-        trades = client.getData()['trade_history']
+        trades = data['trade_history']
 
         asset_names = []
         ignored_assets = []
@@ -398,19 +379,18 @@ class Exchange:
                 parameters.database.putInHistory(asset)
                 continue
             
-            client = web.Api(Exchange.baseUrl + "/account/orders/" + order_id, headers=self.headers).send()
-
+            status_code, data = web.Api(Exchange.baseUrl + "/account/orders/" + order_id, headers=self.headers).send()
             time.sleep(1)
 
-            if client.getStatusCode() != 200:
+            if status_code != 200:
                 parameters.database.putInHistory(asset)
                 continue
 
-            if client.getData()['order']['status'] not in ["FILLED_FULLY", "CLOSED"]:
+            if data['order']['status'] not in ["FILLED_FULLY", "CLOSED"]:
                 parameters.database.putInHistory(asset)
                 continue
             
-            current_price = asset.owned * float(client.getData()['order']['price'])
+            current_price = asset.owned * float(data['order']['price'])
             if current_price == 0.0:
                 parameters.database.putInHistory(asset)
                 continue
@@ -430,14 +410,14 @@ class Exchange:
                 "Accept": "application/json"
             }
 
-            status_code = 0
             if asset.precision == 0:
-                client = web.Api(Exchange.baseUrl + "/instruments", headers=header).send()
-                status_code = client.getStatusCode()
+                status_code, data = web.Api(Exchange.baseUrl + "/instruments", headers=header).send()
                 time.sleep(1)
                 
-            if status_code == 200:
-                for item in client.getData():
+                if status_code != 200:
+                    continue
+
+                for item in data:
                     pair = item["base"]["code"] + "_" + item["quote"]["code"]
 
                     if pair != asset.instrument_code:
@@ -461,16 +441,15 @@ class Exchange:
         for asset in actives:
             ignored_assets.append(asset["_id"])
         
-        client = web.Api(Exchange.baseUrl + "/instruments", headers=header).send()
-
-        if client.getStatusCode() != 200:
-            print("Error while trying to get available cryptos")
-            return []
-        
+        status_code, data = web.Api(Exchange.baseUrl + "/instruments", headers=header).send()
         time.sleep(1)
 
+        if status_code != 200:
+            print("Error while trying to get available cryptos")
+            return []
+
         available_cryptos = []
-        for item in client.getData():
+        for item in data:
             if item["state"] != "ACTIVE":
                 continue
 
@@ -550,15 +529,14 @@ class Exchange:
     
     def stopLossOrder(self, crypto, parameters):
         if crypto.stop_id != "":
-            client = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
-                
-            if client.getStatusCode() == 429:
+            status_code, data = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
+            time.sleep(1)
+
+            if status_code == 429:
                 print("Too many requests at once")
                 return False
 
-            time.sleep(1)
-
-            if client.getStatusCode() != 204:
+            if status_code != 204:
                 print("Error while trying to cancel stop order")
                 return False
                 
@@ -574,20 +552,19 @@ class Exchange:
             "trigger_price": self.truncate(crypto.higher * parameters.security_min_recovered / crypto.owned, 2)
         }
         
-        client = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
-        
-        if client.getStatusCode() == 429:
-            print("Too many requests at once")
-            return False
-        
+        status_code, data = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
         time.sleep(1)
 
-        if client.getStatusCode() != 201:
+        if status_code == 429:
+            print("Too many requests at once")
+            return False
+
+        if status_code != 201:
             crypto.failed == True
             print("Error while trying to create stop order")
             return False
         
-        crypto.stop_id = client.getData()["order_id"]
+        crypto.stop_id = data["order_id"]
         
         parameters.database.putInActive(crypto)
 
@@ -595,15 +572,14 @@ class Exchange:
     
     def sellingMarketOrder(self, crypto, parameters):
         if crypto.stop_id != "":
-            client = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
-            
-            if client.getStatusCode() == 429:
+            status_code, data = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
+            time.sleep(1)
+
+            if status_code == 429:
                 print("Too many requests at once")
                 return False
 
-            time.sleep(1)
-
-            if client.getStatusCode() != 204:
+            if status_code != 204:
                 print("Error while trying to cancel stop order")
                 return False
             
@@ -617,19 +593,18 @@ class Exchange:
             "amount": self.truncate(crypto.owned, crypto.precision)
         }
 
-        client = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
-
-        if client.getStatusCode() == 429:
-            print("Too many requests at once")
-            return False
-        
+        status_code, data = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
         time.sleep(1)
 
-        if client.getStatusCode() != 201:
+        if status_code == 429:
+            print("Too many requests at once")
+            return False
+
+        if status_code != 201:
             print("Error while trying to create selling market order")
             return False
         
-        crypto.market_id = client.getData()['order_id']
+        crypto.market_id = data['order_id']
         parameters.database.putInActive(crypto)
 
         return True
@@ -647,13 +622,13 @@ class Exchange:
             "amount": self.truncate(amount, crypto.precision)
         }
 
-        client = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
+        status_code, data = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
         
-        if client.getStatusCode() == 429:
+        if status_code == 429:
             print("Too many requests at once")
             return False
 
-        if client.getStatusCode() != 201:
+        if status_code != 201:
             print("Error while trying to buy crypto")
             return False
         
