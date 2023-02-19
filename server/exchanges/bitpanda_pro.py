@@ -96,10 +96,12 @@ class Exchange:
         
         response = self.getCurrencyBalance('EUR')
         if response is None:
-            return None
+            return False
 
         account.available = response
         account.makerFee, account.takerFee = self.getAccountFees()
+
+        return True
     
     def getStats(self, crypto, parameters, full=False):
         frame = parameters.period + 1

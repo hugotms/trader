@@ -44,7 +44,7 @@ def start():
             message += alerts + "\n"
             body += environment.get_template("alerts.html.j2").render(text=alerts)
         
-        parameters.exchange_client.actualizeAccount(parameters.account)
+        isOk = parameters.exchange_client.actualizeAccount(parameters.account)
 
         profitables = parameters.exchange_client.findProfitable(parameters)
 
@@ -119,10 +119,6 @@ def start():
         time.sleep(sleep)
 
         parameters.actualize()
-
-        if parameters.exchange_type == "HISTORY" and not isOk:
-            parameters.database.client.drop_collection("actives")
-            parameters.database.client.drop_collection("history")
         
         if parameters.exchange_type == "HISTORY":
             continue
@@ -133,6 +129,10 @@ def start():
 
         else:
             report_send = True
+    
+    if parameters.exchange_type == "HISTORY":
+        parameters.database.client.drop_collection("actives")
+        parameters.database.client.drop_collection("history")
 
 if __name__ == '__main__':
     start()
