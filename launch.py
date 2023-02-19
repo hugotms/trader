@@ -4,7 +4,7 @@ import datetime
 from jinja2 import Environment, FileSystemLoader
 
 from data import params
-from bot import logic
+from bot import logic, utils
 from server import fs
 
 def start():
@@ -31,9 +31,9 @@ def start():
 
         parameters.account.total = parameters.account.available
 
-        reports = []
+        history = []
         if parameters.exchange_type != "HISTORY":
-            reports = logic.getHistory(parameters)
+            history = utils.getHistory(parameters)
 
         actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
@@ -74,7 +74,7 @@ def start():
 
             account_html = environment.get_template("account.html.j2").render(
                 account=parameters.account,
-                history=reports[0].list,
+                history=history[0].list,
             )
             html_file = fs.File('output', 'account.html')
             
@@ -90,8 +90,7 @@ def start():
             isOk = parameters.exchange_client.isOk
 
         if (report_send == True and datetime.time(00,00) <= datetime.datetime.now().time() <= datetime.time(00,59)) or isOk == False:
-            reports = logic.getHistory(parameters)
-            report_message = logic.report(parameters, reports)
+            report_message = utils.report(parameters)
             message += "############# REPORT #############\n"
             message += report_message
             body += environment.get_template("reports.html.j2").render(text=report_message)
@@ -99,7 +98,7 @@ def start():
 
         update_message = ""
         if parameters.latest_bot_release is not None and message != "":
-            update_message = logic.checkUpdate(parameters.latest_bot_release)
+            update_message = utils.checkUpdate(parameters.latest_bot_release)
         
         if update_message != "":
             message += "############# UPDATE #############\n\n"
