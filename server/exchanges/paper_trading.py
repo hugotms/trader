@@ -279,7 +279,7 @@ class Exchange:
             if crypto.precision == 0:
                 continue
 
-            if parameters.database.getLastPlaced(crypto, parameters.min_recovered, parameters.max_danger, parameters.wait_time):
+            if parameters.database.getLastPlaced(crypto, parameters.wait_time):
                 continue
 
             res = self.getStats(crypto, parameters, full=True)
