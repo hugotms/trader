@@ -240,7 +240,7 @@ class Mongo:
         }
 
         res = self.find("history", query)
-        if len(res) == 0:
+        if len(res) != 0:
             return True
 
         return False
