@@ -80,7 +80,7 @@ def buy(parameters, profitables):
 
     for crypto in profitables:
 
-        if crypto.rsi < parameters.oversold_threshold:
+        if crypto.rsi < 50:
             continue
 
         if crypto.rsi >= parameters.overbought_threshold:
