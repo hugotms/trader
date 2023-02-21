@@ -491,9 +491,6 @@ class Exchange:
             if res is None:
                 continue
 
-            if crypto.sma >= crypto.fma:
-                crypto.danger += 1
-
             if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
                 continue
             
@@ -515,9 +512,6 @@ class Exchange:
             crypto.last_price = round(self.getPrice(crypto.instrument_code), crypto.precision)
             if crypto.last_price == 0:
                 continue
-
-            if crypto.fma >= crypto.last_price:
-                crypto.danger += 1
             
             if crypto.danger > parameters.max_danger:
                 continue

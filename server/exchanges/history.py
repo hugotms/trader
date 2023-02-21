@@ -208,9 +208,6 @@ class Exchange:
             if res is None:
                 continue
 
-            if crypto.sma >= crypto.fma:
-                crypto.danger += 1
-
             if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
                 continue
             
@@ -225,9 +222,6 @@ class Exchange:
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
-
-            if crypto.fma >= crypto.last_price:
-                crypto.danger += 1
             
             if crypto.danger > parameters.max_danger:
                 continue
