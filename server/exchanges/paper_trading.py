@@ -307,6 +307,9 @@ class Exchange:
             crypto.last_price = round(self.getPrice(crypto.instrument_code), crypto.precision)
             if crypto.last_price == 0:
                 continue
+
+            if crypto.last_price >= crypto.fma:
+                crypto.danger += 1
             
             if crypto.danger > parameters.max_danger:
                 continue

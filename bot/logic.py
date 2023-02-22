@@ -92,7 +92,7 @@ def buy(parameters, profitables):
         if crypto.sma >= crypto.fma:
             continue
 
-        if crypto.fma >= crypto.last_price:
+        if crypto.sma >= crypto.last_price:
             continue
 
         if (parameters.account.available / crypto.danger) * parameters.account.takerFee * parameters.account.makerFee * parameters.security_min_recovered * (1 - (crypto.rsi / 100)) < 10:
