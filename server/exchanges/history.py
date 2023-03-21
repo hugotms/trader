@@ -223,9 +223,6 @@ class Exchange:
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
             
-            if crypto.last_price >= crypto.fma:
-                crypto.danger += 1
-            
             if crypto.danger > parameters.max_danger:
                 continue
             
