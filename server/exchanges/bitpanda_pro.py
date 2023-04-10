@@ -610,7 +610,7 @@ class Exchange:
         if current_price == 0:
             return False
         
-        amount = ((parameters.account.available / crypto.danger) * 0.99 * (crypto.rsi / 100)) / current_price
+        amount = ((parameters.account.available / crypto.danger) * 0.99) / current_price
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
