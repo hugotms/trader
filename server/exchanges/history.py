@@ -245,7 +245,7 @@ class Exchange:
         return True
     
     def buyingMarketOrder(self, crypto, parameters):
-        amount = ((parameters.account.available / crypto.danger) * 0.99 * (1 - (crypto.rsi / 100))) / crypto.last_price
+        amount = ((parameters.account.available / crypto.danger) * 0.99 * (crypto.rsi / 100)) / crypto.last_price
 
         crypto.placed = amount * crypto.last_price
         
