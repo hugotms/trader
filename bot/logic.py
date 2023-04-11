@@ -26,10 +26,10 @@ def start(parameters, crypto):
     return "Buying market order for " + crypto.instrument_code + \
         " (OWNED: " + str(round(crypto.owned, crypto.precision)) + \
         " / PRICE: " + str(round(crypto.last_price, crypto.precision)) + \
-        " / FMA: " + str(round(crypto.fma, crypto.precision)) + \
-        " / SMA: " + str(round(crypto.sma, crypto.precision)) + \
+        " / HIST: " + str(round(crypto.macd - crypto.signal, crypto.precision)) + \
         " / RSI: " + str(round(crypto.rsi)) + \
-        " / ADL: " + str(round(crypto.adl)) + \
+        " / %K: " + str(round(crypto.stochastic_k)) + \
+        " / %D: " + str(round(crypto.stochastic_d)) + \
         ").\n"
 
 def monitor(parameters, actives):
@@ -41,7 +41,11 @@ def monitor(parameters, actives):
             + " (HIGHER: " + str(round(crypto.higher, 2)) 
             + "€ / CURRENT: " + str(round(crypto.current, 2)) 
             + "€ / VARIATION: " + str(round((1 - crypto.current / crypto.placed) * -100, 2))
-            + "%).")
+            + "% / HIST: " + str(round(crypto.macd - crypto.signal, crypto.precision))
+            + " / RSI: " + str(round(crypto.rsi))
+            + " / %K: " + str(round(crypto.stochastic_k))
+            + " / %D: " + str(round(crypto.stochastic_d))
+            + ").")
 
         if crypto.current < 10:
             trading_message += "No action can be done on " + crypto.instrument_code + " (less than 10€).\n"
@@ -50,14 +54,14 @@ def monitor(parameters, actives):
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.rsi >= parameters.overbought_threshold and crypto.adl <= -1:
+        elif (crypto.stochastic_d >= parameters.overbought_threshold or crypto.stochastic_k >= parameters.overbought_threshold) and crypto.signal >= crypto.macd:
             trading_message += crypto.instrument_code + " is overbought. "
             trading_message += stop(parameters, crypto)
         
-        elif crypto.rsi < parameters.oversold_threshold and crypto.adl <= -1:
+        elif crypto.rsi < 50 and (parameters.oversold_threshold >= crypto.stochastic_d or parameters.oversold_threshold >= crypto.stochastic_k):
             trading_message += crypto.instrument_code + " is oversold. "
             trading_message += stop(parameters, crypto)
-        
+
         elif parameters.min_profit > 1.0 and crypto.current * parameters.account.takerFee >= crypto.placed * parameters.min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(parameters, crypto)
@@ -83,16 +87,13 @@ def buy(parameters, profitables):
         if crypto.rsi < 50:
             continue
 
-        if crypto.rsi >= parameters.overbought_threshold:
+        if crypto.stochastic_d >= crypto.stochastic_k:
             continue
 
-        if crypto.adl < 1:
+        if crypto.stochastic_k >= parameters.overbought_threshold:
             continue
 
-        if crypto.sma >= crypto.fma:
-            continue
-
-        if crypto.fma >= crypto.last_price:
+        if crypto.signal >= crypto.macd:
             continue
 
         if (parameters.account.available / crypto.danger) * parameters.account.takerFee * parameters.account.makerFee * parameters.security_min_recovered < 10:

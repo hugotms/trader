@@ -8,10 +8,11 @@ class Crypto:
         self.placed = placed
         self.current = current
         self.placed_on = placed_on
-        self.fma = 0
-        self.sma = 0
+        self.macd = 0
+        self.signal = 0
         self.rsi = 0
-        self.adl = 0
+        self.stochastic_k = 0
+        self.stochastic_d = 0
         self.danger = 1
         self.hourlyVolume = 0
         self.dailyVolume = 0

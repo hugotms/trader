@@ -72,10 +72,10 @@
           ">
             <h4>{{ asset.instrument_code }}</h4>
             <p>Last price: {{ asset.last_price | round(asset.precision) }}€</p>
-            <p>FMA: {{ asset.fma | round(asset.precision) }}€</p>
-            <p>SMA: {{ asset.sma | round(asset.precision) }}€</p>
+            <p>HIST: {{ (asset.macd - asset.signal) | round(asset.precision) }}€</p>
             <p>RSI: {{ asset.rsi | round(1) }}</p>
-            <p>AD: {{ asset.adl | round(1) }}</p>
+            <p>%K: {{ asset.stochastic_k | round(1) }}</p>
+            <p>%D: {{ asset.stochastic_d | round(1) }}</p>
             <p>Danger: {{ asset.danger }}</p>
           </div>
         </div>

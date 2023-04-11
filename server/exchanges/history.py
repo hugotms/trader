@@ -41,25 +41,24 @@ class Exchange:
             return None
 
         dataframe = dataframe.head(self.frame)
+        
+        dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_fast, adjust=False).mean()
+        dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_slow, adjust=False).mean()
+        dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]
+        dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=parameters.macd_smooth, adjust=False).mean()
+
+        crypto.macd = float(dataframe.iloc[-1]["MACD"])
+        crypto.signal = float(dataframe.iloc[-1]["Signal"])
+
+        dataframe["Highest"] = dataframe["High"].rolling(parameters.period).max()
+        dataframe["Lowest"] = dataframe["Low"].rolling(parameters.period).min()
+        dataframe["%K"] = ((dataframe["Close"] - dataframe["Lowest"]) * 100) / (dataframe["Highest"] - dataframe["Lowest"])
+        dataframe["%D"] = dataframe["%K"].rolling(3).mean()
+
+        crypto.stochastic_k = float(dataframe.iloc[-1]["%K"])
+        crypto.stochastic_d = float(dataframe.iloc[-1]["%D"])
+        
         dataframe = dataframe.sort_values("Date", ascending=False)
-        
-        fma_mean = 0
-        for i in range(parameters.fma_unit, parameters.fma_unit + 10):
-            fma_mean += float(dataframe.iloc[i]["Close"])
-        
-        fma_mean = fma_mean / 10
-
-        for i in range(1, parameters.fma_unit + 1):
-            fma_mean = ((2 / (parameters.fma_unit + 1)) * float(dataframe.iloc[parameters.fma_unit - i]["Close"])) + ((1 - (2 / (parameters.fma_unit + 1))) * fma_mean)
-
-        sma_mean = 0
-        for i in range(parameters.sma_unit, parameters.sma_unit + 10):
-            sma_mean += float(dataframe.iloc[i]["Close"])
-        
-        sma_mean = sma_mean / 10
-
-        for i in range(1, parameters.sma_unit + 1):
-            sma_mean = ((2 / (parameters.sma_unit + 1)) * float(dataframe.iloc[parameters.sma_unit - i]["Close"])) + ((1 - (2 / (parameters.sma_unit + 1))) * sma_mean)
 
         avg_gain = 0
         avg_loss = 0
@@ -79,28 +78,11 @@ class Exchange:
         avg_gain = avg_gain / parameters.period
         avg_loss = avg_loss / parameters.period
 
-        crypto.fma = round(fma_mean, crypto.precision)
-        crypto.sma = round(sma_mean, crypto.precision)
-
         if avg_loss == 0:
             crypto.rsi = 100
         
         else:
             crypto.rsi = 100 - (100 / (1 + (avg_gain / avg_loss)))
-        
-        adl = 0.0
-        for i in range(1, parameters.period + 1):
-            close = float(dataframe.iloc[parameters.period - i]["Close"])
-            high = float(dataframe.iloc[parameters.period - i]["High"])
-            low = float(dataframe.iloc[parameters.period - i]["Low"])
-            volume = float(dataframe.iloc[parameters.period - i]["Volume"])
-
-            if high == low:
-                continue
-
-            adl += ((((close - low) - (high - close)) / (high - low)) * volume) * i
-        
-        crypto.adl = adl / parameters.period
 
         crypto.last_price = float(dataframe.iloc[0]["Close"])
         
@@ -208,16 +190,16 @@ class Exchange:
             if res is None:
                 continue
 
-            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
+            if parameters.account.available * 0.99 >= crypto.hourlyVolume:
                 continue
             
-            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
+            if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1
             
-            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.5:
+            if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.5:
                 crypto.danger += 2
             
-            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.75:
+            if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.75:
                 crypto.danger += 3
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:

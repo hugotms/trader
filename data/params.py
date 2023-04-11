@@ -27,8 +27,9 @@ class Params:
         self.make_order = os.getenv('MAKE_ORDER')
         self.candlesticks_timeframe = os.getenv('CANDLESTICKS_TIMEFRAME')
         self.candlesticks_period = os.getenv('CANDLESTICKS_PERIOD')
-        self.fma_unit = os.getenv('WINDOW_SIZE_FMA')
-        self.sma_unit = os.getenv('WINDOW_SIZE_SMA')
+        self.macd_fast = os.getenv('MACD_FAST')
+        self.macd_slow = os.getenv('MACD_SLOW')
+        self.macd_smooth = os.getenv('MACD_SMOOTH')
         self.period = os.getenv('INDICATORS_PERIOD')
         self.oversold_threshold = os.getenv('OVERSOLD_THRESHOLD')
         self.overbought_threshold = os.getenv('OVERBOUGHT_THRESHOLD')
@@ -60,8 +61,9 @@ class Params:
         self.make_order = self.database.findVar("make_order", self.make_order, False)
         self.candlesticks_timeframe = self.database.findVar("candlesticks_timeframe", self.candlesticks_timeframe, "DAYS")
         self.candlesticks_period = self.database.findVar("candlesticks_period", self.candlesticks_period, 1)
-        self.fma_unit = self.database.findVar("fma_unit", self.fma_unit, 5)
-        self.sma_unit = self.database.findVar("sma_unit", self.sma_unit, 50)
+        self.macd_fast = self.database.findVar("macd_fast", self.macd_fast, 12)
+        self.macd_slow = self.database.findVar("macd_slow", self.macd_slow, 26)
+        self.macd_smooth = self.database.findVar("macd_smooth", self.macd_smooth, 9)
         self.period = self.database.findVar("period", self.period, 14)
         self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
         self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 70)
@@ -151,8 +153,9 @@ class Params:
             self.max_danger = int(self.max_danger)
             self.make_order = bool(self.make_order)
             self.candlesticks_period = int(self.candlesticks_period)
-            self.fma_unit = int(self.fma_unit)
-            self.sma_unit = int(self.sma_unit)
+            self.macd_fast = int(self.macd_fast)
+            self.macd_slow = int(self.macd_slow)
+            self.macd_smooth = int(self.macd_smooth)
             self.period = int(self.period)
             self.oversold_threshold = int(self.oversold_threshold)
             self.overbought_threshold = int(self.overbought_threshold)
@@ -188,8 +191,8 @@ class Params:
                 return False
             
             frame = self.period + 1
-            if frame < self.sma_unit + 10:
-                frame = self.sma_unit + 10
+            if frame < self.macd_slow + 10:
+                frame = self.macd_slow + 10
             
             self.exchange_client = history.Exchange(self.init_capital, self.exchange_input_filename, frame, self.watching_currencies, self.ignore_currencies)
 

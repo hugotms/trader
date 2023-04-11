@@ -2,6 +2,7 @@ from server import web
 from server import db
 
 import time
+import pandas
 
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
@@ -30,8 +31,8 @@ class Exchange:
     
     def getStats(self, crypto, parameters, full=False):
         frame = parameters.period + 1
-        if frame < parameters.sma_unit + 10:
-            frame = parameters.sma_unit + 10
+        if frame < parameters.macd_slow + 10:
+            frame = parameters.macd_slow + 10
 
         today = datetime.utcnow()
         tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -69,70 +70,76 @@ class Exchange:
         if length < 3:
             return None
         
-        values = []
+        dataframe = pandas.DataFrame(data=data)
+        dataframe = dataframe.loc[:, ["time", "high", "low", "close", "volume"]]
+        dataframe.rename(columns={"time": "Date", "high": "High", "low": "Low", "close": "Close", "volume": "Volume"}, inplace=True)
+        dataframe.sort_values("Date", inplace=True, ascending=True)
 
-        last_time = datetime.strptime(data[length - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-        i = 0
-        while last_time < today.replace(second=59):
-            values.append(data[length - 1])
-            values[i]['volume'] = 0.0
+        modified = True
+        while modified:
+            modified = False
 
-            last_time = last_time + delta
-            i += 1
+            for index, row in dataframe.iterrows():
+                current_time = datetime.strptime(row["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
-            if i >= frame:
-                return None
+                if index == 0 and current_time > datetime.strptime(tz2, "%Y-%m-%dT%H:%M:%S.%fZ"):
+                    modified = True
+                    new_row = [datetime.strftime(current_time - delta, "%Y-%m-%dT%H:%M:%S.%fZ"), row["High"], row["Low"], row["Close"], 0.0]
+                    dataframe.loc[-1] = new_row
+                    break
 
-        for i in range(1, length + 1):
-            if length - i - 1 < 0:
+                elif index == 0:
+                    continue
+
+                last_time = datetime.strptime(dataframe.iloc[index - 1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                
+                if last_time + delta >= current_time:
+                    continue
+
+                modified = True
+                last_time += delta
+                new_row = [datetime.strftime(last_time, "%Y-%m-%dT%H:%M:%S.%fZ"), None, None, None, None]
+                dataframe.loc[index - 0.5] = new_row
                 break
             
-            previous_time = datetime.strptime(data[length - i - 1]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
-            current_time = datetime.strptime(data[length - i]['time'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            dataframe = dataframe.sort_index().reset_index(drop=True)
 
-            added = False
+        dataframe[["High", "Low", "Close"]] = dataframe[["High", "Low", "Close"]].fillna(method='ffill')
+        dataframe["Volume"].fillna(value=0.0, inplace=True)
+        
+        length = dataframe.shape[0]
+        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
             
-            while previous_time < current_time:
-                values.append(data[length - i])
-                current_time = current_time - delta
-
-                if added:
-                    values[len(values) - 1]['volume'] = 0.0
-                
-                added = True
+        while last_time + delta < today:
+            row = dataframe.iloc[-1]
+            last_time = datetime.strptime(row.Date, "%Y-%m-%dT%H:%M:%S.%fZ")
+            dataframe.loc[length] = [datetime.strftime(last_time + delta, "%Y-%m-%dT%H:%M:%S.%fZ"), row.High, row.Low, row.Close, 0.0]
+            length += 1
         
-        missing = frame - len(values)
+        dataframe[["High", "Low", "Close", "Volume"]] = dataframe[["High", "Low", "Close", "Volume"]].astype("float64")
+        dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_fast, adjust=False).mean()
+        dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_slow, adjust=False).mean()
+        dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]
+        dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=parameters.macd_smooth, adjust=False).mean()
 
-        if missing > 0:
-            last_item = values[len(values) - 1]
-            last_item['volume'] = 0.0
-            
-            for i in range(missing):
-                values.append(last_item)
-        
-        fma_mean = 0
-        for i in range(parameters.fma_unit, parameters.fma_unit + 10):
-            fma_mean += float(values[i]['close'])
-        
-        fma_mean = fma_mean / 10
+        crypto.macd = float(dataframe.iloc[-1]["MACD"])
+        crypto.signal = float(dataframe.iloc[-1]["Signal"])
 
-        for i in range(1, parameters.fma_unit + 1):
-            fma_mean = ((2 / (parameters.fma_unit + 1)) * float(values[parameters.fma_unit - i]['close'])) + ((1 - (2 / (parameters.fma_unit + 1))) * fma_mean)
+        dataframe["Highest"] = dataframe["High"].rolling(parameters.period).max()
+        dataframe["Lowest"] = dataframe["Low"].rolling(parameters.period).min()
+        dataframe["%K"] = ((dataframe["Close"] - dataframe["Lowest"]) * 100) / (dataframe["Highest"] - dataframe["Lowest"])
+        dataframe["%D"] = dataframe["%K"].rolling(3).mean()
 
-        sma_mean = 0
-        for i in range(parameters.sma_unit, parameters.sma_unit + 10):
-            sma_mean += float(values[i]['close'])
-        
-        sma_mean = sma_mean / 10
+        crypto.stochastic_k = float(dataframe.iloc[-1]["%K"])
+        crypto.stochastic_d = float(dataframe.iloc[-1]["%D"])
 
-        for i in range(1, parameters.sma_unit + 1):
-            sma_mean = ((2 / (parameters.sma_unit + 1)) * float(values[parameters.sma_unit - i]['close'])) + ((1 - (2 / (parameters.sma_unit + 1))) * sma_mean)
+        dataframe = dataframe.sort_values("Date", ascending=False)
 
         avg_gain = 0
         avg_loss = 0
         for i in range(parameters.period):
-            current_price = float(values[i]['close'])
-            last_price = float(values[i + 1]['close'])
+            current_price = float(dataframe.iloc[i]["Close"])
+            last_price = float(dataframe.iloc[i + 1]["Close"])
             
             if current_price == last_price:
                 continue
@@ -146,28 +153,11 @@ class Exchange:
         avg_gain = avg_gain / parameters.period
         avg_loss = avg_loss / parameters.period
 
-        crypto.fma = round(fma_mean, crypto.precision)
-        crypto.sma = round(sma_mean, crypto.precision)
-
         if avg_loss == 0:
             crypto.rsi = 100
         
         else:
             crypto.rsi = 100 - (100 / (1 + (avg_gain / avg_loss)))
-        
-        adl = 0.0
-        for i in range(1, parameters.period + 1):
-            close = float(values[parameters.period - i]['close'])
-            high = float(values[parameters.period - i]['high'])
-            low = float(values[parameters.period - i]['low'])
-            volume = float(values[parameters.period - i]['volume'])
-
-            if high == low:
-                continue
-
-            adl += ((((close - low) - (high - close)) / (high - low)) * volume) * i
-        
-        crypto.adl = adl / parameters.period
         
         if full == False:
             return True
@@ -286,16 +276,16 @@ class Exchange:
             if res is None:
                 continue
 
-            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume:
+            if parameters.account.available * 0.99 >= crypto.hourlyVolume:
                 continue
             
-            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.25:
+            if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1
             
-            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.5:
+            if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.5:
                 crypto.danger += 2
             
-            if parameters.account.available * 0.99 * (1 - (crypto.rsi / 100)) >= crypto.hourlyVolume * 0.75:
+            if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.75:
                 crypto.danger += 3
             
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
