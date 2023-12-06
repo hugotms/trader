@@ -17,7 +17,8 @@ class Mongo:
                 host=self.hostname,
                 port=self.port, 
                 username=self.user, 
-                password=self.password
+                password=self.password,
+                authSource="admin"
             )
             client.server_info()
             self.client = client[self.db_name]
