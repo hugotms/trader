@@ -1,12 +1,12 @@
 # Trader
 
-This algorithm has been created by Hugo TOMASI in order to be used with Bitpanda Pro API server. It is used to monitor your assets fluctuation and sell them if necessary.
+This algorithm has been created by Hugo TOMASI in order to be used with One Trading API server. It is used to monitor your assets fluctuation and sell them if necessary.
 
 In any case would this program be allowed to buy any currency on your behalf, unless you specify it (see variables below).
 
 ## Requirements
 
-For this to work, you must have a Bitpanda Pro account that have been verified and an API key (with at least the `Read` and `Trade` scopes).
+For this to work, you must have a One Trading account that have been verified and an API key (with at least the `Read` and `Trade` scopes).
 
 No active order is necessarry to allow the program to run. If you have some running orders, this program will pick them and monitor them, until it (or you) cancel the active trade.
 
@@ -24,8 +24,8 @@ If you want to receive mail alert on action took by the bot, please make sure th
 
 | Variable      | Description       | Required | Default |
 |---------------|-------------------|----------|---------|
-| `EXCHANGE_TYPE`       | The exchange you want to use. Options are `BITPANDA_PRO`, `HISTORY` and `PAPER_TRADING`.            | yes      | None       |
-| `EXCHANGE_API_KEY`       | Your Bitpanda Pro API token used to connect to the API (required if `EXCHANGE_TYPE` is `BITPANDA_PRO`)            | no      | None       |
+| `EXCHANGE_TYPE`       | The exchange you want to use. Options are `HISTORY`, `ONETRADING` and `PAPER_TRADING`.            | yes      | None       |
+| `EXCHANGE_API_KEY`       | Your One Trading API token used to connect to the API (required if `EXCHANGE_TYPE` is `ONETRADING`)            | no      | None       |
 | `EXCHANGE_INPUT_FILENAME`       | The filename of the CSV file placed in `./input/` directory (required if `EXCHANGE_TYPE` is `HISTORY`)           | no      | None       |
 | `MONGO_DB_HOST`       | The MongoDB hostname (FQDN or IP)            | yes      | None       |
 | `MONGO_DB_PASSWORD`       | The MongoDB password            | yes      | None       |
@@ -125,7 +125,7 @@ volumes:
 
 As with every strategy, you should always test it before going live. Luckily this bot provides this fonctionnality by implementing two fake exchanges.
 
-**Note that in testing mode, no real order is placed. The exchange code will make fake orders in its database. On going orders on Bitpanda Pro are not monitored.**
+**Note that in testing mode, no real order is placed. The exchange code will make fake orders in its database. On going orders on One Trading are not monitored.**
 
 It is recommended to use another database when testing than the one used in real life. Reason is that the bot will enter its trade in the database in the same way it would normally, which would mess reporting and could disturb the other bot. Also, when in `HISTORY` mode, the bot reset the database at the end of the test.
 
@@ -139,7 +139,7 @@ The timeframe will be defined by the CSV, thus ignoring the value set in `CANDLE
 
 ### PAPER_TRADING
 
-In this mode, the bot gets real-time data from Bitpanda Pro in the same way it would in non-testing mode. Only difference is that you get a fake account and that no real order is made.
+In this mode, the bot gets real-time data from One Trading in the same way it would in non-testing mode. Only difference is that you get a fake account and that no real order is made.
 
 ## Disclaimer
 
@@ -154,6 +154,6 @@ This program is not guaranteed to be free of any bug. If you do find one, please
 By using this program, you understand that there is no support tied to it. You are, of course able to raise an issue. Please note that any work on those issues will be done in a "Best effort".
 
 Please, note that the author of this code is not responsible of any loss you may endure and thus, can, in no case, be the target of legal proceedings. As for every financial placement, you should monitor it yourself and not blindly trust technology. Especially if you do not understand this code and what it's doing.
-You are, at all time able to cancel an order the classical way (via Bitpanda Pro web interface or application).
+You are, at all time able to cancel an order the classical way (via One Trading web interface or application).
 
 You should never invest with money you do not own nor that you need.

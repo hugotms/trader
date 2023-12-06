@@ -1,7 +1,7 @@
 import os
 
 from server import db
-from server.exchanges import bitpanda_pro, history, paper_trading
+from server.exchanges import history, onetrading, paper_trading
 from server import mail
 
 class Params:
@@ -169,13 +169,13 @@ class Params:
         if self.refresh_time < 1:
             self.refresh_time = 1
         
-        if self.exchange_type == "BITPANDA_PRO":
+        if self.exchange_type == "ONETRADING":
         
             if self.exchange_api_key is None:
                 print("Required API key was not set")
                 return False
             
-            self.exchange_client = bitpanda_pro.Exchange(self.exchange_api_key)
+            self.exchange_client = onetrading.Exchange(self.exchange_api_key)
 
             return True
         

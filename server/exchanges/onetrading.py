@@ -11,7 +11,7 @@ from data import account
 from data import assets
 
 class Exchange:
-    baseUrl = "https://api.exchange.bitpanda.com/public/v1"
+    baseUrl = "https://api.exchange.onetrading.com/public/v1"
 
     def __init__(self, api_key):
         self.headers = {

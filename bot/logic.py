@@ -54,13 +54,9 @@ def monitor(parameters, actives):
             trading_message += "Loosing money on " + crypto.instrument_code + ". "
             trading_message += stop(parameters, crypto)
         
-        elif (crypto.stochastic_d >= parameters.overbought_threshold or crypto.stochastic_k >= parameters.overbought_threshold) and crypto.signal >= crypto.macd:
-            trading_message += crypto.instrument_code + " is overbought. "
-            trading_message += stop(parameters, crypto)
-        
-        elif crypto.rsi < 50 and (parameters.oversold_threshold >= crypto.stochastic_d or parameters.oversold_threshold >= crypto.stochastic_k):
-            trading_message += crypto.instrument_code + " is oversold. "
-            trading_message += stop(parameters, crypto)
+        #elif crypto.rsi < 50 and parameters.oversold_threshold >= crypto.stochastic_d and crypto.signal >= crypto.macd:
+        #    trading_message += crypto.instrument_code + " is oversold. "
+        #    trading_message += stop(parameters, crypto)
 
         elif parameters.min_profit > 1.0 and crypto.current * parameters.account.takerFee >= crypto.placed * parameters.min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
