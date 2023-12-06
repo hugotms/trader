@@ -266,24 +266,19 @@ class Exchange:
         
         profitable_assets = []
         for crypto in available_cryptos:
-            print(crypto.instrument_code)
             if crypto.precision == 0:
                 continue
 
-            print(crypto.instrument_code)
             if parameters.database.getLastPlaced(crypto, parameters.wait_time):
                 continue
 
-            print(crypto.instrument_code)
             res = self.getStats(crypto, parameters, full=True)
             if res is None:
                 continue
 
-            print(crypto.instrument_code)
             if parameters.account.available * 0.99 >= crypto.hourlyVolume:
                 continue
             
-            print(crypto.instrument_code)
             if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1
             
@@ -299,13 +294,8 @@ class Exchange:
             if crypto.danger > parameters.max_danger:
                 continue
 
-            print(crypto.instrument_code)
             crypto.last_price = round(self.getPrice(crypto.instrument_code), crypto.precision)
             if crypto.last_price == 0:
-                continue
-            
-            print(crypto.instrument_code)
-            if crypto.danger > parameters.max_danger:
                 continue
             
             profitable_assets.append(crypto)
