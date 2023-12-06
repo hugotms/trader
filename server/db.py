@@ -20,7 +20,10 @@ class Mongo:
                 password=self.password,
                 authSource="admin"
             )
-            client.server_info()
+            print(client.server_info())
+
+            print(client.list_databases())
+
             self.client = client[self.db_name]
 
         except Exception:
