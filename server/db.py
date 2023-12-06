@@ -20,9 +20,9 @@ class Mongo:
                 password=self.password,
                 authSource="admin"
             )
-            print(client.server_info())
+            client.server_info()
 
-            print(client.list_databases())
+            print(list(client.list_databases()))
 
             self.client = client[self.db_name]
 
