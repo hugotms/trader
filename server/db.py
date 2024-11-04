@@ -1,5 +1,4 @@
 import pymongo
-import json
 
 from datetime import datetime, timedelta
 
@@ -15,8 +14,8 @@ class Mongo:
         try:
             client = pymongo.MongoClient(
                 host=self.hostname,
-                port=self.port, 
-                username=self.user, 
+                port=self.port,
+                username=self.user,
                 password=self.password,
                 authSource="admin"
             )
@@ -27,27 +26,27 @@ class Mongo:
 
         except Exception:
             print("Unable to connect to database")
-            self.client = None   
-        
+            self.client = None
+
     def find(self, table, query={}):
         return list(self.client[table].find(query))
-    
+
     def create(self, table, data):
         if self.client[table].insert_one(data).inserted_id is None:
             print("Unable to insert data on " + table)
-    
+
     def update(self, table, data, query):
         if self.client[table].update_one(query, {"$set": data}) is None:
             print("Unable to update data on " + table)
-    
+
     def delete(self, table, query):
         if self.client[table].delete_one(query) is None:
             print("Unable to delete data on " + table)
-    
+
     def findVar(self, var_name, current_value, default=None):
         if self.client is None and current_value is None:
             return default
-        
+
         elif self.client is None:
             return current_value
 
@@ -59,22 +58,22 @@ class Mongo:
 
         if len(res) == 0 and current_value is None:
             return default
-        
+
         elif len(res) == 0:
             return current_value
 
         return res[0]["value"]
-    
+
     def putInActive(self, crypto):
         if self.client is None:
             return None
-        
+
         isFound = False
         for active in self.find("actives"):
             if active["_id"] == crypto.instrument_code:
                 isFound = True
                 break
-        
+
         if isFound == True:
             data = {
                 "stop_id": crypto.stop_id,
@@ -99,7 +98,7 @@ class Mongo:
             }
 
             self.update("actives", data, query)
-        
+
         else:
             data = {
                 "_id": crypto.instrument_code,
@@ -121,19 +120,19 @@ class Mongo:
             }
 
             self.create("actives", data)
-        
+
         return self
-    
+
     def putInHistory(self, crypto):
         if self.client is None:
             return None
-        
+
         isFound = False
         for active in self.find("actives"):
             if active["_id"] == crypto.instrument_code:
                 isFound = True
                 break
-        
+
         if isFound == True:
             query = {
                 "_id": crypto.instrument_code
@@ -154,9 +153,9 @@ class Mongo:
             }
 
             self.create("history", data)
-        
+
         return self
-    
+
     def findActives(self, watching_currencies, ignore_currencies):
         if self.client is None:
             return []
@@ -166,14 +165,14 @@ class Mongo:
             query["_id"] = {
                 "$nin": ignore_currencies
             }
-        
+
         elif len(watching_currencies) != 0:
             query["_id"] = {
                 "$in": watching_currencies
             }
-        
+
         return self.find("actives", query)
-    
+
     def getPastPerformance(self, report, parameters, instrument_code=None):
         if self.client is None:
             return None
@@ -196,7 +195,7 @@ class Mongo:
             query2["_id"] = {
                 "$nin": parameters.ignore_currencies
             }
-        
+
         elif len(parameters.watching_currencies) != 0:
             query["instrument_code"] = {
                 "$in": parameters.watching_currencies
@@ -204,7 +203,7 @@ class Mongo:
             query2["_id"] = {
                 "$in": parameters.watching_currencies
             }
-        
+
         if instrument_code is not None:
             query["instrument_code"] = instrument_code
             query2["_id"] = instrument_code
@@ -225,16 +224,16 @@ class Mongo:
                 continue
 
             report.loss += placed - current
-        
+
         for item in res2:
             report.volume += float(item["placed"])
-        
+
         return res
 
     def getLastPlaced(self, crypto, wait_time):
         if self.client is None:
             return True
-        
+
         query = {
             "instrument_code": crypto.instrument_code,
             "date": {

@@ -48,7 +48,7 @@ class Params:
         self.smtp_to = os.getenv('SMTP_TO')
         self.smtp = None
         self.account = None
-    
+
     def actualize(self):
         self.watching_currencies = self.database.findVar("watching_currencies", self.watching_currencies, [])
         self.ignore_currencies = self.database.findVar("ignore_currencies", self.ignore_currencies, [])
@@ -75,8 +75,8 @@ class Params:
             self.smtp_from = self.database.findVar("smtp_from", self.smtp_from)
             self.smtp_key = self.database.findVar("smtp_key", self.smtp_key)
             self.smtp_as = self.database.findVar("smtp_as", self.smtp_as)
-        
-        if (self.smtp_sending == True and 
+
+        if (self.smtp_sending == True and
             (self.smtp_host is None or self.smtp_port is None or
             self.smtp_from is None or self.smtp_key is None)
             ):
@@ -84,13 +84,13 @@ class Params:
             self.smtp_sending = False
             self.smtp = None
 
-        if self.smtp_sending == True: 
+        if self.smtp_sending == True:
             self.smtp = mail.SMTP(
-                self.smtp_host, 
-                self.smtp_port, 
-                self.smtp_key, 
-                self.smtp_from, 
-                self.smtp_as, 
+                self.smtp_host,
+                self.smtp_port,
+                self.smtp_key,
+                self.smtp_from,
+                self.smtp_as,
                 self.smtp_to
             )
 
@@ -98,52 +98,52 @@ class Params:
         if self.db_hostname is None:
             print("Required DB hostname was not set")
             return False
-        
+
         if self.db_password is None:
             print("Required DB password was not set")
             return False
-        
+
         if self.db_user is None:
             print("Default DB user is trader")
             self.db_user = "trader"
 
         if self.db_name is None:
             print("Default DB name is trader")
-            self.db_name = "trader" 
-        
+            self.db_name = "trader"
+
         if self.db_port is None:
             print("Default DB port is 27017")
             self.db_port = 27017
-        
+
         if self.smtp_sending is None or self.smtp_sending.lower() != "true":
             print("By default, you will not be alerted of any variation")
             self.smtp_sending = False
         else:
             self.smtp_sending = True
-        
+
         try:
             self.db_port = int(self.db_port)
         except Exception:
             print("DB port must be a number")
             return False
-        
+
         self.database = db.Mongo(self.db_hostname, self.db_port, self.db_name, self.db_user, self.db_password)
-        
+
         if self.watching_currencies is not None:
             self.watching_currencies = self.watching_currencies.split(',')
-        
+
         if self.ignore_currencies is not None:
             self.ignore_currencies = self.ignore_currencies.split(',')
-        
+
         if self.smtp_sending == True:
             try:
                 self.smtp_port = int(self.smtp_port)
             except Exception:
                 print("SMTP port must be a number")
                 return False
-        
+
         self.actualize()
-        
+
         try:
             self.refresh_time = int(self.refresh_time)
             self.wait_time = int(self.wait_time)
@@ -162,42 +162,42 @@ class Params:
         except Exception:
             print("Error while converting parameters from string")
             return False
-        
+
         if self.security_min_recovered >= self.min_recovered:
             return False
-        
+
         if self.refresh_time < 1:
             self.refresh_time = 1
-        
+
         if self.exchange_type == "ONETRADING":
-        
+
             if self.exchange_api_key is None:
                 print("Required API key was not set")
                 return False
-            
+
             self.exchange_client = onetrading.Exchange(self.exchange_api_key)
 
             return True
-        
+
         try:
             self.init_capital = float(self.init_capital)
         except Exception:
             print("Init capital must be a number")
             return False
-        
+
         if self.exchange_type == "HISTORY":
             if self.exchange_input_filename is None:
                 print("Required CSV file not set")
                 return False
-            
+
             frame = self.period + 1
             if frame < self.macd_slow + 10:
                 frame = self.macd_slow + 10
-            
+
             self.exchange_client = history.Exchange(self.init_capital, self.exchange_input_filename, frame, self.watching_currencies, self.ignore_currencies)
 
             return True
-        
+
         if self.exchange_type == "PAPER_TRADING":
             self.exchange_client = paper_trading.Exchange(self.init_capital)
 
@@ -206,4 +206,3 @@ class Params:
         print("No available exchanges selected")
 
         return False
-    

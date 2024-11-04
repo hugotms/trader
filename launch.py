@@ -38,12 +38,12 @@ def start():
         actives = parameters.exchange_client.getAllActiveAssets(parameters)
 
         alerts = logic.monitor(parameters, actives)
-        
+
         if alerts != "":
             message += "############# ALERTS #############\n\n"
             message += alerts + "\n"
             body += environment.get_template("alerts.html.j2").render(text=alerts)
-        
+
         isOk = parameters.exchange_client.actualizeAccount(parameters.account)
 
         profitables = parameters.exchange_client.findProfitable(parameters)
@@ -53,7 +53,7 @@ def start():
 
             actives_html = environment.get_template("actives.html.j2").render(list=actives)
             html_file = fs.File('output', 'index.html')
-            
+
             if html_file.create() is None:
                 print("Unable to create 'output/index.html' file. Please check permissions on filesystem")
                 isOk = False
@@ -62,7 +62,7 @@ def start():
 
             profitables_html = environment.get_template("profitables.html.j2").render(list=profitables)
             html_file = fs.File('output', 'profitables.html')
-            
+
             if html_file.create() is None:
                 print("Unable to create 'output/profitables.html' file. Please check permissions on filesystem")
                 isOk = False
@@ -77,7 +77,7 @@ def start():
                 history=history[0].list,
             )
             html_file = fs.File('output', 'account.html')
-            
+
             if html_file.create() is None:
                 print("Unable to create 'output/account.html' file. Please check permissions on filesystem")
                 isOk = False
@@ -85,7 +85,7 @@ def start():
             html_file.putInFile(account_html)
 
             sleep = parameters.refresh_time * 60
-        
+
         else:
             isOk = parameters.exchange_client.isOk
 
@@ -99,7 +99,7 @@ def start():
         update_message = ""
         if parameters.latest_bot_release is not None and message != "":
             update_message = utils.checkUpdate(parameters.latest_bot_release)
-        
+
         if update_message != "":
             message += "############# UPDATE #############\n\n"
             message += update_message
@@ -112,24 +112,24 @@ def start():
         if message != "":
             print("\n" + subject)
             print("\n" + message)
-        
+
         if parameters.make_order == True and isOk:
             logic.buy(parameters, profitables)
 
         time.sleep(sleep)
 
         parameters.actualize()
-        
+
         if parameters.exchange_type == "HISTORY":
             continue
-        
+
         if (delay > 0):
             delay -= parameters.refresh_time * 60
             report_send = False
 
         else:
             report_send = True
-    
+
     if parameters.exchange_type == "HISTORY":
         parameters.database.client.drop_collection("actives")
         parameters.database.client.drop_collection("history")

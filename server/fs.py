@@ -10,14 +10,14 @@ class File:
         try:
             if not os.path.exists(self.directory):
                 os.mkdir(self.directory)
-            
+
             fs = open(self.filename, mode='w')
             fs.close()
             return True
 
         except IOError:
             return None
-    
+
     def putInFile(self, content):
         fs = open(self.filename, mode='w')
         fs.write(content)

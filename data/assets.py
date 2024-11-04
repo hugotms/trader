@@ -27,6 +27,5 @@ class Crypto:
         self.higher = self.placed
         if self.current > self.placed:
             self.higher = self.current
-        
+
         return self
-    

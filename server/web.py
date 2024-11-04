@@ -1,5 +1,4 @@
 import requests
-import json
 
 class Api:
 
@@ -13,7 +12,7 @@ class Api:
 
     def send(self):
         response = None
-        
+
         try:
             if self.method == 'GET':
                 response = requests.get(self.url, headers=self.headers)
@@ -28,9 +27,9 @@ class Api:
         except:
             response = None
             print('Unable to access URL')
-        
+
         if response is not None:
             self.statusCode = response.status_code
             self.res = response.json()
-        
+
         return self.statusCode, self.res

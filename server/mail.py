@@ -39,5 +39,5 @@ class SMTP:
         except Exception:
             print("Failed to send mail")
             return False
-        
+
         return True

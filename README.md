@@ -106,7 +106,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: trader
       MONGO_INITDB_ROOT_PASSWORD: secure
-  
+
   # this part is only useful if you wish to have a graphical output
   apache:
     image: httpd:2.4
