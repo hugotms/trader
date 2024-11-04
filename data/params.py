@@ -21,11 +21,9 @@ class Params:
         self.min_recovered = os.getenv('MIN_RECOVERED_RATE')
         self.security_min_recovered = os.getenv('SECURITY_MIN_RECOVERED_RATE')
         self.min_profit = os.getenv('MIN_PROFIT_RATE')
-        self.max_danger = os.getenv('MAX_DANGER')
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
         self.wait_time = os.getenv('MINUTES_WAIT_TIME')
         self.make_order = os.getenv('MAKE_ORDER')
-        self.candlesticks_timeframe = os.getenv('CANDLESTICKS_TIMEFRAME')
         self.candlesticks_period = os.getenv('CANDLESTICKS_PERIOD')
         self.macd_fast = os.getenv('MACD_FAST')
         self.macd_slow = os.getenv('MACD_SLOW')
@@ -55,19 +53,15 @@ class Params:
         self.min_recovered = self.database.findVar("min_recovered", self.min_recovered, 0.95)
         self.security_min_recovered = self.database.findVar("security_min_recovered", self.security_min_recovered, 0.9)
         self.min_profit = self.database.findVar("min_profit", self.min_profit, 1.0)
-        self.max_danger = self.database.findVar("max_danger", self.max_danger, 5)
         self.wait_time = self.database.findVar("wait_time", self.wait_time, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
         self.make_order = self.database.findVar("make_order", self.make_order, False)
-        self.candlesticks_timeframe = self.database.findVar("candlesticks_timeframe", self.candlesticks_timeframe, "DAYS")
         self.candlesticks_period = self.database.findVar("candlesticks_period", self.candlesticks_period, 1)
         self.macd_fast = self.database.findVar("macd_fast", self.macd_fast, 12)
         self.macd_slow = self.database.findVar("macd_slow", self.macd_slow, 26)
         self.macd_smooth = self.database.findVar("macd_smooth", self.macd_smooth, 9)
-        self.period = self.database.findVar("period", self.period, 14)
         self.oversold_threshold = self.database.findVar("oversold_threshold", self.oversold_threshold, 30)
         self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 70)
-        self.init_capital = self.database.findVar("test_init_capital", self.init_capital, 1000)
 
         if self.smtp_sending == True:
             self.smtp_host = self.database.findVar("smtp_host", self.smtp_host)
@@ -150,13 +144,11 @@ class Params:
             self.min_recovered = float(self.min_recovered)
             self.security_min_recovered = float(self.security_min_recovered)
             self.min_profit = float(self.min_profit)
-            self.max_danger = int(self.max_danger)
             self.make_order = bool(self.make_order)
             self.candlesticks_period = int(self.candlesticks_period)
             self.macd_fast = int(self.macd_fast)
             self.macd_slow = int(self.macd_slow)
             self.macd_smooth = int(self.macd_smooth)
-            self.period = int(self.period)
             self.oversold_threshold = int(self.oversold_threshold)
             self.overbought_threshold = int(self.overbought_threshold)
         except Exception:
@@ -190,11 +182,7 @@ class Params:
                 print("Required CSV file not set")
                 return False
 
-            frame = self.period + 1
-            if frame < self.macd_slow + 10:
-                frame = self.macd_slow + 10
-
-            self.exchange_client = history.Exchange(self.init_capital, self.exchange_input_filename, frame, self.watching_currencies, self.ignore_currencies)
+            self.exchange_client = history.Exchange(self.init_capital, self.exchange_input_filename, self.macd_slow + 10, self.watching_currencies, self.ignore_currencies)
 
             return True
 

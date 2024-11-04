@@ -44,7 +44,7 @@ def start():
             message += alerts + "\n"
             body += environment.get_template("alerts.html.j2").render(text=alerts)
 
-        isOk = parameters.exchange_client.actualizeAccount(parameters.account)
+        isOk = parameters.exchange_client.actualizeAccount(parameters)
 
         profitables = parameters.exchange_client.findProfitable(parameters)
 

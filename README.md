@@ -22,45 +22,42 @@ If you want to receive mail alert on action took by the bot, please make sure th
 
 ### Envrionment variables only
 
-| Variable      | Description       | Required | Default |
-|---------------|-------------------|----------|---------|
-| `EXCHANGE_TYPE`       | The exchange you want to use. Options are `HISTORY`, `ONETRADING` and `PAPER_TRADING`.            | yes      | None       |
-| `EXCHANGE_API_KEY`       | Your One Trading API token used to connect to the API (required if `EXCHANGE_TYPE` is `ONETRADING`)            | no      | None       |
-| `EXCHANGE_INPUT_FILENAME`       | The filename of the CSV file placed in `./input/` directory (required if `EXCHANGE_TYPE` is `HISTORY`)           | no      | None       |
-| `MONGO_DB_HOST`       | The MongoDB hostname (FQDN or IP)            | yes      | None       |
-| `MONGO_DB_PASSWORD`       | The MongoDB password            | yes      | None       |
-| `MONGO_DB_NAME`       | The MongoDB database            | no      | trader       |
-| `MONGO_DB_USER`       | The MongoDB username            | no      | trader       |
-| `MONGO_DB_PORT`       | The MongoDB port            | no      | 27017       |
+| Variable                  | Description                                                                                            | Required | Default |
+| ------------------------- | ------------------------------------------------------------------------------------------------------ | -------- | ------- |
+| `EXCHANGE_TYPE`           | The exchange you want to use. Options are `HISTORY`, `ONETRADING` and `PAPER_TRADING`.                 | yes      | None    |
+| `EXCHANGE_API_KEY`        | Your One Trading API token used to connect to the API (required if `EXCHANGE_TYPE` is `ONETRADING`)    | no       | None    |
+| `EXCHANGE_INPUT_FILENAME` | The filename of the CSV file placed in `./input/` directory (required if `EXCHANGE_TYPE` is `HISTORY`) | no       | None    |
+| `MONGO_DB_HOST`           | The MongoDB hostname (FQDN or IP)                                                                      | yes      | None    |
+| `MONGO_DB_PASSWORD`       | The MongoDB password                                                                                   | yes      | None    |
+| `MONGO_DB_NAME`           | The MongoDB database                                                                                   | no       | trader  |
+| `MONGO_DB_USER`           | The MongoDB username                                                                                   | no       | trader  |
+| `MONGO_DB_PORT`           | The MongoDB port                                                                                       | no       | 27017   |
 
 ### Other variables
 
-| Variable      | Description       | Required | Default |
-|---------------|-------------------|----------|---------|
-| `MIN_RECOVERED_RATE`       | The minimum rate you want to recover if currency goes down.            | no      | 0.95       |
-| `SECURITY_MIN_RECOVERED_RATE`       | The minimum rate you want to recover if currency goes down and server is down (places a stop loss order).            | no      | 0.9       |
-| `MIN_PROFIT_RATE`          | The rate from which you take profit. Must be greater than `1.0` to activate. | no      | 1.0       |
-| `MAX_DANGER`              | The maximum danger level a currency can be bought.       | no         | 5        |
-| `MINUTES_REFRESH_TIME`       | The number of minutes between two checks.            | no      | 10       |
-| `MINUTES_WAIT_TIME`       | The number of minutes between a selling order and a buying order on the same currency.            | no      | 10       |
-| `WATCHING_CURRENCIES`       | By default, the bot watches all currencies that you bought. You can, however, specify currencies to look for and thus ignore the rest.            | no      | None       |
-| `IGNORE_CURRENCIES`       | By default, the bot watches all currencies that you bought. You can, however, specify cryptos to ignore. Note that if both this variable and `WATCHING_CURRENCIES` are set, this one will take precedence.            | no      | None       |
-| `MAKE_ORDER`          | Specify if the bot is allowed to place order.       | no      | False    |
-| `CANDLESTICKS_TIMEFRAME`          | Specify the timeframe at which crypto stats are required.      | no      | DAYS     |
-| `CANDLESTICKS_PERIOD`          | Specify the period of unit at which crypto stats are required (1, 4, 5, 15 or 30)       | no      | 1     |
-| `WINDOW_SIZE_FMA`          | Specify the number of units looked at to calculate fast exponential moving average (must be lower than `WINDOW_SIZE_SMA`)       | no      | 5     |
-| `WINDOW_SIZE_SMA`          | Specify the number of units looked at to calculate slow exponential moving average       | no      | 50     |
-| `INDICATORS_PERIOD`          | Specify the number of units looked at to calculate RSI and Accumulation/Distribution indicators      | no      | 14     |
-| `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)       | no      | 30     |
-| `OVERBOUGHT_THRESHOLD`          | Specify the RSI level to define overbought zone (from value to 100)       | no      | 70     |
-| `TEST_INIT_CAPITAL`       | In testing mode, the amount of capital the bot has to invest.            | no      | 1000       |
-| `SEND_ALERT_MAIL`       | If set to `true`, allow the user to be alerted by mail on any action            | no      | False      |
-| `SMTP_HOST`       | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
-| `SMTP_PORT`       | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
-| `SMTP_AS`       | The sender name which you're going to use to send mail         | no      | None       |
-| `SMTP_FROM`       | The email address which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
-| `SMTP_KEY`       | The token used to connect to your account (required if `SEND_ALERT_MAIL="True"`)            | no      | None       |
-| `SMTP_TO`       | The email addresses to whom you want to send the email separated by a comma (default to `SMTP_FROM`)            | no      | None       |
+| Variable                      | Description                                                                                                                                                                                                | Required | Default |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
+| `MIN_RECOVERED_RATE`          | The minimum rate you want to recover if currency goes down.                                                                                                                                                | no       | 0.95    |
+| `SECURITY_MIN_RECOVERED_RATE` | The minimum rate you want to recover if currency goes down and server is down (places a stop loss order).                                                                                                  | no       | 0.9     |
+| `MIN_PROFIT_RATE`             | The rate from which you take profit. Must be greater than `1.0` to activate.                                                                                                                               | no       | 1.0     |
+| `MINUTES_REFRESH_TIME`        | The number of minutes between two checks.                                                                                                                                                                  | no       | 10      |
+| `MINUTES_WAIT_TIME`           | The number of minutes between a selling order and a buying order on the same currency.                                                                                                                     | no       | 10      |
+| `WATCHING_CURRENCIES`         | By default, the bot watches all currencies that you bought. You can, however, specify currencies to look for and thus ignore the rest.                                                                     | no       | None    |
+| `IGNORE_CURRENCIES`           | By default, the bot watches all currencies that you bought. You can, however, specify cryptos to ignore. Note that if both this variable and `WATCHING_CURRENCIES` are set, this one will take precedence. | no       | None    |
+| `MAKE_ORDER`                  | Specify if the bot is allowed to place order.                                                                                                                                                              | no       | False   |
+| `CANDLESTICKS_PERIOD`         | Specify the period of unit at which crypto stats are required (1, 4, 5, 15 or 30)                                                                                                                          | no       | 1       |
+| `WINDOW_SIZE_FMA`             | Specify the number of units looked at to calculate fast exponential moving average (must be lower than `WINDOW_SIZE_SMA`)                                                                                  | no       | 5       |
+| `WINDOW_SIZE_SMA`             | Specify the number of units looked at to calculate slow exponential moving average                                                                                                                         | no       | 50      |
+| `OVERSOLD_THRESHOLD`          | Specify the RSI level to define oversold zone (from 0 to value)                                                                                                                                            | no       | 30      |
+| `OVERBOUGHT_THRESHOLD`        | Specify the RSI level to define overbought zone (from value to 100)                                                                                                                                        | no       | 70      |
+| `TEST_INIT_CAPITAL`           | In testing mode, the amount of capital the bot has to invest.                                                                                                                                              | yes      | None    |
+| `SEND_ALERT_MAIL`             | If set to `true`, allow the user to be alerted by mail on any action                                                                                                                                       | no       | False   |
+| `SMTP_HOST`                   | The SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)                                                                                                              | no       | None    |
+| `SMTP_PORT`                   | The port of the SMTP server which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)                                                                                                  | no       | None    |
+| `SMTP_AS`                     | The sender name which you're going to use to send mail                                                                                                                                                     | no       | None    |
+| `SMTP_FROM`                   | The email address which you're going to use to send mail (required if `SEND_ALERT_MAIL="True"`)                                                                                                            | no       | None    |
+| `SMTP_KEY`                    | The token used to connect to your account (required if `SEND_ALERT_MAIL="True"`)                                                                                                                           | no       | None    |
+| `SMTP_TO`                     | The email addresses to whom you want to send the email separated by a comma (default to `SMTP_FROM`)                                                                                                       | no       | None    |
 
 ## Build
 
@@ -135,7 +132,7 @@ In this mode, the bot gets its data from a CSV file defined by `EXCHANGE_INPUT_F
 
 You can have the data of one or several cryptocurrencies in the same file. However, you must keep in mind that the values of `WATCHING_CURRENCIES` and `IGNORE_CURRENCIES` are still taken into account.
 
-The timeframe will be defined by the CSV, thus ignoring the value set in `CANDLESTICKS_TIMEFRAME` and `CANDLESTICKS_PERIOD`. If you create the CSV file yourself from different source, be sure to use the same timeframe for all currencies.
+If you create the CSV file yourself from different source, be sure to use the same timeframe for all currencies.
 
 ### PAPER_TRADING
 

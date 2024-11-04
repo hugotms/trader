@@ -28,7 +28,7 @@ class Exchange:
 
         return new
 
-    def actualizeAccount(self, account):
+    def actualizeAccount(self, parameters):
         return True
 
     def getStats(self, crypto, parameters, full=False):
@@ -202,9 +202,6 @@ class Exchange:
 
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
-
-            if crypto.danger > parameters.max_danger:
-                continue
 
             profitable_assets.append(crypto)
 

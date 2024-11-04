@@ -25,40 +25,11 @@ class Exchange:
 
         return new
 
-    def actualizeAccount(self, account):
+    def actualizeAccount(self, parameters):
         return True
 
-    def getStats(self, crypto, parameters, full=False):
-        frame = parameters.period + 1
-        if frame < parameters.macd_slow + 10:
-            frame = parameters.macd_slow + 10
-
-        today = datetime.utcnow()
-        tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        tz2 = None
-        delta = None
-
-        if parameters.candlesticks_timeframe == 'MONTHS':
-            tz2 = (today - relativedelta(months=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-            delta = relativedelta(months=parameters.candlesticks_period)
-
-        elif parameters.candlesticks_timeframe == 'WEEKS':
-            tz2 = (today - relativedelta(weeks=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-            delta = relativedelta(weeks=parameters.candlesticks_period)
-
-        elif parameters.candlesticks_timeframe == 'DAYS':
-            tz2 = (today - timedelta(days=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-            delta = timedelta(days=parameters.candlesticks_period)
-
-        elif parameters.candlesticks_timeframe == 'HOURS':
-            tz2 = (today - timedelta(hours=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-            delta = timedelta(hours=parameters.candlesticks_period)
-
-        elif parameters.candlesticks_timeframe == 'MINUTES':
-            tz2 = (today - timedelta(minutes=frame * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-            delta = timedelta(minutes=parameters.candlesticks_period)
-
-        status_code, data = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=" + parameters.candlesticks_timeframe + "&period=" + str(parameters.candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=self.header).send()
+    def getDataframe(self, instrument_code, timeframe, candlesticks_period, today, tz, tz2, delta):
+        status_code, data = web.Api(Exchange.baseUrl + "/candlesticks/" + instrument_code + "?unit=" + timeframe + "&period=" + str(candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=self.header).send()
         time.sleep(1)
 
         if status_code != 200:
@@ -116,27 +87,15 @@ class Exchange:
             length += 1
 
         dataframe[["High", "Low", "Close", "Volume"]] = dataframe[["High", "Low", "Close", "Volume"]].astype("float64")
-        dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_fast, adjust=False).mean()
-        dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_slow, adjust=False).mean()
-        dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]
-        dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=parameters.macd_smooth, adjust=False).mean()
 
-        crypto.macd = float(dataframe.iloc[-1]["MACD"])
-        crypto.signal = float(dataframe.iloc[-1]["Signal"])
+        return dataframe
 
-        dataframe["Highest"] = dataframe["High"].rolling(parameters.period).max()
-        dataframe["Lowest"] = dataframe["Low"].rolling(parameters.period).min()
-        dataframe["%K"] = ((dataframe["Close"] - dataframe["Lowest"]) * 100) / (dataframe["Highest"] - dataframe["Lowest"])
-        dataframe["%D"] = dataframe["%K"].rolling(3).mean()
-
-        crypto.stochastic_k = float(dataframe.iloc[-1]["%K"])
-        crypto.stochastic_d = float(dataframe.iloc[-1]["%D"])
-
+    def getRSI(self, dataframe):
         dataframe = dataframe.sort_values("Date", ascending=False)
 
         avg_gain = 0
         avg_loss = 0
-        for i in range(parameters.period):
+        for i in range(14):
             current_price = float(dataframe.iloc[i]["Close"])
             last_price = float(dataframe.iloc[i + 1]["Close"])
 
@@ -149,35 +108,85 @@ class Exchange:
 
             avg_loss += abs(current_price - last_price)
 
-        avg_gain = avg_gain / parameters.period
-        avg_loss = avg_loss / parameters.period
+        avg_gain = avg_gain / 14
+        avg_loss = avg_loss / 14
 
         if avg_loss == 0:
-            crypto.rsi = 100
+            return 100
 
-        else:
-            crypto.rsi = 100 - (100 / (1 + (avg_gain / avg_loss)))
+        return 100 - (100 / (1 + (avg_gain / avg_loss)))
 
-        if full == False:
-            return True
+    def getStats(self, crypto, parameters):
+        today = datetime.utcnow()
+        tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+        tz2 = (today - relativedelta(months=14)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        delta = relativedelta(months=1)
+
+        dataframe = self.getDataframe(crypto.instrument_code, "MONTHS", 1, today, tz, tz2, delta)
+        if dataframe is None:
+            return None
+
+        if self.getRSI(dataframe) < 50:
+            crypto.danger += 1
+
+        tz2 = (today - relativedelta(weeks=14)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        delta = relativedelta(weeks=1)
+
+        dataframe = self.getDataframe(crypto.instrument_code, "WEEKS", 1, today, tz, tz2, delta)
+        if dataframe is None:
+            return None
+
+        if self.getRSI(dataframe) < 50:
+            crypto.danger += 1
+
+        tz2 = (today - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        delta = timedelta(days=1)
+
+        dataframe = self.getDataframe(crypto.instrument_code, "DAYS", 1, today, tz, tz2, delta)
+        if dataframe is None:
+            return None
+
+        if self.getRSI(dataframe) < 50:
+            crypto.danger += 2
 
         tz2 = (today - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        status_code, data = web.Api(Exchange.baseUrl + "/candlesticks/" + crypto.instrument_code + "?unit=HOURS&period=1&from=" + tz2 + "&to=" + tz, headers=self.header).send()
-        time.sleep(1)
+        delta = timedelta(hours=1)
 
-        if status_code != 200:
-            print("Error while trying to get price tickers")
+        dataframe = self.getDataframe(crypto.instrument_code, "HOURS", 1, today, tz, tz2, delta)
+        if dataframe is None:
             return None
 
-        length = len(data)
+        if self.getRSI(dataframe) < 50:
+            crypto.danger += 2
 
-        if length == 0:
+        crypto.hourlyVolume = float(dataframe.iloc[-1]["Volume"])
+
+        for index, row in dataframe.iterrows():
+            crypto.dailyVolume += float(row['Volume'])
+
+        tz2 = (today - timedelta(minutes=(parameters.macd_slow + 10) * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        delta = timedelta(minutes=parameters.candlesticks_period)
+
+        dataframe = self.getDataframe(crypto.instrument_code, "MINUTES", parameters.candlesticks_period, today, tz, tz2, delta)
+        if dataframe is None:
             return None
 
-        crypto.hourlyVolume = float(data[length - 1]['volume'])
+        dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_fast, adjust=False).mean()
+        dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_slow, adjust=False).mean()
+        dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]
+        dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=parameters.macd_smooth, adjust=False).mean()
+        dataframe["Highest"] = dataframe["High"].rolling(14).max()
+        dataframe["Lowest"] = dataframe["Low"].rolling(14).min()
+        dataframe["%K"] = ((dataframe["Close"] - dataframe["Lowest"]) * 100) / (dataframe["Highest"] - dataframe["Lowest"])
+        dataframe["%D"] = dataframe["%K"].rolling(3).mean()
 
-        for item in data:
-            crypto.dailyVolume += float(item['volume'])
+        crypto.macd = float(dataframe.iloc[-1]["MACD"])
+        crypto.signal = float(dataframe.iloc[-1]["Signal"])
+        crypto.stochastic_k = float(dataframe.iloc[-1]["%K"])
+        crypto.stochastic_d = float(dataframe.iloc[-1]["%D"])
+
+        crypto.rsi = self.getRSI(dataframe)
 
         return True
 
@@ -269,7 +278,7 @@ class Exchange:
             if parameters.database.getLastPlaced(crypto, parameters.wait_time):
                 continue
 
-            res = self.getStats(crypto, parameters, full=True)
+            res = self.getStats(crypto, parameters)
             if res is None:
                 continue
 
@@ -288,10 +297,7 @@ class Exchange:
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
 
-            if crypto.danger > parameters.max_danger:
-                continue
-
-            crypto.last_price = round(self.getPrice(crypto.instrument_code), crypto.precision)
+            crypto.last_price = self.getPrice(crypto.instrument_code)
             if crypto.last_price == 0:
                 continue
 

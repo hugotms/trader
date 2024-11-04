@@ -1,7 +1,7 @@
 class Account:
 
-    def __init__(self, available, makerFee=1, takerFee=1):
+    def __init__(self, available):
         self.available = available
-        self.makerFee = makerFee
-        self.takerFee = takerFee
+        self.makerFee = 1
+        self.takerFee = 1
         self.total = 0
