@@ -10,7 +10,7 @@ from data import account
 from data import assets
 
 class Exchange:
-    baseUrl = "https://api.onetrading.com/public/v1"
+    baseUrl = "https://api.onetrading.com/fast/v1"
 
     def __init__(self, api_key):
         self.headers = {
@@ -112,6 +112,8 @@ class Exchange:
         if status_code != 200:
             print("Error while trying to get price tickers")
             return None
+
+        data = data["candlesticks"]
 
         length = len(data)
         if length < 3:
