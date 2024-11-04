@@ -306,18 +306,22 @@ class Exchange:
                 ignored_assets.append(item['trade']['instrument_code'])
                 continue
 
-            amount = (float(item['trade']['amount']) - float(item['fee']['fee_amount'])) * self.getPrice(item['trade']['instrument_code'])
-
             if item['trade']['instrument_code'] not in asset_names:
-                active_assets.append(assets.Crypto(
+                last_price = self.getPrice(item['trade']['instrument_code'])
+
+                asset = assets.Crypto(
                     instrument_code=item['trade']['instrument_code'],
                     base=item['trade']['instrument_code'].split('_')[0],
                     currency=item['trade']['instrument_code'].split('_')[1],
                     owned=float(item['trade']['amount']) - float(item['fee']['fee_amount']),
                     placed=float(item['trade']['amount']) * float(item['trade']['price']),
-                    current=amount,
+                    current=(float(item['trade']['amount']) - float(item['fee']['fee_amount'])) * last_price,
                     placed_on=item['trade']['time']
-                    ).setHigher())
+                ).setHigher()
+
+                asset.last_price = last_price
+
+                active_assets.append(asset)
 
                 asset_names.append(item['trade']['instrument_code'])
 
@@ -325,7 +329,7 @@ class Exchange:
                 active = active_assets[asset_names.index(item['trade']['instrument_code'])]
                 active.owned += float(item['trade']['amount']) - float(item['fee']['fee_amount'])
                 active.placed += float(item['trade']['amount']) * float(item['trade']['price'])
-                active.current += amount
+                active.current += (float(item['trade']['amount']) - float(item['fee']['fee_amount'])) * active.last_price
                 active.setHigher()
 
         for crypto in parameters.database.findActives(parameters.watching_currencies, parameters.ignore_currencies):
@@ -394,8 +398,6 @@ class Exchange:
             parameters.database.putInHistory(asset)
 
         for asset in active_assets:
-            asset.last_price = self.getPrice(asset.instrument_code)
-
             header = {
                 "Accept": "application/json"
             }
