@@ -12,7 +12,7 @@ def start():
     isOk = parameters.new()
 
     if isOk == True:
-        parameters.account = parameters.exchange_client.getAccount()
+        parameters.account = parameters.exchange_client.getAccount(parameters)
 
     if parameters.account is None:
         isOk = False

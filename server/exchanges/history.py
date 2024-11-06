@@ -22,7 +22,7 @@ class Exchange:
         self.isOk = True
         self.frame = frame
 
-    def getAccount(self):
+    def getAccount(self, parameters):
         new = account.Account(available=self.init_capital)
         new.makerFee = 0.9985
         new.takerFee = 0.9975
@@ -41,12 +41,12 @@ class Exchange:
 
         dataframe = dataframe.head(self.frame)
 
-        dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_fast, adjust=False).mean()
-        dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_slow, adjust=False).mean()
+        dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=12, adjust=False).mean()
+        dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=26, adjust=False).mean()
         dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]
-        dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=parameters.macd_smooth, adjust=False).mean()
-        dataframe["Highest"] = dataframe["High"].rolling(parameters.period).max()
-        dataframe["Lowest"] = dataframe["Low"].rolling(parameters.period).min()
+        dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=9, adjust=False).mean()
+        dataframe["Highest"] = dataframe["High"].rolling(14).max()
+        dataframe["Lowest"] = dataframe["Low"].rolling(14).min()
         dataframe["%K"] = ((dataframe["Close"] - dataframe["Lowest"]) * 100) / (dataframe["Highest"] - dataframe["Lowest"])
         dataframe["%D"] = dataframe["%K"].rolling(3).mean()
 
@@ -62,7 +62,7 @@ class Exchange:
 
         avg_gain = 0
         avg_loss = 0
-        for i in range(parameters.period):
+        for i in range(14):
             current_price = float(dataframe.iloc[i]["Close"])
             last_price = float(dataframe.iloc[i + 1]["Close"])
 
@@ -75,8 +75,8 @@ class Exchange:
 
             avg_loss += abs(current_price - last_price)
 
-        avg_gain = avg_gain / parameters.period
-        avg_loss = avg_loss / parameters.period
+        avg_gain = avg_gain / 14
+        avg_loss = avg_loss / 14
 
         if avg_loss == 0:
             crypto.rsi = 100
@@ -191,7 +191,7 @@ class Exchange:
                 continue
 
             if parameters.account.available * 0.99 >= crypto.hourlyVolume:
-                continue
+                crypto.danger += 4
 
             if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1

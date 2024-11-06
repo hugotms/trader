@@ -10,6 +10,7 @@ class Params:
         self.exchange_type = os.getenv('EXCHANGE_TYPE')
         self.exchange_api_key = os.getenv('EXCHANGE_API_KEY')
         self.exchange_input_filename = os.getenv('EXCHANGE_INPUT_FILENAME')
+        self.base_fiat = os.getenv('BASE_FIAT')
         self.init_capital = os.getenv('TEST_INIT_CAPITAL')
 
         self.db_hostname = os.getenv('MONGO_DB_HOST')
@@ -24,10 +25,6 @@ class Params:
         self.refresh_time = os.getenv('MINUTES_REFRESH_TIME')
         self.wait_time = os.getenv('MINUTES_WAIT_TIME')
         self.make_order = os.getenv('MAKE_ORDER')
-        self.macd_fast = os.getenv('MACD_FAST')
-        self.macd_slow = os.getenv('MACD_SLOW')
-        self.macd_smooth = os.getenv('MACD_SMOOTH')
-        self.period = os.getenv('INDICATORS_PERIOD')
         self.overbought_threshold = os.getenv('OVERBOUGHT_THRESHOLD')
 
         self.latest_bot_release = os.getenv('TRADER_VERSION')
@@ -54,9 +51,6 @@ class Params:
         self.wait_time = self.database.findVar("wait_time", self.wait_time, 10)
         self.refresh_time = self.database.findVar("refresh_time", self.refresh_time, 10)
         self.make_order = self.database.findVar("make_order", self.make_order, False)
-        self.macd_fast = self.database.findVar("macd_fast", self.macd_fast, 12)
-        self.macd_slow = self.database.findVar("macd_slow", self.macd_slow, 26)
-        self.macd_smooth = self.database.findVar("macd_smooth", self.macd_smooth, 9)
         self.overbought_threshold = self.database.findVar("overbought_threshold", self.overbought_threshold, 80)
 
         if self.smtp_sending == True:
@@ -141,9 +135,6 @@ class Params:
             self.security_min_recovered = float(self.security_min_recovered)
             self.min_profit = float(self.min_profit)
             self.make_order = bool(self.make_order)
-            self.macd_fast = int(self.macd_fast)
-            self.macd_slow = int(self.macd_slow)
-            self.macd_smooth = int(self.macd_smooth)
             self.overbought_threshold = int(self.overbought_threshold)
         except Exception:
             print("Error while converting parameters from string")
@@ -159,6 +150,10 @@ class Params:
 
             if self.exchange_api_key is None:
                 print("Required API key was not set")
+                return False
+            
+            if self.base_fiat is None:
+                print("Base fiat must be set")
                 return False
 
             self.exchange_client = onetrading.Exchange(self.exchange_api_key)
@@ -176,11 +171,15 @@ class Params:
                 print("Required CSV file not set")
                 return False
 
-            self.exchange_client = history.Exchange(self.init_capital, self.exchange_input_filename, self.macd_slow + 10, self.watching_currencies, self.ignore_currencies)
+            self.exchange_client = history.Exchange(self.init_capital, self.exchange_input_filename, 36, self.watching_currencies, self.ignore_currencies)
 
             return True
 
         if self.exchange_type == "PAPER_TRADING":
+            if self.base_fiat is None:
+                print("Base fiat must be set")
+                return False
+
             self.exchange_client = paper_trading.Exchange(self.init_capital)
 
             return True

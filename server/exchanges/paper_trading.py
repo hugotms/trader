@@ -19,7 +19,7 @@ class Exchange:
             "Accept": "application/json"
         }
 
-    def getAccount(self):
+    def getAccount(self, parameters):
         new = account.Account(available=self.init_capital)
         new.makerFee = 0.9985
         new.takerFee = 0.9975
@@ -161,17 +161,17 @@ class Exchange:
         if self.getRSI(dataframe) < 50:
             crypto.danger += 1
 
-        tz2 = (today - timedelta(days=(parameters.macd_slow + 10))).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - timedelta(days=36)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         delta = timedelta(days=1)
 
-        dataframe = self.getDataframe(crypto.instrument_code, "DAYS", parameters.macd_slow + 10, 1, today, tz, tz2, delta)
+        dataframe = self.getDataframe(crypto.instrument_code, "DAYS", 26 + 10, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
         
-        dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_fast, adjust=False).mean()
-        dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_slow, adjust=False).mean()
+        dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=12, adjust=False).mean()
+        dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=26, adjust=False).mean()
         dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]
-        dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=parameters.macd_smooth, adjust=False).mean()
+        dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=9, adjust=False).mean()
         dataframe["Highest"] = dataframe["High"].rolling(14).max()
         dataframe["Lowest"] = dataframe["Low"].rolling(14).min()
         dataframe["%K"] = ((dataframe["Close"] - dataframe["Lowest"]) * 100) / (dataframe["Highest"] - dataframe["Lowest"])
@@ -273,6 +273,9 @@ class Exchange:
 
         available_cryptos = []
         for item in data:
+            if item["quote"]["code"] != parameters.base_fiat:
+                continue
+
             if item["state"] != "ACTIVE":
                 continue
 
