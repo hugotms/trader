@@ -2,6 +2,7 @@ from server import web
 
 import time
 import pandas
+import math
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -101,7 +102,7 @@ class Exchange:
 
         return True
 
-    def getDataframe(self, instrument_code, timeframe, candlesticks_period, today, tz, tz2, delta):
+    def getDataframe(self, instrument_code, timeframe, lines, candlesticks_period, today, tz, tz2, delta):
         header = {
             "Accept": "application/json"
         }
@@ -123,48 +124,66 @@ class Exchange:
         dataframe = dataframe.loc[:, ["time", "high", "low", "close", "volume"]]
         dataframe.rename(columns={"time": "Date", "high": "High", "low": "Low", "close": "Close", "volume": "Volume"}, inplace=True)
         dataframe.sort_values("Date", inplace=True, ascending=True)
+        dataframe.reset_index(inplace=True, drop=True)
+
+        length = dataframe.shape[0]
+        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+
+        i = 0
+        while last_time + delta < today.replace(second=59):
+            last_time += delta
+            dataframe.loc[length] = [datetime.strftime(last_time, "%Y-%m-%dT%H:%M:%S.%fZ"), None, None, None, None]
+            length += 1
+            i += 1
+
+            if i >= lines:
+                return None
+        
+        dataframe.reset_index(inplace=True, drop=True)
 
         modified = True
         while modified:
             modified = False
 
-            for index, row in dataframe.iterrows():
-                current_time = datetime.strptime(row["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            last_row = None
+            length = dataframe.shape[0]
 
-                if index == 0 and current_time > datetime.strptime(tz2, "%Y-%m-%dT%H:%M:%S.%fZ"):
-                    modified = True
-                    new_row = [datetime.strftime(current_time - delta, "%Y-%m-%dT%H:%M:%S.%fZ"), row["High"], row["Low"], row["Close"], 0.0]
-                    dataframe.loc[-1] = new_row
+            for index, row in dataframe.iterrows():
+                if index >= lines:
                     break
 
-                elif index == 0:
+                if index + 1 > length:
+                    break
+
+                if index == 0:
+                    last_row = row
                     continue
 
-                last_time = datetime.strptime(dataframe.iloc[index - 1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                current_time = datetime.strptime(row["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
-                if last_time + delta >= current_time:
-                    continue
+                if datetime.strptime(last_row["Date"], "%Y-%m-%dT%H:%M:%S.%fZ") + delta < current_time:
+                    modified = True
+                    new_time = datetime.strptime(last_row["Date"], "%Y-%m-%dT%H:%M:%S.%fZ") + delta
+                    new_row = [datetime.strftime(new_time, "%Y-%m-%dT%H:%M:%S.%fZ"), None, None, None, None]
+                    dataframe.loc[index - 0.5] = new_row
+                    break
 
-                modified = True
-                last_time += delta
-                new_row = [datetime.strftime(last_time, "%Y-%m-%dT%H:%M:%S.%fZ"), None, None, None, None]
-                dataframe.loc[index - 0.5] = new_row
-                break
+                last_row = row
 
             dataframe = dataframe.sort_index().reset_index(drop=True)
 
-        dataframe[["High", "Low", "Close"]] = dataframe[["High", "Low", "Close"]].fillna(method='ffill')
-        dataframe["Volume"].fillna(value=0.0, inplace=True)
-
         length = dataframe.shape[0]
-        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        last_row = dataframe.iloc[0]
+        last_time = datetime.strptime(last_row["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
-        while last_time + delta < today:
-            row = dataframe.iloc[-1]
-            last_time = datetime.strptime(row.Date, "%Y-%m-%dT%H:%M:%S.%fZ")
-            dataframe.loc[length] = [datetime.strftime(last_time + delta, "%Y-%m-%dT%H:%M:%S.%fZ"), row.High, row.Low, row.Close, 0.0]
+        while length < lines:
+            last_time -= delta
+            dataframe.loc[-1] = [datetime.strftime(last_time, "%Y-%m-%dT%H:%M:%S.%fZ"), last_row["High"], last_row["Low"], last_row["Close"], 0.0]
+            dataframe = dataframe.sort_index().reset_index(drop=True)
             length += 1
 
+        dataframe[["High", "Low", "Close"]] = dataframe[["High", "Low", "Close"]].fillna(method='ffill')
+        dataframe["Volume"].fillna(value=0.0, inplace=True)
         dataframe[["High", "Low", "Close", "Volume"]] = dataframe[["High", "Low", "Close", "Volume"]].astype("float64")
 
         return dataframe
@@ -199,58 +218,33 @@ class Exchange:
         today = datetime.utcnow()
         tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        tz2 = (today - relativedelta(months=14)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - relativedelta(months=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         delta = relativedelta(months=1)
 
-        dataframe = self.getDataframe(crypto.instrument_code, "MONTHS", 1, today, tz, tz2, delta)
+        dataframe = self.getDataframe(crypto.instrument_code, "MONTHS", 24, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
 
         if self.getRSI(dataframe) < 50:
             crypto.danger += 1
 
-        tz2 = (today - relativedelta(weeks=14)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - relativedelta(weeks=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         delta = relativedelta(weeks=1)
 
-        dataframe = self.getDataframe(crypto.instrument_code, "WEEKS", 1, today, tz, tz2, delta)
+        dataframe = self.getDataframe(crypto.instrument_code, "WEEKS", 24, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
 
         if self.getRSI(dataframe) < 50:
             crypto.danger += 1
 
-        tz2 = (today - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        tz2 = (today - timedelta(days=(parameters.macd_slow + 10))).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         delta = timedelta(days=1)
 
-        dataframe = self.getDataframe(crypto.instrument_code, "DAYS", 1, today, tz, tz2, delta)
+        dataframe = self.getDataframe(crypto.instrument_code, "DAYS", parameters.macd_slow + 10, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
-
-        if self.getRSI(dataframe) < 50:
-            crypto.danger += 2
-
-        tz2 = (today - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        delta = timedelta(hours=1)
-
-        dataframe = self.getDataframe(crypto.instrument_code, "HOURS", 1, today, tz, tz2, delta)
-        if dataframe is None:
-            return None
-
-        if self.getRSI(dataframe) < 50:
-            crypto.danger += 2
-
-        crypto.hourlyVolume = float(dataframe.iloc[-1]["Volume"])
-
-        for index, row in dataframe.iterrows():
-            crypto.dailyVolume += float(row['Volume'])
-
-        tz2 = (today - timedelta(minutes=(parameters.macd_slow + 10) * parameters.candlesticks_period)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        delta = timedelta(minutes=parameters.candlesticks_period)
-
-        dataframe = self.getDataframe(crypto.instrument_code, "MINUTES", parameters.candlesticks_period, today, tz, tz2, delta)
-        if dataframe is None:
-            return None
-
+        
         dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_fast, adjust=False).mean()
         dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_slow, adjust=False).mean()
         dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]
@@ -265,7 +259,41 @@ class Exchange:
         crypto.stochastic_k = float(dataframe.iloc[-1]["%K"])
         crypto.stochastic_d = float(dataframe.iloc[-1]["%D"])
 
+        if math.isnan(crypto.macd) or math.isnan(crypto.signal) or math.isnan(crypto.stochastic_k) or math.isnan(crypto.stochastic_d):
+            return None
+
         crypto.rsi = self.getRSI(dataframe)
+
+        tz2 = (today - timedelta(hours=34)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        delta = timedelta(hours=1)
+
+        dataframe = self.getDataframe(crypto.instrument_code, "HOURS", 34, 1, today, tz, tz2, delta)
+        if dataframe is None:
+            return None
+
+        if self.getRSI(dataframe) < 50:
+            crypto.danger += 2
+
+        crypto.hourlyVolume = float(dataframe.iloc[-1]["Volume"])
+
+        dataframe = dataframe.sort_values("Date", ascending=False)
+        dataframe.reset_index(drop=True, inplace=True)
+
+        for index, row in dataframe.iterrows():
+            if index >= 24:
+                break
+
+            crypto.dailyVolume += float(row["Volume"])
+
+        tz2 = (today - timedelta(minutes=(24 * 5))).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        delta = timedelta(minutes=5)
+
+        dataframe = self.getDataframe(crypto.instrument_code, "MINUTES", 24, 5, today, tz, tz2, delta)
+        if dataframe is None:
+            return None
+
+        if self.getRSI(dataframe) < 50:
+            crypto.danger += 2
 
         return True
 
@@ -490,7 +518,7 @@ class Exchange:
                 continue
 
             if parameters.account.available * 0.99 >= crypto.hourlyVolume:
-                continue
+                crypto.danger += 4
 
             if parameters.account.available * 0.99 >= crypto.hourlyVolume * 0.25:
                 crypto.danger += 1
@@ -503,9 +531,6 @@ class Exchange:
 
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
-
-            if crypto.danger > parameters.max_danger:
-                continue
 
             crypto.last_price = self.getPrice(crypto.instrument_code)
             if crypto.last_price == 0:

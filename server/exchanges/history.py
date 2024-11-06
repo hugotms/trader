@@ -1,4 +1,5 @@
 import pandas
+import math
 
 from data import account
 from data import assets
@@ -44,17 +45,18 @@ class Exchange:
         dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=parameters.macd_slow, adjust=False).mean()
         dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]
         dataframe["Signal"] = dataframe.iloc[:]["MACD"].ewm(span=parameters.macd_smooth, adjust=False).mean()
-
-        crypto.macd = float(dataframe.iloc[-1]["MACD"])
-        crypto.signal = float(dataframe.iloc[-1]["Signal"])
-
         dataframe["Highest"] = dataframe["High"].rolling(parameters.period).max()
         dataframe["Lowest"] = dataframe["Low"].rolling(parameters.period).min()
         dataframe["%K"] = ((dataframe["Close"] - dataframe["Lowest"]) * 100) / (dataframe["Highest"] - dataframe["Lowest"])
         dataframe["%D"] = dataframe["%K"].rolling(3).mean()
 
+        crypto.macd = float(dataframe.iloc[-1]["MACD"])
+        crypto.signal = float(dataframe.iloc[-1]["Signal"])
         crypto.stochastic_k = float(dataframe.iloc[-1]["%K"])
         crypto.stochastic_d = float(dataframe.iloc[-1]["%D"])
+
+        if math.isnan(crypto.macd) or math.isnan(crypto.signal) or math.isnan(crypto.stochastic_k) or math.isnan(crypto.stochastic_d):
+            return None
 
         dataframe = dataframe.sort_values("Date", ascending=False)
 
