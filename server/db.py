@@ -34,14 +34,23 @@ class Mongo:
     def create(self, table, data):
         if self.client[table].insert_one(data).inserted_id is None:
             print("Unable to insert data on " + table)
+            return None
+
+        return True
 
     def update(self, table, data, query):
         if self.client[table].update_one(query, {"$set": data}) is None:
             print("Unable to update data on " + table)
+            return None
+
+        return True
 
     def delete(self, table, query):
         if self.client[table].delete_one(query) is None:
             print("Unable to delete data on " + table)
+            return None
+
+        return True
 
     def findVar(self, var_name, current_value, default=None):
         if self.client is None and current_value is None:
@@ -246,3 +255,36 @@ class Mongo:
             return True
 
         return False
+
+    def getAccount(self):
+        if self.client is None:
+            return None
+
+        res = self.find("account")
+        if len(res) <= 0:
+            return None
+
+        return res[0]
+
+    def updateAccount(self, available, init_capital):
+        if self.client is None:
+            return None
+
+        account = None
+        res = self.find("account")
+        if len(res) != 0:
+            account = res[0]
+
+        data = {
+            "available": available,
+            "init_capital": init_capital
+        }
+
+        if account is None:
+            return self.create("account", data)
+
+        query = {
+            "_id": account['_id']
+        }
+
+        return self.update("account", data, query)

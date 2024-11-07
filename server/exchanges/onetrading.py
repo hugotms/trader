@@ -138,7 +138,7 @@ class Exchange:
 
             if i >= lines:
                 return None
-        
+
         dataframe.reset_index(inplace=True, drop=True)
 
         modified = True
@@ -248,7 +248,7 @@ class Exchange:
         dataframe = self.getDataframe(crypto.instrument_code, "DAYS", 26 + 10, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
-        
+
         last_day = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
         if datetime.strftime(last_day, "%d") != datetime.strftime(today, "%d"):
             header = {
@@ -263,7 +263,7 @@ class Exchange:
             length = dataframe.shape[0]
             dataframe.loc[length] = [datetime.strftime(today, "%Y-%m-%dT%H:%M:%S.%fZ"), float(data['high']), float(data['low']), float(data['last_price']), None]
             dataframe.reset_index(inplace=True, drop=True)
-        
+
         dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=12, adjust=False).mean()
         dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=26, adjust=False).mean()
         dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]

@@ -20,14 +20,28 @@ class Exchange:
         }
 
     def getAccount(self, parameters):
-        new = account.Account(available=self.init_capital)
+        new = None
+
+        savedAccount = parameters.database.getAccount()
+        if savedAccount is None:
+            new = account.Account(available=self.init_capital)
+
+        elif float(savedAccount['init_capital']) == self.init_capital:
+            new = account.Account(available=float(savedAccount['available']))
+
+        else:
+            new = account.Account(available=(float(savedAccount['available']) + self.init_capital - float(savedAccount['available'])))
+
+        if new.available < 0:
+            new.available = 0
+
         new.makerFee = 0.9985
         new.takerFee = 0.9975
 
         return new
 
     def actualizeAccount(self, parameters):
-        return True
+        return parameters.database.updateAccount(parameters.account.available, self.init_capital)
 
     def getDataframe(self, instrument_code, timeframe, lines, candlesticks_period, today, tz, tz2, delta):
         status_code, data = web.Api(Exchange.baseUrl + "/candlesticks/" + instrument_code + "?unit=" + timeframe + "&period=" + str(candlesticks_period) + "&from=" + tz2 + "&to=" + tz, headers=self.header).send()
@@ -61,7 +75,7 @@ class Exchange:
 
             if i >= lines:
                 return None
-        
+
         dataframe.reset_index(inplace=True, drop=True)
 
         modified = True
@@ -171,7 +185,7 @@ class Exchange:
         dataframe = self.getDataframe(crypto.instrument_code, "DAYS", 26 + 10, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
-        
+
         last_day = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
         if datetime.strftime(last_day, "%d") != datetime.strftime(today, "%d"):
             status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + crypto.instrument_code, headers=self.header).send()
@@ -183,7 +197,7 @@ class Exchange:
             length = dataframe.shape[0]
             dataframe.loc[length] = [datetime.strftime(today, "%Y-%m-%dT%H:%M:%S.%fZ"), float(data['high']), float(data['low']), float(data['last_price']), None]
             dataframe.reset_index(inplace=True, drop=True)
-        
+
         dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=12, adjust=False).mean()
         dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=26, adjust=False).mean()
         dataframe["MACD"] = dataframe["FMA"] - dataframe["SMA"]

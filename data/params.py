@@ -151,7 +151,7 @@ class Params:
             if self.exchange_api_key is None:
                 print("Required API key was not set")
                 return False
-            
+
             if self.base_fiat is None:
                 print("Base fiat must be set")
                 return False
