@@ -215,6 +215,10 @@ class Exchange:
         return 100 - (100 / (1 + (avg_gain / avg_loss)))
 
     def getStats(self, crypto, parameters):
+        crypto.last_price = self.getPrice(crypto.instrument_code)
+        if crypto.last_price == 0:
+            return None
+
         today = datetime.utcnow()
         tz = today.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
@@ -244,6 +248,21 @@ class Exchange:
         dataframe = self.getDataframe(crypto.instrument_code, "DAYS", 26 + 10, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
+        
+        last_day = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if datetime.strftime(last_day, "%d") != datetime.strftime(today, "%d"):
+            header = {
+                "Accept": "application/json"
+            }
+
+            status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + crypto.instrument_code, headers=header).send()
+            if status_code != 200:
+                print("Error while trying to get market tickers")
+                return None
+
+            length = dataframe.shape[0]
+            dataframe.loc[length] = [datetime.strftime(today, "%Y-%m-%dT%H:%M:%S.%fZ"), float(data['high']), float(data['low']), float(data['last_price']), None]
+            dataframe.reset_index(inplace=True, drop=True)
         
         dataframe["FMA"] = dataframe.iloc[:]["Close"].ewm(span=12, adjust=False).mean()
         dataframe["SMA"] = dataframe.iloc[:]["Close"].ewm(span=26, adjust=False).mean()
@@ -537,10 +556,6 @@ class Exchange:
 
             if crypto.hourlyVolume < crypto.dailyVolume / 24:
                 crypto.danger += 2
-
-            crypto.last_price = self.getPrice(crypto.instrument_code)
-            if crypto.last_price == 0:
-                continue
 
             profitable_assets.append(crypto)
 
