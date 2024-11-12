@@ -215,6 +215,10 @@ class Exchange:
         return 100 - (100 / (1 + (avg_gain / avg_loss)))
 
     def getStats(self, crypto, parameters):
+        header = {
+            "Accept": "application/json"
+        }
+
         crypto.last_price = self.getPrice(crypto.instrument_code)
         if crypto.last_price == 0:
             return None
@@ -229,6 +233,18 @@ class Exchange:
         if dataframe is None:
             return None
 
+        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if datetime.strftime(last_time, "%m") != datetime.strftime(today, "%m"):
+            status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + crypto.instrument_code, headers=header).send()
+
+            if status_code != 200:
+                print("Error while trying to get market tickers")
+                return None
+
+            length = dataframe.shape[0]
+            dataframe.loc[length] = [datetime.strftime(today, "%Y-%m-%dT%H:%M:%S.%fZ"), float(data['high']), float(data['low']), float(data['last_price']), None]
+            dataframe.reset_index(inplace=True, drop=True)
+
         if self.getRSI(dataframe) < 50:
             crypto.danger += 1
 
@@ -238,6 +254,18 @@ class Exchange:
         dataframe = self.getDataframe(crypto.instrument_code, "WEEKS", 24, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
+
+        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if datetime.strftime(last_time, "%W") != datetime.strftime(today, "%W"):
+            status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + crypto.instrument_code, headers=header).send()
+
+            if status_code != 200:
+                print("Error while trying to get market tickers")
+                return None
+
+            length = dataframe.shape[0]
+            dataframe.loc[length] = [datetime.strftime(today, "%Y-%m-%dT%H:%M:%S.%fZ"), float(data['high']), float(data['low']), float(data['last_price']), None]
+            dataframe.reset_index(inplace=True, drop=True)
 
         if self.getRSI(dataframe) < 50:
             crypto.danger += 1
@@ -249,13 +277,10 @@ class Exchange:
         if dataframe is None:
             return None
 
-        last_day = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
-        if datetime.strftime(last_day, "%d") != datetime.strftime(today, "%d"):
-            header = {
-                "Accept": "application/json"
-            }
-
+        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if datetime.strftime(last_time, "%d") != datetime.strftime(today, "%d"):
             status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + crypto.instrument_code, headers=header).send()
+
             if status_code != 200:
                 print("Error while trying to get market tickers")
                 return None

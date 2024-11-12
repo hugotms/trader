@@ -35,9 +35,6 @@ class Exchange:
         if new.available < 0:
             new.available = 0
 
-        new.makerFee = 0.9985
-        new.takerFee = 0.9975
-
         return new
 
     def actualizeAccount(self, parameters):
@@ -166,6 +163,18 @@ class Exchange:
         if dataframe is None:
             return None
 
+        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if datetime.strftime(last_time, "%m") != datetime.strftime(today, "%m"):
+            status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + crypto.instrument_code, headers=self.header).send()
+
+            if status_code != 200:
+                print("Error while trying to get market tickers")
+                return None
+
+            length = dataframe.shape[0]
+            dataframe.loc[length] = [datetime.strftime(today, "%Y-%m-%dT%H:%M:%S.%fZ"), float(data['high']), float(data['low']), float(data['last_price']), None]
+            dataframe.reset_index(inplace=True, drop=True)
+
         if self.getRSI(dataframe) < 50:
             crypto.danger += 1
 
@@ -175,6 +184,18 @@ class Exchange:
         dataframe = self.getDataframe(crypto.instrument_code, "WEEKS", 24, 1, today, tz, tz2, delta)
         if dataframe is None:
             return None
+
+        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if datetime.strftime(last_time, "%W") != datetime.strftime(today, "%W"):
+            status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + crypto.instrument_code, headers=self.header).send()
+
+            if status_code != 200:
+                print("Error while trying to get market tickers")
+                return None
+
+            length = dataframe.shape[0]
+            dataframe.loc[length] = [datetime.strftime(today, "%Y-%m-%dT%H:%M:%S.%fZ"), float(data['high']), float(data['low']), float(data['last_price']), None]
+            dataframe.reset_index(inplace=True, drop=True)
 
         if self.getRSI(dataframe) < 50:
             crypto.danger += 1
@@ -186,8 +207,8 @@ class Exchange:
         if dataframe is None:
             return None
 
-        last_day = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
-        if datetime.strftime(last_day, "%d") != datetime.strftime(today, "%d"):
+        last_time = datetime.strptime(dataframe.iloc[-1]["Date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if datetime.strftime(last_time, "%d") != datetime.strftime(today, "%d"):
             status_code, data = web.Api(Exchange.baseUrl + "/market-ticker/" + crypto.instrument_code, headers=self.header).send()
 
             if status_code != 200:
@@ -264,13 +285,14 @@ class Exchange:
 
         for asset in parameters.database.findActives(parameters.watching_currencies, parameters.ignore_currencies):
             crypto = assets.Crypto(
-                asset["_id"],
-                "",
-                "",
-                float(asset["owned"]),
-                float(asset["placed"]),
-                float(asset["current"]),
-                "").setHigher()
+                instrument_code=asset["_id"],
+                base=asset["base"],
+                currency=asset["currency"],
+                owned=float(asset["owned"]),
+                placed=float(asset["placed"]),
+                current=float(asset["current"]),
+                placed_on=asset["placed_on"]
+            ).setHigher()
 
             crypto.precision = int(asset["precision"])
             crypto.higher = float(asset["higher"])
@@ -386,6 +408,8 @@ class Exchange:
         crypto.owned = amount
         crypto.current = amount * crypto.last_price
         crypto.setHigher()
+
+        crypto.placed_on = datetime.strftime(datetime.utcnow(), "%Y-%m-%dT%H:%M:%S.%fZ")
 
         parameters.database.putInActive(crypto)
 

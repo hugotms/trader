@@ -142,28 +142,29 @@ class Mongo:
                 isFound = True
                 break
 
-        if isFound == True:
-            query = {
-                "_id": crypto.instrument_code
-            }
+        if not isFound:
+            return None
 
-            self.delete("actives", query)
+        data = {
+            "date": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "instrument_code": crypto.instrument_code,
+            "base": crypto.base,
+            "currency": crypto.currency,
+            "owned": str(crypto.owned),
+            "placed": str(crypto.placed),
+            "current": str(crypto.current),
+            "higher": str(crypto.higher),
+            "placed_on": crypto.placed_on
+        }
 
-            data = {
-                "date": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-                "instrument_code": crypto.instrument_code,
-                "base": crypto.base,
-                "currency": crypto.currency,
-                "owned": str(crypto.owned),
-                "placed": str(crypto.placed),
-                "current": str(crypto.current),
-                "higher": str(crypto.higher),
-                "placed_on": crypto.placed_on
-            }
+        if not self.create("history", data):
+            return None
 
-            self.create("history", data)
+        query = {
+            "_id": crypto.instrument_code
+        }
 
-        return self
+        return self.delete("actives", query)
 
     def findActives(self, watching_currencies, ignore_currencies):
         if self.client is None:
