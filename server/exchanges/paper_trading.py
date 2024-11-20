@@ -276,7 +276,7 @@ class Exchange:
 
         if status_code != 200:
             print("Error while trying to get market tickers")
-            return 0
+            return False
 
         return float(data['last_price'])
 
@@ -298,6 +298,8 @@ class Exchange:
             crypto.higher = float(asset["higher"])
 
             crypto.last_price = self.getPrice(crypto.instrument_code)
+            if not crypto.last_price:
+                continue
 
             crypto.current = crypto.owned * crypto.last_price
 

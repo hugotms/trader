@@ -1,6 +1,6 @@
 ARG VERSION=v5.0.0
 
-FROM alpine/git:latest as clone
+FROM docker.io/alpine/git:latest as clone
 
 ARG VERSION
 
@@ -8,7 +8,7 @@ WORKDIR /trader
 
 RUN git clone --branch feat/updating https://github.com/hugotms/trader.git ./
 
-FROM python:3.8-slim as run
+FROM docker.io/library/python:3.8-slim as run
 
 ARG VERSION
 

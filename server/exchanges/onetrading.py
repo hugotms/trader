@@ -350,7 +350,7 @@ class Exchange:
 
         if status_code != 200:
             print("Error while trying to get market tickers")
-            return 0
+            return False
 
         return float(data['last_price'])
 
@@ -391,6 +391,9 @@ class Exchange:
 
             if item['trade']['instrument_code'] not in asset_names:
                 last_price = self.getPrice(item['trade']['instrument_code'])
+                if not last_price:
+                    ignored_assets.append(item['trade']['instrument_code'])
+                    continue
 
                 asset = assets.Crypto(
                     instrument_code=item['trade']['instrument_code'],
@@ -431,7 +434,7 @@ class Exchange:
                     if float(crypto["higher"]) > asset.current:
                         asset.higher = float(crypto["higher"])
 
-            if isFound == True:
+            if isFound == True or crypto["_id"] in ignored_assets:
                 continue
 
             order_id = ""
