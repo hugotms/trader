@@ -593,69 +593,77 @@ class Exchange:
         return profitable_assets
 
     def stopLossOrder(self, crypto, parameters):
-        if crypto.stop_id != "":
-            status_code, data = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
-            time.sleep(1)
+        # We comment this code base to keep logic for later when onetrading eventually brings back stop order
 
-            if status_code == 429:
-                print("Too many requests at once")
-                return False
+        # if crypto.stop_id != "":
+        #     status_code, data = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
+        #     time.sleep(1)
 
-            if status_code != 204:
-                print("Error while trying to cancel stop order")
-                return False
+        #     if status_code == 429:
+        #         print("Too many requests at once")
+        #         return False
 
-            crypto.stop_id = ""
-            parameters.database.putInActive(crypto)
+        #     if status_code != 204:
+        #         print("Error while trying to cancel stop order")
+        #         return False
 
-        body = {
-            "instrument_code": crypto.instrument_code,
-            "side": "SELL",
-            "type": "STOP",
-            "amount": self.truncate(crypto.owned, crypto.precision),
-            "price": self.truncate(crypto.higher * parameters.security_min_recovered / crypto.owned, 2),
-            "trigger_price": self.truncate(crypto.higher * parameters.security_min_recovered / crypto.owned, 2)
-        }
+        #     crypto.stop_id = ""
+        #     parameters.database.putInActive(crypto)
 
-        status_code, data = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
-        time.sleep(1)
+        # body = {
+        #     "instrument_code": crypto.instrument_code,
+        #     "side": "SELL",
+        #     "type": "STOP",
+        #     "amount": self.truncate(crypto.owned, crypto.precision),
+        #     "price": self.truncate(crypto.higher * parameters.security_min_recovered / crypto.owned, 2),
+        #     "trigger_price": self.truncate(crypto.higher * parameters.security_min_recovered / crypto.owned, 2)
+        # }
 
-        if status_code == 429:
-            print("Too many requests at once")
-            return False
+        # status_code, data = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
+        # time.sleep(1)
 
-        if status_code != 201:
-            crypto.failed == True
-            print("Error while trying to create stop order")
-            return False
+        # if status_code == 429:
+        #     print("Too many requests at once")
+        #     return False
 
-        crypto.stop_id = data["order_id"]
+        # if status_code != 201:
+        #     crypto.failed == True
+        #     print("Error while trying to create stop order")
+        #     return False
 
-        parameters.database.putInActive(crypto)
+        # crypto.stop_id = data["order_id"]
+
+        # parameters.database.putInActive(crypto)
 
         return True
 
     def sellingMarketOrder(self, crypto, parameters):
-        if crypto.stop_id != "":
-            status_code, data = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
-            time.sleep(1)
+        # if crypto.stop_id != "":
+        #     status_code, data = web.Api(Exchange.baseUrl + "/account/orders/" + crypto.stop_id, headers=self.headers, method="DELETE").send()
+        #     time.sleep(1)
 
-            if status_code == 429:
-                print("Too many requests at once")
-                return False
+        #     if status_code == 429:
+        #         print("Too many requests at once")
+        #         return False
 
-            if status_code != 204:
-                print("Error while trying to cancel stop order")
-                return False
+        #     if status_code != 204:
+        #         print("Error while trying to cancel stop order")
+        #         return False
 
-            crypto.stop_id = ""
-            parameters.database.putInActive(crypto)
+        #     crypto.stop_id = ""
+        #     parameters.database.putInActive(crypto)
+
+        current_price = self.getPrice(crypto.instrument_code)
+        if current_price == 0:
+            return False
 
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "SELL",
-            "type": "MARKET",
-            "amount": self.truncate(crypto.owned, crypto.precision)
+            "type": "LIMIT",
+            "time_in_force": "IMMEDIATE_OR_CANCELLED",
+            "amount": self.truncate(crypto.owned, crypto.precision),
+            "price": current_price * 0.75
         }
 
         status_code, data = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
@@ -683,8 +691,10 @@ class Exchange:
         body = {
             "instrument_code": crypto.instrument_code,
             "side": "BUY",
-            "type": "MARKET",
-            "amount": self.truncate(amount, crypto.precision)
+            "type": "LIMIT",
+            "time_in_force": "IMMEDIATE_OR_CANCELLED",
+            "amount": self.truncate(amount, crypto.precision),
+            "price": current_price * 1.25
         }
 
         status_code, data = web.Api(Exchange.baseUrl + "/account/orders", headers=self.headers, method="POST", data=body).send()
