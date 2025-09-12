@@ -35,6 +35,6 @@ class Api:
             except ValueError:
                 print('Unable to process returned data')
                 self.statusCode = 500
-                return self.statusCode, None
+                self.res = None
 
         return self.statusCode, self.res
