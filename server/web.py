@@ -24,12 +24,17 @@ class Api:
                 response = requests.delete(self.url, headers=self.headers, json=self.data)
             else:
                 print('Unsupported method')
-        except:
+        except Exception:
             response = None
             print('Unable to access URL')
 
         if response is not None:
             self.statusCode = response.status_code
-            self.res = response.json()
+            try:
+                self.res = response.json()
+            except ValueError:
+                print('Unable to process returned data')
+                self.statusCode = 500
+                self.res = None
 
         return self.statusCode, self.res
