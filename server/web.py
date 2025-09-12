@@ -36,5 +36,6 @@ class Api:
                 print('Unable to process returned data')
                 self.statusCode = 500
                 self.res = None
+                return self.statusCode, self.res
 
         return self.statusCode, self.res
