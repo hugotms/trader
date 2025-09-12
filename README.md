@@ -4,6 +4,47 @@ This algorithm has been created by Hugo TOMASI in order to be used with One Trad
 
 In any case would this program be allowed to buy any currency on your behalf, unless you specify it (see variables below).
 
+## Overview
+
+Trader is a Python trading bot tailored for the One Trading API. It monitors cryptocurrency positions, evaluates technical indicators, executes trades (real or simulated), logs results, and can send email alerts. Key areas include bot logic, data models, exchange interfaces, database handling, and a launch script to orchestrate operations.
+
+### Core Modules and Functions
+
+#### `bot.logic` – Trading decisions
+- **`stop(parameters, crypto)`** – Attempts to sell a position, logging success or failure, adjusting the database state, and summarizing gain or loss.
+- **`start(parameters, crypto)`** – Places a buy order and deducts cost from available funds; returns a formatted status string.
+- **`monitor(parameters, actives)`** – Evaluates each open position for stop-loss, profit-taking, or errors; may queue alert messages.
+- **`buy(parameters, profitables)`** – Filters candidate assets using RSI, stochastic, MACD, and liquidity checks before buying.
+
+#### `bot.utils` – Reporting & updates
+- **`getHistory(parameters)`** – Pulls recent trades from the database and builds daily, weekly, and monthly summaries.
+- **`report(parameters)`** – Formats performance history into text for console or email output.
+- **`checkUpdate(current_version)`** – Uses `lastversion` to warn if a newer bot release exists.
+
+### Data Models and Configuration
+- **`Account`** – Tracks available balance, maker/taker fees, and total value.
+- **`Crypto`** – Represents a cryptocurrency position with pricing indicators; `setHigher` records the peak valuation.
+- **`Params`** – Loads environment variables, refreshes runtime settings from MongoDB, and selects the appropriate exchange client (live, paper, or CSV history).
+- **`Report`** – Container for past-performance statistics.
+
+### Database Wrapper
+The `server.db.Mongo` module handles connection setup, CRUD utilities, and active/history synchronization. It provides helpers such as `findActives`, `getPastPerformance`, `getLastPlaced`, `getAccount`, and `updateAccount`.
+
+### Supporting Services
+- **File system** – `File.create` ensures output files exist, while `File.putInFile` writes contents.
+- **Mail** – `SMTP.send` composes multipart emails (plain & HTML) and sends them via TLS-authenticated SMTP.
+- **Web** – `Api.send` performs HTTP requests with basic method dispatching and JSON parsing.
+
+### Exchange Connectors
+Each exchange class offers similar methods tailored to its environment:
+
+- **History-based (`server/exchanges/history.py`)** – Operates on CSV price data for backtesting. Provides price/statistics computation (`getStats`), asset discovery (`getAllActiveAssets`, `findProfitable`), and order emulation (`sellingMarketOrder`, `buyingMarketOrder`).
+- **Live OneTrading (`server/exchanges/onetrading.py`)** – Real API integration with account & balance retrieval (`getCurrencyBalance`, `getAccountFees`, `getAccount`, `actualizeAccount`), indicator calculation (`getRSI`, `getStats`) across multiple timeframes, market scanning, and order placement.
+- **Paper trading (`server/exchanges/paper_trading.py`)** – Simulated trades with live price data; updates a simulated account balance while keeping orders in the database.
+
+### Entry Point
+`launch.start` initializes parameters, loads account data, cycles through monitoring, reporting, alerting, and optional trading while writing HTML dashboards. It cleans up when history mode finishes.
+
 ## Requirements
 
 For this to work, you must have a One Trading account that have been verified and an API key (with at least the `Read` and `Trade` scopes).
