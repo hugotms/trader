@@ -34,5 +34,7 @@ class Api:
                 self.res = response.json()
             except ValueError:
                 print('Unable to process returned data')
+                self.statusCode = 500
+                return self.statusCode, None
 
         return self.statusCode, self.res
