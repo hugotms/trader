@@ -214,9 +214,6 @@ class Exchange:
 
         return profitable_assets
 
-    def stopLossOrder(self, crypto, parameters):
-        return True
-
     def sellingMarketOrder(self, crypto, parameters):
         parameters.database.putInHistory(crypto)
         parameters.account.available += crypto.current * parameters.account.takerFee
