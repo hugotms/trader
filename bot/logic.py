@@ -4,7 +4,7 @@ def stop(parameters, crypto):
         parameters.database.putInActive(crypto)
         return "Unable to sell " + crypto.instrument_code + ".\n"
 
-    message = "Selling market order for " + crypto.instrument_code + " at " + str(round(crypto.current * parameters.account.takerFee, 2)) + "€"
+    message = "Selling limit order for " + crypto.instrument_code + " at " + str(round(crypto.current * parameters.account.takerFee, 2)) + "€"
 
     if crypto.current * parameters.account.takerFee >= crypto.placed:
         message += " (WON: " + str(round((crypto.current * parameters.account.takerFee) - crypto.placed, 2)) + "€)"
@@ -19,7 +19,7 @@ def start(parameters, crypto):
 
     parameters.account.available -= crypto.placed
 
-    return "Buying market order for " + crypto.instrument_code + \
+    return "Buying limit order for " + crypto.instrument_code + \
         " (OWNED: " + str(round(crypto.owned, crypto.precision)) + \
         " / PRICE: " + str(round(crypto.last_price, crypto.precision)) + \
         " / HIST: " + str(round(crypto.macd - crypto.signal, crypto.precision)) + \
@@ -49,9 +49,6 @@ def monitor(parameters, actives):
         elif parameters.min_profit > 1.0 and crypto.current * parameters.account.takerFee >= crypto.placed * parameters.min_profit:
             trading_message += crypto.instrument_code + " has reached its profit level. "
             trading_message += stop(parameters, crypto)
-
-        elif crypto.higher * parameters.min_recovered > 10 and (crypto.higher == crypto.current or crypto.stop_id == ""):
-            parameters.exchange_client.stopLossOrder(crypto, parameters)
 
         if crypto.failed == True and crypto.alerted == False:
             trading_alert += "No action can be done on " + crypto.instrument_code + " due to an error.\n"
